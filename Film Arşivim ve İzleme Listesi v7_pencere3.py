@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP RESIZE v17 (MIN 1 FILM FOR SERIES/REMAKE)")
+    print("   ANA KOD.PY - POPUP RESIZE v18 (MULTI-SELECT CHECKBOX FOR GENRES)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -766,6 +766,55 @@ def main():
   .film-id-badge { background: #333; color: #aaa; padding: 1px 6px; border-radius: 4px; font-size: 11px; }
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
+
+  /* Checkbox Multiple-Choice Listesi (Tür Popup için) */
+  .multi-checkbox-list {
+    width: 100%;
+    height: 315px;
+    overflow-y: auto;
+    background: #121212;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .multi-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+    border: 1px solid transparent;
+  }
+  .multi-checkbox-item:hover {
+    background: #1f2937;
+  }
+  .multi-checkbox-item.active-row {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+  .multi-checkbox-item input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #10b981;
+    cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .multi-checkbox-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -946,7 +995,7 @@ def main():
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:25px; border-radius:8px; width:960px; max-width:96%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
     <h3 style="margin-top:0; color:#f5c518;" id="groupSelectModalTitle">📁 Bir Gruba Dahil Et (ID: <span id="targetMovieIdForGroup"></span>)</h3>
-    <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
+    <p style="font-size:12px; color:#aaa; margin-bottom:15px;" id="groupSelectModalSubtitle">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
 
     <div style="display:flex; gap:18px;">
       <!-- Sol Taraf: Liste ve Arama -->
@@ -961,7 +1010,10 @@ def main():
             <option value="count_desc">Film Sayısı (Azalan)</option>
           </select>
         </div>
+        <!-- Seri / Remake için Tekli Seçim -->
         <select id="groupSelectDropdown" size="15" style="width:100%; background:#121212; color:#e0e0e0; border:1px solid #444; padding:8px; border-radius:4px; font-size:13px; box-sizing:border-box;"></select>
+        <!-- Tür için Çoklu Seçim (Checkbox Listesi) -->
+        <div id="groupSelectCheckboxList" class="multi-checkbox-list" style="display:none;"></div>
       </div>
 
       <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar) -->
@@ -1031,6 +1083,8 @@ def main():
   let activeGroupSelectType = null;
   let cachedGroupListForPopup = [];
   let tempCreatedGroupKeysInPopup = [];
+  let selectedGenreKeysInPopup = new Set();
+  let focusedGenreKeyInPopup = null;
 
   let minGlobalYear = 1900;
   let maxGlobalYear = 2030;
@@ -1666,6 +1720,8 @@ def main():
     activeMovieIdForGroupSelect = String(movieId);
     activeGroupSelectType = type;
     tempCreatedGroupKeysInPopup = [];
+    selectedGenreKeysInPopup = new Set();
+    focusedGenreKeyInPopup = null;
 
     const targetSpan = document.getElementById("targetMovieIdForGroup");
     if (targetSpan) targetSpan.innerText = activeMovieIdForGroupSelect;
@@ -1678,6 +1734,27 @@ def main():
 
     const renameInputEl = document.getElementById("renameGroupInPopupInput");
     if (renameInputEl) renameInputEl.value = "";
+
+    const singleSelectEl = document.getElementById("groupSelectDropdown");
+    const checkboxListEl = document.getElementById("groupSelectCheckboxList");
+    const subtitleEl = document.getElementById("groupSelectModalSubtitle");
+
+    if (type === 'genre') {
+      if (singleSelectEl) singleSelectEl.style.display = "none";
+      if (checkboxListEl) checkboxListEl.style.display = "flex";
+      if (subtitleEl) subtitleEl.innerText = "Birden fazla tür seçebilir, yeni tür ekleyebilir veya seçili türün adını düzenleyebilirsiniz:";
+
+      // Filmin halihazırda bağlı olduğu türleri başlangıçta işaretle
+      const existingGenres = getGenreGroupsForMovie(activeMovieIdForGroupSelect);
+      existingGenres.forEach(g => selectedGenreKeysInPopup.add(g[0]));
+      if (existingGenres.length > 0) {
+        focusedGenreKeyInPopup = existingGenres[0][0];
+      }
+    } else {
+      if (singleSelectEl) singleSelectEl.style.display = "block";
+      if (checkboxListEl) checkboxListEl.style.display = "none";
+      if (subtitleEl) subtitleEl.innerText = "Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:";
+    }
 
     const createBtnEl = document.getElementById("createNewGroupInPopupBtn");
     if (createBtnEl) {
@@ -1699,12 +1776,12 @@ def main():
     let modalTitle = "📁 Bir Gruba Dahil Et";
     if (type === 'series') modalTitle = `📁 Bir Seri Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
     else if (type === 'remake') modalTitle = `📁 Bir Remake Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
-    else if (type === 'genre') modalTitle = `📁 Bir Tür Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
+    else if (type === 'genre') modalTitle = `🏷️ Tür Seç / Yönet (ID: ${activeMovieIdForGroupSelect})`;
 
     const titleEl = document.getElementById("groupSelectModalTitle");
     if (titleEl) titleEl.innerText = modalTitle;
 
-    rebuildCachedGroupListForPopup(null);
+    rebuildCachedGroupListForPopup(focusedGenreKeyInPopup);
 
     const popupModal = document.getElementById("groupSelectPopupModal");
     if (popupModal) {
@@ -1747,10 +1824,15 @@ def main():
     });
 
     if (existingEntry) {
+      const exKey = existingEntry[0];
+      if (type === 'genre') {
+        selectedGenreKeysInPopup.add(exKey);
+        focusedGenreKeyInPopup = exKey;
+      }
       if (inputEl) inputEl.value = "";
       const searchEl = document.getElementById("groupSearchInput");
       if (searchEl) searchEl.value = "";
-      rebuildCachedGroupListForPopup(existingEntry[0]);
+      rebuildCachedGroupListForPopup(exKey);
       return;
     }
 
@@ -1758,6 +1840,11 @@ def main():
     groupsList.push([newKey]);
     namesObj[newKey] = newName;
     tempCreatedGroupKeysInPopup.push(newKey);
+
+    if (type === 'genre') {
+      selectedGenreKeysInPopup.add(newKey);
+      focusedGenreKeyInPopup = newKey;
+    }
 
     if (inputEl) inputEl.value = "";
     const searchEl = document.getElementById("groupSearchInput");
@@ -1770,12 +1857,8 @@ def main():
     const type = activeGroupSelectType;
     if (!type) return;
 
-    const sel = document.getElementById("groupSelectDropdown");
     const renameInputEl = document.getElementById("renameGroupInPopupInput");
-    if (!sel || sel.value === "" || isNaN(sel.value) || !renameInputEl) {
-      alert("Lütfen önce soldaki listeden adı değiştirilecek bir grup seçin.");
-      return;
-    }
+    if (!renameInputEl) return;
 
     const newName = renameInputEl.value.trim();
     if (!newName) {
@@ -1784,34 +1867,61 @@ def main():
       return;
     }
 
-    const groupIdx = parseInt(sel.value, 10);
-    let groupsList = null;
+    let targetKey = null;
     let namesObj = null;
 
-    if (type === 'series') {
-      groupsList = seriesMoviesGroupsState;
-      namesObj = seriesGroupsNamesState;
-    } else if (type === 'remake') {
-      groupsList = remakeMoviesGroupsState;
-      namesObj = remakeGroupsNamesState;
-    } else {
-      groupsList = genreMoviesGroupsState;
+    if (type === 'genre') {
+      targetKey = focusedGenreKeyInPopup;
       namesObj = genreGroupsNamesState;
+      if (!targetKey) {
+        alert("Lütfen önce soldaki listeden adı değiştirilecek bir tür satırına tıklayın.");
+        return;
+      }
+    } else {
+      const sel = document.getElementById("groupSelectDropdown");
+      if (!sel || sel.value === "" || isNaN(sel.value)) {
+        alert("Lütfen önce soldaki listeden adı değiştirilecek bir grup seçin.");
+        return;
+      }
+      const groupIdx = parseInt(sel.value, 10);
+      const groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
+      namesObj = (type === 'series') ? seriesGroupsNamesState : remakeGroupsNamesState;
+      const group = groupsList[groupIdx];
+      if (!group || group.length === 0) return;
+      targetKey = group[0];
     }
 
-    const group = groupsList[groupIdx];
-    if (!group || group.length === 0) return;
-
-    const gKey = group[0];
-    namesObj[gKey] = newName;
+    namesObj[targetKey] = newName;
 
     if (type === 'series') saveSeriesGroups();
     else if (type === 'remake') saveRemakeGroups();
     else saveGenreGroups();
 
-    rebuildCachedGroupListForPopup(gKey);
+    rebuildCachedGroupListForPopup(targetKey);
     updateRelationBanner();
     renderMovies(false);
+  }
+
+  function setFocusedGenreRow(groupKey) {
+    focusedGenreKeyInPopup = groupKey;
+    const matchedItem = cachedGroupListForPopup.find(item => item.groupKey === groupKey);
+    updateGroupPreview(matchedItem ? matchedItem.members : null);
+
+    const renameInputEl = document.getElementById("renameGroupInPopupInput");
+    if (renameInputEl) {
+      renameInputEl.value = matchedItem ? matchedItem.rawName : "";
+    }
+
+    const checkboxListEl = document.getElementById("groupSelectCheckboxList");
+    if (checkboxListEl) {
+      checkboxListEl.querySelectorAll(".multi-checkbox-item").forEach(row => {
+        if (row.dataset.groupKey === groupKey) {
+          row.classList.add("active-row");
+        } else {
+          row.classList.remove("active-row");
+        }
+      });
+    }
   }
 
   function filterAndSortGroupSelectDropdown(selectTargetKey = null) {
@@ -1843,6 +1953,72 @@ def main():
       return 0;
     });
 
+    // Tür (genre) için Multiple-Choice Checkbox Listesi render et
+    if (activeGroupSelectType === 'genre') {
+      const checkboxListEl = document.getElementById("groupSelectCheckboxList");
+      if (!checkboxListEl) return;
+      checkboxListEl.innerHTML = "";
+
+      if (list.length === 0) {
+        checkboxListEl.innerHTML = `<div style="color:#888; padding:12px; text-align:center; font-style:italic;">Eşleşen tür bulunamadı</div>`;
+        updateGroupPreview(null);
+        const renameInputEl = document.getElementById("renameGroupInPopupInput");
+        if (renameInputEl) renameInputEl.value = "";
+        return;
+      }
+
+      if (selectTargetKey && list.some(i => i.groupKey === selectTargetKey)) {
+        focusedGenreKeyInPopup = selectTargetKey;
+      } else if (!focusedGenreKeyInPopup || !list.some(i => i.groupKey === focusedGenreKeyInPopup)) {
+        focusedGenreKeyInPopup = list[0].groupKey;
+      }
+
+      list.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "multi-checkbox-item" + (item.groupKey === focusedGenreKeyInPopup ? " active-row" : "");
+        row.dataset.groupKey = item.groupKey;
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = selectedGenreKeysInPopup.has(item.groupKey);
+        cb.addEventListener("change", (e) => {
+          e.stopPropagation();
+          if (cb.checked) {
+            selectedGenreKeysInPopup.add(item.groupKey);
+          } else {
+            selectedGenreKeysInPopup.delete(item.groupKey);
+          }
+          setFocusedGenreRow(item.groupKey);
+        });
+
+        const lbl = document.createElement("span");
+        lbl.className = "multi-checkbox-label";
+        lbl.textContent = item.name;
+        lbl.title = item.name;
+
+        row.appendChild(cb);
+        row.appendChild(lbl);
+
+        row.addEventListener("click", (e) => {
+          if (e.target !== cb) {
+            cb.checked = !cb.checked;
+            if (cb.checked) {
+              selectedGenreKeysInPopup.add(item.groupKey);
+            } else {
+              selectedGenreKeysInPopup.delete(item.groupKey);
+            }
+          }
+          setFocusedGenreRow(item.groupKey);
+        });
+
+        checkboxListEl.appendChild(row);
+      });
+
+      setFocusedGenreRow(focusedGenreKeyInPopup);
+      return;
+    }
+
+    // Seri ve Remake için Tekli <select> render et
     const sel = document.getElementById("groupSelectDropdown");
     if (!sel) return;
     sel.innerHTML = "";
@@ -1958,61 +2134,81 @@ def main():
     activeMovieIdForGroupSelect = null;
     activeGroupSelectType = null;
     cachedGroupListForPopup = [];
+    selectedGenreKeysInPopup = new Set();
+    focusedGenreKeyInPopup = null;
   }
 
   function confirmGroupSelect() {
-    const sel = document.getElementById("groupSelectDropdown");
-    if (!sel) {
-      closeGroupSelectPopup();
-      return;
-    }
-    const idx = sel.value;
-    if (idx === "" || isNaN(idx) || !activeMovieIdForGroupSelect || !activeGroupSelectType) {
-      closeGroupSelectPopup();
-      return;
-    }
-
-    let groupsList = null;
-    if (activeGroupSelectType === 'series') groupsList = seriesMoviesGroupsState;
-    else if (activeGroupSelectType === 'remake') groupsList = remakeMoviesGroupsState;
-    else groupsList = genreMoviesGroupsState;
-
-    const group = groupsList[idx];
-    if (!group || group.length === 0) {
+    if (!activeMovieIdForGroupSelect || !activeGroupSelectType) {
       closeGroupSelectPopup();
       return;
     }
 
     const movieIdToAdd = activeMovieIdForGroupSelect;
     const type = activeGroupSelectType;
-    const targetGroupKey = group[0];
 
-    // Seri ve Remake 1:1 olduğu için, film başka bir gruptaysa önce oradan çıkar
-    if (type === 'series' || type === 'remake') {
-      const existingGroup = (type === 'series') ? getSeriesGroupForMovie(movieIdToAdd) : getRemakeGroupForMovie(movieIdToAdd);
-      if (existingGroup && existingGroup[0] !== targetGroupKey) {
-        unlinkMovie(movieIdToAdd, type, existingGroup[0], false);
-      }
-    }
-
+    // Tür (genre) için Çoklu Seçim (Checkbox) kaydı
     if (type === 'genre') {
-      propagateGenreToRelatedMovies(movieIdToAdd, targetGroupKey);
+      const currentAssignedKeys = new Set(getGenreGroupsForMovie(movieIdToAdd).map(g => g[0]));
+
+      // Yeni işaretlenen türleri ekle (bağlı seri/remake kümesine de yay)
+      selectedGenreKeysInPopup.forEach(gKey => {
+        if (!currentAssignedKeys.has(gKey)) {
+          propagateGenreToRelatedMovies(movieIdToAdd, gKey);
+        }
+      });
+
+      // İşareti kaldırılan eski türleri çıkar
+      currentAssignedKeys.forEach(oldKey => {
+        if (!selectedGenreKeysInPopup.has(oldKey)) {
+          unlinkMovie(movieIdToAdd, 'genre', oldKey, false);
+        }
+      });
+
       closeGroupSelectPopup();
       saveGenreGroups();
       renderMovies(false);
-    } else {
-      if (!group.slice(1).includes(movieIdToAdd)) {
-        group.push(movieIdToAdd);
-      }
-
-      closeGroupSelectPopup();
-
-      if (type === 'series') saveSeriesGroups();
-      else saveRemakeGroups();
-
-      syncGenresAcrossRelatedCluster(movieIdToAdd, true);
-      renderMovies(false);
+      return;
     }
+
+    // Seri ve Remake için Tekli Seçim kaydı
+    const sel = document.getElementById("groupSelectDropdown");
+    if (!sel) {
+      closeGroupSelectPopup();
+      return;
+    }
+    const idx = sel.value;
+    if (idx === "" || isNaN(idx)) {
+      closeGroupSelectPopup();
+      return;
+    }
+
+    const groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
+    const group = groupsList[idx];
+    if (!group || group.length === 0) {
+      closeGroupSelectPopup();
+      return;
+    }
+
+    const targetGroupKey = group[0];
+
+    // Seri ve Remake 1:1 olduğu için, film başka bir gruptaysa önce oradan çıkar
+    const existingGroup = (type === 'series') ? getSeriesGroupForMovie(movieIdToAdd) : getRemakeGroupForMovie(movieIdToAdd);
+    if (existingGroup && existingGroup[0] !== targetGroupKey) {
+      unlinkMovie(movieIdToAdd, type, existingGroup[0], false);
+    }
+
+    if (!group.slice(1).includes(movieIdToAdd)) {
+      group.push(movieIdToAdd);
+    }
+
+    closeGroupSelectPopup();
+
+    if (type === 'series') saveSeriesGroups();
+    else saveRemakeGroups();
+
+    syncGenresAcrossRelatedCluster(movieIdToAdd, true);
+    renderMovies(false);
   }
 
   // specificGroupKey özellikle Many:Many olan Tür grubunda hangi türden ayıracağımızı belirler
@@ -2928,7 +3124,7 @@ def main():
             <div class="relation-input-wrap" title="Yeni tür grubu oluşturmak için başka bir film ID'si yazın veya + ile mevcut türlerden seçin">
               <span class="relation-label">🏷️ Tür:</span>
               <input type="text" inputmode="numeric" class="relation-input" value="" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'genre');" style="color:#a7f3d0; border-color:#10b981;">
-              <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut bir tür grubuna dahil et veya yeni oluştur (+)">+</button>
+              <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut türlerden çoklu seç veya yeni oluştur (+)">+</button>
             </div>
           </div>
           ${genrePillsHtml}

@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Seri, Tür yada Remake için insert/update seçeneği eklendi"
+SURUM_NOTU = "çoklu tür seçebilme yeteneği eklendi"
 
 #kaydet ve 30 sn bekle
 import time
