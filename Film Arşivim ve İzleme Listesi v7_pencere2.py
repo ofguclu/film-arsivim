@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "tür sayfasına popup'tan seçerek film ekleme seçeneği eklendi"
+SURUM_NOTU = "önceki geliştirmede film o türde varsa Türde Mevcut ibaresi ile o filmi de gösteriyordu. göstermemesi sağlandı"
 
 #kaydet ve 30 sn bekle
 import time

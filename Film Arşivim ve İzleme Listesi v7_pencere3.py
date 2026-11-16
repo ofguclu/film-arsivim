@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP RESIZE v19 (GENRE + ADD MOVIES 5x5 POPUP)")
+    print("   ANA KOD.PY - POPUP RESIZE v20 (EXCLUDE EXISTING GENRE MOVIES)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -453,10 +453,6 @@ def main():
     border: 2px solid #10b981;
     background: #064e3b;
   }
-  .bulk-movie-item.already-in-genre {
-    opacity: 0.55;
-    border-color: #4b5563;
-  }
   .bulk-movie-cb {
     position: absolute;
     top: 6px;
@@ -500,18 +496,6 @@ def main():
     color: #f5c518;
     font-size: 10px;
     font-weight: bold;
-  }
-  .bulk-in-genre-badge {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    background: rgba(16, 185, 129, 0.92);
-    color: #fff;
-    font-size: 9px;
-    font-weight: bold;
-    padding: 2px 5px;
-    border-radius: 3px;
-    z-index: 4;
   }
 
   .watchlist-group {
@@ -1945,6 +1929,9 @@ def main():
 
     let filteredList = allMovies.filter(movie => {
       const fid = String(movie.film_ID);
+      // Türde zaten mevcut olan filmleri hiç gösterme
+      if (existingMemberSet.has(fid)) return false;
+
       if (hiddenMoviesState[fid] && !showHidden) return false;
 
       if (domainVal && getDomain(movie.web_scraper_start_url) !== domainVal) return false;
@@ -1990,18 +1977,17 @@ def main():
 
     gridEl.innerHTML = "";
     if (filteredList.length === 0) {
-      gridEl.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:30px; color:#888; font-style:italic;">Filtreye uygun film bulunamadı.</div>`;
+      gridEl.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:30px; color:#888; font-style:italic;">Eklenecek uygun film bulunamadı.</div>`;
       return;
     }
 
     const fragment = document.createDocumentFragment();
     filteredList.forEach(movie => {
       const fid = String(movie.film_ID);
-      const isAlreadyIn = existingMemberSet.has(fid);
       const isSelected = bulkSelectedMovieIds.has(fid);
 
       const itemEl = document.createElement("div");
-      itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "") + (isAlreadyIn ? " already-in-genre" : "");
+      itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "");
 
       const posterUrl = movie.poster || "";
       const imdbTxt = movie.imdb_score ? `⭐ ${movie.imdb_score}` : "⭐ -";
@@ -2010,11 +1996,9 @@ def main():
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.className = "bulk-movie-cb";
-      cb.checked = isAlreadyIn || isSelected;
-      cb.disabled = isAlreadyIn;
+      cb.checked = isSelected;
 
       const toggleSelection = () => {
-        if (isAlreadyIn) return;
         if (bulkSelectedMovieIds.has(fid)) {
           bulkSelectedMovieIds.delete(fid);
           itemEl.classList.remove("selected");
@@ -2029,7 +2013,6 @@ def main():
 
       cb.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (isAlreadyIn) return;
         if (cb.checked) {
           bulkSelectedMovieIds.add(fid);
           itemEl.classList.add("selected");
@@ -2042,10 +2025,7 @@ def main():
 
       itemEl.addEventListener("click", toggleSelection);
 
-      const alreadyBadgeHtml = isAlreadyIn ? `<span class="bulk-in-genre-badge">✓ Türde Mevcut</span>` : "";
-
       itemEl.innerHTML = `
-        ${alreadyBadgeHtml}
         <img class="bulk-movie-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/160x220?text=Afi%C5%9F+Yok';">
         <div class="bulk-movie-info">
           <div class="bulk-movie-title" title="${escapeHtml(movie.film_name)}">${escapeHtml(movie.film_name)}</div>
