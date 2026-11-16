@@ -23,7 +23,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("      ANA KOD.PY - POPUP RESIZE v14 (MULTI-GENRE & GROUP KEYS)")
+    print("      ANA KOD.PY - POPUP RESIZE v15 (FULL GENRE PROPAGATION)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -1317,27 +1317,43 @@ def main():
     return "";
   }
 
-  // Seri veya Remake görünümündeyken bir filme tür eklendiğinde, serideki/remake'teki diğer filmlere de sadece bu türü ekler (eski türlerini bozmaz)
+  // =========================================================================
+  // YENİ: ZİNCİRLEME (GEÇİŞLİ) SERİ & REMAKE BAĞLANTILI FİLMLERİ BULMA (BFS)
+  // A -> B (Seri) ve B -> C (Remake) ise [A, B, C] kümesinin tamamını döndürür.
+  // =========================================================================
+  function getTransitiveRelatedMovieIds(startMovieId) {
+    const startId = String(startMovieId);
+    const visited = new Set([startId]);
+    const queue = [startId];
+    const allRelationGroups = [...seriesMoviesGroupsState, ...remakeMoviesGroupsState];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      for (const group of allRelationGroups) {
+        if (!Array.isArray(group) || group.length < 2) continue;
+        const members = group.slice(1).map(String);
+        if (members.includes(currentId)) {
+          for (const mId of members) {
+            if (!visited.has(mId)) {
+              visited.add(mId);
+              queue.push(mId);
+            }
+          }
+        }
+      }
+    }
+    return Array.from(visited);
+  }
+
+  // Hangi görünümde olunursa olunsun, bir filme eklenen türü bağlı tüm Seri/Remake kümesine yayar
   function propagateGenreToRelatedMovies(movieId, targetGenreKey) {
-    const currentWatchlistSel = document.getElementById("watchlistDropdown").value;
-    const isStrictSeriesOrRemakeContext = (
-      currentWatchlistSel === "linked_only" ||
-      currentWatchlistSel === "remake_only" ||
-      (activeRelationFilterSet && (activeRelationFilterSet.type === 'series' || activeRelationFilterSet.type === 'remake'))
-    );
-
-    if (!isStrictSeriesOrRemakeContext || !targetGenreKey) return;
-
+    if (!targetGenreKey) return;
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKey);
     if (!genreGroup) return;
 
-    const relatedIds = new Set([String(movieId)]);
-    const sGrp = getSeriesGroupForMovie(movieId);
-    const rGrp = getRemakeGroupForMovie(movieId);
-    if (sGrp) sGrp.slice(1).forEach(id => relatedIds.add(String(id)));
-    if (rGrp) rGrp.slice(1).forEach(id => relatedIds.add(String(id)));
-
+    const relatedIds = getTransitiveRelatedMovieIds(movieId);
     let addedAny = false;
+
     relatedIds.forEach(relId => {
       if (!genreGroup.slice(1).includes(relId)) {
         genreGroup.push(relId);
@@ -1349,6 +1365,60 @@ def main():
       saveGenreGroups();
     }
   }
+
+  // Bir kümedeki (Seri/Remake zincirindeki) tüm filmlerin mevcut türlerini birleştirip herkese eşitler
+  function syncGenresAcrossRelatedCluster(seedMovieId, shouldSave = true) {
+    const clusterIds = getTransitiveRelatedMovieIds(seedMovieId);
+    if (clusterIds.length <= 1) return false;
+
+    let changed = false;
+    genreMoviesGroupsState.forEach(g => {
+      if (!Array.isArray(g) || g.length < 2) return;
+      const members = g.slice(1).map(String);
+      const hasAnyFromCluster = clusterIds.some(cid => members.includes(cid));
+      if (hasAnyFromCluster) {
+        clusterIds.forEach(cid => {
+          if (!g.slice(1).includes(cid)) {
+            g.push(cid);
+            changed = true;
+          }
+        });
+      }
+    });
+
+    if (changed && shouldSave) {
+      saveGenreGroups();
+    }
+    return changed;
+  }
+
+  // Tüm arşivdeki seri/remake kümelerini tarayıp eksik kalan türleri otomatik senkronize eder
+  function syncAllConnectedGenres() {
+    const processed = new Set();
+    let anyChanged = false;
+    const allRelationGroups = [...seriesMoviesGroupsState, ...remakeMoviesGroupsState];
+
+    allRelationGroups.forEach(group => {
+      if (!Array.isArray(group) || group.length < 2) return;
+      group.slice(1).forEach(rawId => {
+        const fid = String(rawId);
+        if (!processed.has(fid)) {
+          const cluster = getTransitiveRelatedMovieIds(fid);
+          cluster.forEach(cid => processed.add(cid));
+          if (syncGenresAcrossRelatedCluster(fid, false)) {
+            anyChanged = true;
+          }
+        }
+      });
+    });
+
+    if (anyChanged) {
+      saveGenreGroups();
+    }
+  }
+
+  // Başlangıçta mevcut kayıtları da otomatik onar
+  syncAllConnectedGenres();
 
   function linkMovies(sourceId, targetIdInput, type) {
     const src = String(sourceId).trim();
@@ -1383,7 +1453,7 @@ def main():
 
     if (type === 'genre') {
       // Many:Many Tür bağlama mantığı:
-      // Hedef filmin (tgt) zaten tür grupları varsa, src'yi hedefin ilk tür grubuna ekle; yoksa ikisi için yeni tür grubu oluştur.
+      // Hedef filmin (tgt) zaten tür grupları varsa, src'yi (ve bağlı seri/remake kümesini) hedefin ilk tür grubuna ekle; yoksa yeni tür grubu oluştur.
       const tgtGroups = getGenreGroupsForMovie(tgt);
       if (tgtGroups.length === 0) {
         pendingGroupSource = src;
@@ -1402,9 +1472,11 @@ def main():
         const targetGroup = tgtGroups[0];
         if (!targetGroup.slice(1).includes(src)) {
           targetGroup.push(src);
-          saveGenreGroups();
         }
+        // Hem src hem de tgt kümesindeki tüm bağlı filmlere bu türü yay
         propagateGenreToRelatedMovies(src, targetGroup[0]);
+        propagateGenreToRelatedMovies(tgt, targetGroup[0]);
+        saveGenreGroups();
         renderMovies(false);
       }
       return;
@@ -1447,8 +1519,10 @@ def main():
       if (customName) {
         genreGroupsNamesState[newKey] = customName;
       }
-      saveGenreGroups();
+      // Hem src hem tgt tarafındaki bağlı tüm seri/remake filmlerini bu yeni türe dahil et
       propagateGenreToRelatedMovies(src, newKey);
+      propagateGenreToRelatedMovies(tgt, newKey);
+      saveGenreGroups();
       renderMovies(false);
       return;
     }
@@ -1504,6 +1578,9 @@ def main():
 
     if (type === 'series') saveSeriesGroups();
     else saveRemakeGroups();
+
+    // Yeni bağlanan seri/remake kümesindeki tüm mevcut türleri birleştirip eşitle
+    syncGenresAcrossRelatedCluster(src, true);
 
     if (activeRelationFilterSet && activeRelationFilterSet.type === type && (activeRelationFilterSet.set.has(src) || activeRelationFilterSet.set.has(tgt))) {
       const updatedGroup = (type === 'series') ? getSeriesGroupForMovie(src) : getRemakeGroupForMovie(src);
@@ -1736,16 +1813,18 @@ def main():
       }
     }
 
-    if (!group.slice(1).includes(movieIdToAdd)) {
+    if (type === 'genre') {
+      // Seçilen türü hem bu filme hem de bağlı tüm Seri/Remake kümesine yay
+      propagateGenreToRelatedMovies(movieIdToAdd, targetGroupKey);
+      renderMovies(false);
+    } else if (!group.slice(1).includes(movieIdToAdd)) {
       group.push(movieIdToAdd);
 
       if (type === 'series') saveSeriesGroups();
-      else if (type === 'remake') saveRemakeGroups();
-      else {
-        saveGenreGroups();
-        propagateGenreToRelatedMovies(movieIdToAdd, targetGroupKey);
-      }
+      else saveRemakeGroups();
 
+      // Yeni katılan filmin ve grubun türlerini küme boyunca senkronize et
+      syncGenresAcrossRelatedCluster(movieIdToAdd, true);
       renderMovies(false);
     }
   }
@@ -1776,14 +1855,16 @@ def main():
     const group = groupsList[idx];
     const groupKey = group[0];
 
-    // Sadece 1. indeksten sonraki (film ID) kısmından çıkar, g[0] (key) daima sabit kalır
-    const memberPos = group.indexOf(fid, 1);
-    if (memberPos !== -1) {
-      group.splice(memberPos, 1);
-    }
+    // Tür silme işleminde, bu filme zincirleme bağlı tüm Seri/Remake filmlerinden de ilgili türü çıkar
+    const idsToRemove = (type === 'genre')
+      ? new Set(getTransitiveRelatedMovieIds(fid))
+      : new Set([fid]);
+
+    const filteredMembers = group.slice(1).filter(id => !idsToRemove.has(String(id)));
+    groupsList[idx] = [groupKey, ...filteredMembers];
 
     const minFilmLimit = (type === 'genre') ? 1 : 2;
-    const remainingFilmCount = group.length - 1;
+    const remainingFilmCount = filteredMembers.length;
 
     if (remainingFilmCount < minFilmLimit) {
       delete namesState[groupKey];
@@ -1795,7 +1876,7 @@ def main():
     else saveGenreGroups();
 
     if (activeRelationFilterSet && activeRelationFilterSet.type === type && activeRelationFilterSet.groupKey === groupKey) {
-      activeRelationFilterSet.set.delete(fid);
+      idsToRemove.forEach(remId => activeRelationFilterSet.set.delete(remId));
       if (activeRelationFilterSet.set.size < minFilmLimit) {
         activeRelationFilterSet = null;
       }
@@ -2002,6 +2083,9 @@ def main():
           genreGroupsNamesState = res.names;
         }
         saveGenreGroups();
+
+        // İçe aktarılan yedekteki bağlı filmlerin türlerini de otomatik eşitle
+        syncAllConnectedGenres();
 
         if (data.alternative_urls_map) {
           alternativeUrlsState = data.alternative_urls_map;
@@ -3295,4 +3379,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

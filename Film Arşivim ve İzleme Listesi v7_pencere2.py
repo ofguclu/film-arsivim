@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Seri, Remake ve Tür adları filmlerden bağımsız yapıldı. Tür-Film ilişkisi 1:1'den M:M'e çekildi"
+SURUM_NOTU = "önceki kod bir filme yeni tür ekleyince bu filme Seri yada Remake bağlı filmleri güncellemiyordu "
 
 #kaydet ve 30 sn bekle
 import time
