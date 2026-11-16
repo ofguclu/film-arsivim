@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP RESIZE v18 (MULTI-SELECT CHECKBOX FOR GENRES)")
+    print("   ANA KOD.PY - POPUP RESIZE v19 (GENRE + ADD MOVIES 5x5 POPUP)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -369,6 +369,150 @@ def main():
   .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
   .movie-card:hover { transform: translateY(-4px); border-color: #555; }
   .movie-card.highlight { outline: 4px solid var(--accent-color); }
+
+  /* Tür Sayfasında En Sona Eklenen "+ Film Ekle" Kartı */
+  .add-movie-to-genre-card {
+    background: rgba(16, 185, 129, 0.05);
+    border: 2px dashed #10b981;
+    border-radius: 6px;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    color: #10b981;
+    transition: all 0.2s ease;
+    user-select: none;
+    box-sizing: border-box;
+    padding: 20px;
+  }
+  .add-movie-to-genre-card:hover {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: #34d399;
+    color: #ffffff;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2);
+  }
+  .add-movie-plus-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.16);
+    border: 2px solid #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: bold;
+    line-height: 1;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .add-movie-to-genre-card:hover .add-movie-plus-circle {
+    background: #10b981;
+    color: #fff;
+    transform: scale(1.08);
+  }
+  .add-movie-label {
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  /* 5x5 Çoklu Film Ekleme Popup Kartları */
+  .bulk-add-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 62vh;
+    padding: 8px;
+    background: #121212;
+    border: 1px solid #333;
+    border-radius: 6px;
+  }
+  .bulk-movie-item {
+    position: relative;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .bulk-movie-item:hover {
+    border-color: #10b981;
+    transform: translateY(-2px);
+  }
+  .bulk-movie-item.selected {
+    border: 2px solid #10b981;
+    background: #064e3b;
+  }
+  .bulk-movie-item.already-in-genre {
+    opacity: 0.55;
+    border-color: #4b5563;
+  }
+  .bulk-movie-cb {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 5;
+    width: 17px;
+    height: 17px;
+    accent-color: #10b981;
+    cursor: pointer;
+    margin: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+  }
+  .bulk-movie-poster {
+    width: 100%;
+    height: 165px;
+    object-fit: cover;
+    display: block;
+    background: #0d0d0d;
+  }
+  .bulk-movie-info {
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+  }
+  .bulk-movie-title {
+    color: #fff;
+    font-weight: bold;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 28px;
+  }
+  .bulk-movie-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #f5c518;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .bulk-in-genre-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(16, 185, 129, 0.92);
+    color: #fff;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 4;
+  }
 
   .watchlist-group {
     position: absolute;
@@ -1048,6 +1192,62 @@ def main():
   </div>
 </div>
 
+<!-- Tür Sayfasından Toplu Film Ekleme Modal (5x5 Tablo / Izgara Görünümlü) -->
+<div id="bulkAddMoviesToGenreModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.78); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#1e1e1e; border:1px solid #333; padding:20px; border-radius:8px; width:1140px; max-width:96%; color:#e0e0e0; box-shadow:0 6px 28px rgba(0,0,0,0.85); display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px;">
+      <h3 style="margin:0; color:#10b981;" id="bulkAddGenreModalTitle">🏷️ Türe Film Ekle</h3>
+      <span style="font-size:12px; color:#f5c518; font-weight:bold;" id="bulkAddSelectedCountBadge">Seçili: 0 Film</span>
+    </div>
+
+    <!-- Filtre ve Sıralama Çubuğu -->
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:#141414; padding:10px; border-radius:6px; border:1px solid #2e2e2e;">
+      <input type="text" id="bulkSearchInput" placeholder="Film adı, oyuncu, özet (||)..." style="width:200px;">
+
+      <select id="bulkDomainFilter"><option value="">Tüm Domainler</option></select>
+
+      <div style="display:flex; align-items:center; gap:4px; background:#1e1e1e; border:1px solid #333; padding:4px 8px; border-radius:4px; font-size:11px;">
+        <span style="color:#f5c518; font-weight:bold;">Yıl:</span>
+        <input type="number" id="bulkMinYear" placeholder="Min" style="width:58px; padding:3px 5px; text-align:center;">
+        <span>-</span>
+        <input type="number" id="bulkMaxYear" placeholder="Max" style="width:58px; padding:3px 5px; text-align:center;">
+      </div>
+
+      <div style="display:flex; align-items:center; gap:4px; background:#1e1e1e; border:1px solid #333; padding:4px 8px; border-radius:4px; font-size:11px;">
+        <span style="color:#f5c518; font-weight:bold;">IMDb:</span>
+        <input type="number" id="bulkMinImdb" step="0.1" min="0" max="10" placeholder="Min" style="width:52px; padding:3px 5px; text-align:center;">
+        <span>-</span>
+        <input type="number" id="bulkMaxImdb" step="0.1" min="0" max="10" placeholder="Max" style="width:52px; padding:3px 5px; text-align:center;">
+      </div>
+
+      <select id="bulkSortSelect">
+        <option value="default">Sıralama: Varsayılan</option>
+        <option value="imdb_desc">IMDb (Yüksek -> Düşük)</option>
+        <option value="imdb_asc">IMDb (Düşük -> Yüksek)</option>
+        <option value="year_desc">Yıl (En Yeni)</option>
+        <option value="year_asc">Yıl (En Eski)</option>
+        <option value="title_asc">İsim (A-Z)</option>
+        <option value="title_desc">İsim (Z-A)</option>
+      </select>
+
+      <button type="button" id="bulkResetFiltersBtn" style="background:#2d1b1b; color:#fca5a5; border:1px solid #7f1d1d; font-size:11px;">Filtreleri Sıfırla</button>
+      <span style="margin-left:auto; font-size:11px; color:#aaa;" id="bulkFilteredCountLabel">0 Film</span>
+    </div>
+
+    <!-- 5x5 Tablo/Izgara Film Listesi -->
+    <div id="bulkMoviesGrid" class="bulk-add-grid"></div>
+
+    <!-- Alt Butonlar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:10px;">
+      <span style="font-size:11px; color:#9ca3af;">* Seçilen filmler bağlı oldukları Seri ve Remake zincirindeki filmlerle birlikte bu türe eklenir.</span>
+      <div style="display:flex; gap:8px;">
+        <button type="button" id="closeBulkAddModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:7px 14px;">İptal</button>
+        <button type="button" id="confirmBulkAddBtn" style="background:#10b981; color:#fff; border:none; padding:7px 16px; font-weight:bold;">Seçilenleri Ekle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const allMovies = JSON.parse(decodeURIComponent('__MOVIES_JSON_PLACEHOLDER__'));
   const validMovieIds = new Set(allMovies.map(m => String(m.film_ID)));
@@ -1085,6 +1285,10 @@ def main():
   let tempCreatedGroupKeysInPopup = [];
   let selectedGenreKeysInPopup = new Set();
   let focusedGenreKeyInPopup = null;
+
+  // Toplu Film Ekleme Popup State'leri
+  let targetGenreKeyForBulkAdd = null;
+  let bulkSelectedMovieIds = new Set();
 
   let minGlobalYear = 1900;
   let maxGlobalYear = 2030;
@@ -1415,7 +1619,7 @@ def main():
   }
 
   // Hangi görünümde olunursa olunsun, bir filme eklenen türü bağlı tüm Seri/Remake kümesine yayar
-  function propagateGenreToRelatedMovies(movieId, targetGenreKey) {
+  function propagateGenreToRelatedMovies(movieId, targetGenreKey, shouldSave = true) {
     if (!targetGenreKey) return;
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKey);
     if (!genreGroup) return;
@@ -1430,7 +1634,7 @@ def main():
       }
     });
 
-    if (addedAny) {
+    if (addedAny && shouldSave) {
       saveGenreGroups();
     }
   }
@@ -1539,8 +1743,8 @@ def main():
         if (!targetGroup.slice(1).includes(src)) {
           targetGroup.push(src);
         }
-        propagateGenreToRelatedMovies(src, targetGroup[0]);
-        propagateGenreToRelatedMovies(tgt, targetGroup[0]);
+        propagateGenreToRelatedMovies(src, targetGroup[0], false);
+        propagateGenreToRelatedMovies(tgt, targetGroup[0], false);
         saveGenreGroups();
         renderMovies(false);
       }
@@ -1583,8 +1787,8 @@ def main():
       if (customName) {
         genreGroupsNamesState[newKey] = customName;
       }
-      propagateGenreToRelatedMovies(src, newKey);
-      propagateGenreToRelatedMovies(tgt, newKey);
+      propagateGenreToRelatedMovies(src, newKey, false);
+      propagateGenreToRelatedMovies(tgt, newKey, false);
       saveGenreGroups();
       renderMovies(false);
       return;
@@ -1666,6 +1870,226 @@ def main():
 
     if (!src || !tgt || !type) return;
     executeLinkingWithoutPrompt(src, tgt, type, save ? customName : null);
+  }
+
+  // =========================================================================
+  // TÜR SAYFASINDAN 5x5 TOPLU FİLM EKLEME POPUP FONKSİYONLARI
+  // =========================================================================
+  function openBulkAddMoviesToGenrePopup(genreKey) {
+    const genreGroup = genreMoviesGroupsState.find(g => g[0] === genreKey);
+    if (!genreGroup) return;
+
+    targetGenreKeyForBulkAdd = genreKey;
+    bulkSelectedMovieIds = new Set();
+
+    const gName = getGenreGroupName(genreGroup);
+    document.getElementById("bulkAddGenreModalTitle").innerText = `🏷️ "${gName}" Türüne Film Ekle`;
+    document.getElementById("bulkSearchInput").value = "";
+    document.getElementById("bulkMinYear").value = "";
+    document.getElementById("bulkMaxYear").value = "";
+    document.getElementById("bulkMinImdb").value = "";
+    document.getElementById("bulkMaxImdb").value = "";
+    document.getElementById("bulkSortSelect").value = "imdb_desc";
+
+    // Domain listesini doldur
+    const bulkDomainSel = document.getElementById("bulkDomainFilter");
+    const mainDomainSel = document.getElementById("domainFilter");
+    if (bulkDomainSel && mainDomainSel) {
+      bulkDomainSel.innerHTML = mainDomainSel.innerHTML;
+      bulkDomainSel.value = "";
+    }
+
+    updateBulkSelectedCountBadge();
+    renderBulkAddMoviesGrid();
+
+    document.getElementById("bulkAddMoviesToGenreModal").style.display = "flex";
+    setTimeout(() => document.getElementById("bulkSearchInput").focus(), 100);
+  }
+
+  function closeBulkAddMoviesToGenrePopup() {
+    document.getElementById("bulkAddMoviesToGenreModal").style.display = "none";
+    targetGenreKeyForBulkAdd = null;
+    bulkSelectedMovieIds = new Set();
+  }
+
+  function updateBulkSelectedCountBadge() {
+    const badge = document.getElementById("bulkAddSelectedCountBadge");
+    if (badge) {
+      badge.innerText = `Seçili: ${bulkSelectedMovieIds.size} Film`;
+    }
+  }
+
+  function renderBulkAddMoviesGrid() {
+    const gridEl = document.getElementById("bulkMoviesGrid");
+    if (!gridEl || !targetGenreKeyForBulkAdd) return;
+
+    const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKeyForBulkAdd);
+    const existingMemberSet = new Set(genreGroup ? genreGroup.slice(1).map(String) : []);
+    const showHidden = document.getElementById("showHiddenCheckbox").checked;
+
+    const searchVal = document.getElementById("bulkSearchInput").value.toLowerCase().trim();
+    const searchTerms = searchVal ? searchVal.split("||").map(t => t.trim()).filter(Boolean) : [];
+    const domainVal = document.getElementById("bulkDomainFilter").value;
+
+    const minYearRaw = document.getElementById("bulkMinYear").value.trim();
+    const maxYearRaw = document.getElementById("bulkMaxYear").value.trim();
+    const minYear = minYearRaw !== "" ? parseInt(minYearRaw, 10) : null;
+    const maxYear = maxYearRaw !== "" ? parseInt(maxYearRaw, 10) : null;
+
+    const minImdbRaw = document.getElementById("bulkMinImdb").value.trim();
+    const maxImdbRaw = document.getElementById("bulkMaxImdb").value.trim();
+    const minImdb = minImdbRaw !== "" ? parseFloat(minImdbRaw) : null;
+    const maxImdb = maxImdbRaw !== "" ? parseFloat(maxImdbRaw) : null;
+
+    const sortVal = document.getElementById("bulkSortSelect").value;
+
+    let filteredList = allMovies.filter(movie => {
+      const fid = String(movie.film_ID);
+      if (hiddenMoviesState[fid] && !showHidden) return false;
+
+      if (domainVal && getDomain(movie.web_scraper_start_url) !== domainVal) return false;
+
+      if (minYear !== null && !isNaN(minYear)) {
+        const y = parseInt(movie.year, 10);
+        if (isNaN(y) || y < minYear) return false;
+      }
+      if (maxYear !== null && !isNaN(maxYear)) {
+        const y = parseInt(movie.year, 10);
+        if (isNaN(y) || y > maxYear) return false;
+      }
+
+      if (minImdb !== null && !isNaN(minImdb)) {
+        const sc = parseFloat(movie.imdb_score);
+        if (isNaN(sc) || sc < minImdb) return false;
+      }
+      if (maxImdb !== null && !isNaN(maxImdb)) {
+        const sc = parseFloat(movie.imdb_score);
+        if (isNaN(sc) || sc > maxImdb) return false;
+      }
+
+      if (searchTerms.length > 0) {
+        const name = (movie.film_name || "").toLowerCase();
+        const summary = (movie.movie_summary || "").toLowerCase();
+        const actors = getActorsString(movie).toLowerCase();
+        const idStr = fid.toLowerCase();
+        const matched = searchTerms.some(term =>
+          name.includes(term) || summary.includes(term) || actors.includes(term) || idStr === term
+        );
+        if (!matched) return false;
+      }
+
+      return true;
+    });
+
+    if (sortVal !== "default") {
+      filteredList.sort((a, b) => compareByCriteria(a, b, sortVal));
+    }
+
+    const countLbl = document.getElementById("bulkFilteredCountLabel");
+    if (countLbl) countLbl.innerText = `${filteredList.length} Film`;
+
+    gridEl.innerHTML = "";
+    if (filteredList.length === 0) {
+      gridEl.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:30px; color:#888; font-style:italic;">Filtreye uygun film bulunamadı.</div>`;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    filteredList.forEach(movie => {
+      const fid = String(movie.film_ID);
+      const isAlreadyIn = existingMemberSet.has(fid);
+      const isSelected = bulkSelectedMovieIds.has(fid);
+
+      const itemEl = document.createElement("div");
+      itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "") + (isAlreadyIn ? " already-in-genre" : "");
+
+      const posterUrl = movie.poster || "";
+      const imdbTxt = movie.imdb_score ? `⭐ ${movie.imdb_score}` : "⭐ -";
+      const yearTxt = movie.year ? String(movie.year) : "-";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "bulk-movie-cb";
+      cb.checked = isAlreadyIn || isSelected;
+      cb.disabled = isAlreadyIn;
+
+      const toggleSelection = () => {
+        if (isAlreadyIn) return;
+        if (bulkSelectedMovieIds.has(fid)) {
+          bulkSelectedMovieIds.delete(fid);
+          itemEl.classList.remove("selected");
+          cb.checked = false;
+        } else {
+          bulkSelectedMovieIds.add(fid);
+          itemEl.classList.add("selected");
+          cb.checked = true;
+        }
+        updateBulkSelectedCountBadge();
+      };
+
+      cb.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (isAlreadyIn) return;
+        if (cb.checked) {
+          bulkSelectedMovieIds.add(fid);
+          itemEl.classList.add("selected");
+        } else {
+          bulkSelectedMovieIds.delete(fid);
+          itemEl.classList.remove("selected");
+        }
+        updateBulkSelectedCountBadge();
+      });
+
+      itemEl.addEventListener("click", toggleSelection);
+
+      const alreadyBadgeHtml = isAlreadyIn ? `<span class="bulk-in-genre-badge">✓ Türde Mevcut</span>` : "";
+
+      itemEl.innerHTML = `
+        ${alreadyBadgeHtml}
+        <img class="bulk-movie-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/160x220?text=Afi%C5%9F+Yok';">
+        <div class="bulk-movie-info">
+          <div class="bulk-movie-title" title="${escapeHtml(movie.film_name)}">${escapeHtml(movie.film_name)}</div>
+          <div class="bulk-movie-meta">
+            <span>${imdbTxt}</span>
+            <span>ID: ${fid}</span>
+            <span>${yearTxt}</span>
+          </div>
+        </div>
+      `;
+
+      itemEl.prepend(cb);
+      fragment.appendChild(itemEl);
+    });
+
+    gridEl.appendChild(fragment);
+  }
+
+  function confirmBulkAddMoviesToGenre() {
+    if (!targetGenreKeyForBulkAdd) {
+      closeBulkAddMoviesToGenrePopup();
+      return;
+    }
+
+    const gKey = targetGenreKeyForBulkAdd;
+
+    if (bulkSelectedMovieIds.size > 0) {
+      bulkSelectedMovieIds.forEach(fid => {
+        propagateGenreToRelatedMovies(fid, gKey, false);
+      });
+      saveGenreGroups();
+
+      // Eğer tekil bir tür filtresi açıksa yeni eklenen (seri/remake yayılımı dahil) filmleri set içine al
+      if (activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey === gKey) {
+        const updatedGroup = genreMoviesGroupsState.find(g => g[0] === gKey);
+        if (updatedGroup) {
+          activeRelationFilterSet.set = new Set(updatedGroup.slice(1));
+          updateRelationBanner();
+        }
+      }
+    }
+
+    closeBulkAddMoviesToGenrePopup();
+    renderMovies(false);
   }
 
   // =========================================================================
@@ -2154,7 +2578,7 @@ def main():
       // Yeni işaretlenen türleri ekle (bağlı seri/remake kümesine de yay)
       selectedGenreKeysInPopup.forEach(gKey => {
         if (!currentAssignedKeys.has(gKey)) {
-          propagateGenreToRelatedMovies(movieIdToAdd, gKey);
+          propagateGenreToRelatedMovies(movieIdToAdd, gKey, false);
         }
       });
 
@@ -2951,6 +3375,22 @@ def main():
     return 0;
   }
 
+  // Tür sayfasında son filmin sağındaki boşluğa konulan "+ Film Ekle" kartı üreticisi
+  function buildAddMovieToGenreCard(genreKey) {
+    const card = document.createElement("div");
+    card.className = "add-movie-to-genre-card";
+    card.title = "Bu türe toplu olarak film ekle";
+    card.innerHTML = `
+      <div class="add-movie-plus-circle">+</div>
+      <div class="add-movie-label">Film Ekle</div>
+    `;
+    card.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openBulkAddMoviesToGenrePopup(genreKey);
+    });
+    return card;
+  }
+
   function buildMovieCardElement(movie, showHidden, currentGeneralLastId, contextPrefix = "") {
     const fid = String(movie.film_ID);
     const card = document.createElement("div");
@@ -3470,6 +3910,11 @@ def main():
             moviesContainer.appendChild(card);
           });
 
+          // Türler sayfasındayken her tür grubunun en son filminin sağına "+ Film Ekle" kartı koy
+          if (isGenreView) {
+            moviesContainer.appendChild(buildAddMovieToGenreCard(grpInfo.key));
+          }
+
           wrapper.appendChild(secHeader);
           wrapper.appendChild(moviesContainer);
           fragment.appendChild(wrapper);
@@ -3510,6 +3955,11 @@ def main():
         const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "");
         fragment.appendChild(card);
       });
+
+      // Tekil bir Tür filtrelenmişse (banner açıkken) en son filmin sağına "+ Film Ekle" kartı ekle
+      if (activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey) {
+        fragment.appendChild(buildAddMovieToGenreCard(activeRelationFilterSet.groupKey));
+      }
 
       container.appendChild(fragment);
       updateToggleAllButtonState();
@@ -3565,6 +4015,27 @@ def main():
   document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown(null));
   document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown(null));
   document.getElementById("groupSelectDropdown").addEventListener("change", updateGroupPreviewFromDropdown);
+
+  // Toplu Film Ekleme Popup Event Listener'ları
+  document.getElementById("closeBulkAddModalBtn").addEventListener("click", closeBulkAddMoviesToGenrePopup);
+  document.getElementById("confirmBulkAddBtn").addEventListener("click", confirmBulkAddMoviesToGenre);
+  document.getElementById("bulkSearchInput").addEventListener("input", renderBulkAddMoviesGrid);
+  document.getElementById("bulkDomainFilter").addEventListener("change", renderBulkAddMoviesGrid);
+  document.getElementById("bulkMinYear").addEventListener("input", renderBulkAddMoviesGrid);
+  document.getElementById("bulkMaxYear").addEventListener("input", renderBulkAddMoviesGrid);
+  document.getElementById("bulkMinImdb").addEventListener("input", renderBulkAddMoviesGrid);
+  document.getElementById("bulkMaxImdb").addEventListener("input", renderBulkAddMoviesGrid);
+  document.getElementById("bulkSortSelect").addEventListener("change", renderBulkAddMoviesGrid);
+  document.getElementById("bulkResetFiltersBtn").addEventListener("click", () => {
+    document.getElementById("bulkSearchInput").value = "";
+    document.getElementById("bulkDomainFilter").value = "";
+    document.getElementById("bulkMinYear").value = "";
+    document.getElementById("bulkMaxYear").value = "";
+    document.getElementById("bulkMinImdb").value = "";
+    document.getElementById("bulkMaxImdb").value = "";
+    document.getElementById("bulkSortSelect").value = "imdb_desc";
+    renderBulkAddMoviesGrid();
+  });
 
   function updateToggleAllButtonState() {
     const containers = document.querySelectorAll(".group-movies-container");

@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "çoklu tür seçebilme yeteneği eklendi"
+SURUM_NOTU = "tür sayfasına popup'tan seçerek film ekleme seçeneği eklendi"
 
 #kaydet ve 30 sn bekle
 import time
