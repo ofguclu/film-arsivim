@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "önceki kod bir filme yeni tür ekleyince bu filme Seri yada Remake bağlı filmleri güncellemiyordu "
+SURUM_NOTU = "Seri, Tür yada Remake için insert/update seçeneği eklendi"
 
 #kaydet ve 30 sn bekle
 import time

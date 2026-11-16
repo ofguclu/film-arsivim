@@ -1,5 +1,3 @@
-#PENCERE 3
-
 import json
 import os
 import re
@@ -23,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("      ANA KOD.PY - POPUP RESIZE v15 (FULL GENRE PROPAGATION)")
+    print("   ANA KOD.PY - POPUP RESIZE v17 (MIN 1 FILM FOR SERIES/REMAKE)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -944,11 +942,11 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal (+ Butonu ile direkt ekleme için) -->
+<!-- Grup Seçim Modal (+ Butonu ile direkt ekleme, yeni grup ekleme ve ad değiştirme için) -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:#1e1e1e; border:1px solid #333; padding:25px; border-radius:8px; width:940px; max-width:96%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+  <div style="background:#1e1e1e; border:1px solid #333; padding:25px; border-radius:8px; width:960px; max-width:96%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
     <h3 style="margin-top:0; color:#f5c518;" id="groupSelectModalTitle">📁 Bir Gruba Dahil Et (ID: <span id="targetMovieIdForGroup"></span>)</h3>
-    <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Eklemek istediğiniz grubu seçin. Seçtiğiniz grubun altındaki filmleri sağ tarafta görebilirsiniz:</p>
+    <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
 
     <div style="display:flex; gap:18px;">
       <!-- Sol Taraf: Liste ve Arama -->
@@ -975,9 +973,25 @@ def main():
       </div>
     </div>
 
-    <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:8px;">
-      <button type="button" id="closeGroupSelectModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:7px 14px; border-radius:4px; cursor:pointer;">İptal</button>
-      <button type="button" id="confirmGroupSelectBtn" style="background:#3b82f6; color:#fff; border:none; padding:7px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">Ekle</button>
+    <!-- Alt Çubuk: Sol Altta Yeni Grup Ekle, Alt Ortada Adı Değiştir, Sağ Altta İptal & Ekle -->
+    <div style="margin-top:20px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:14px;">
+      <!-- Sol Alt: Yeni Grup Ekle -->
+      <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
+        <input type="text" id="newGroupInPopupInput" placeholder="Yeni grup adı..." style="flex:1; min-width:130px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:7px 9px; border-radius:4px; font-size:12px;">
+        <button type="button" id="createNewGroupInPopupBtn" style="background:#059669; color:#fff; border:none; padding:7px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Yeni Tür Ekle</button>
+      </div>
+
+      <!-- Alt Orta: Seçili Grubun Adını Değiştir -->
+      <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
+        <input type="text" id="renameGroupInPopupInput" placeholder="Seçili grup adı..." style="flex:1; min-width:130px; background:#121212; color:#f5c518; border:1px solid #444; padding:7px 9px; border-radius:4px; font-size:12px;">
+        <button type="button" id="renameGroupInPopupBtn" style="background:#d97706; color:#fff; border:none; padding:7px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Adı Değiştir</button>
+      </div>
+
+      <!-- Sağ Alt: İptal & Ekle -->
+      <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+        <button type="button" id="closeGroupSelectModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:7px 14px; border-radius:4px; cursor:pointer;">İptal</button>
+        <button type="button" id="confirmGroupSelectBtn" style="background:#3b82f6; color:#fff; border:none; padding:7px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">Ekle</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1016,6 +1030,7 @@ def main():
   let activeMovieIdForGroupSelect = null;
   let activeGroupSelectType = null;
   let cachedGroupListForPopup = [];
+  let tempCreatedGroupKeysInPopup = [];
 
   let minGlobalYear = 1900;
   let maxGlobalYear = 2030;
@@ -1136,7 +1151,7 @@ def main():
     if (rGroups) {
       const parsedG = JSON.parse(rGroups);
       const parsedN = rGroupNames ? JSON.parse(rGroupNames) : {};
-      const res = cleanAndSanitizeGroups(parsedG, parsedN, 2, "series");
+      const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "series");
       seriesMoviesGroupsState = res.groups;
       seriesGroupsNamesState = res.names;
     }
@@ -1146,7 +1161,7 @@ def main():
     if (rRemakeGroups) {
       const parsedG = JSON.parse(rRemakeGroups);
       const parsedN = rRemakeNames ? JSON.parse(rRemakeNames) : {};
-      const res = cleanAndSanitizeGroups(parsedG, parsedN, 2, "remake");
+      const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "remake");
       remakeMoviesGroupsState = res.groups;
       remakeGroupsNamesState = res.names;
     }
@@ -1230,7 +1245,7 @@ def main():
 
   function saveSeriesGroups() {
     try {
-      const res = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 2, "series");
+      const res = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 1, "series");
       seriesMoviesGroupsState = res.groups;
       seriesGroupsNamesState = res.names;
       localStorage.setItem("series_movies_groups", JSON.stringify(seriesMoviesGroupsState));
@@ -1240,7 +1255,7 @@ def main():
 
   function saveRemakeGroups() {
     try {
-      const res = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 2, "remake");
+      const res = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 1, "remake");
       remakeMoviesGroupsState = res.groups;
       remakeGroupsNamesState = res.names;
       localStorage.setItem("remake_movies_groups", JSON.stringify(remakeMoviesGroupsState));
@@ -1318,7 +1333,7 @@ def main():
   }
 
   // =========================================================================
-  // YENİ: ZİNCİRLEME (GEÇİŞLİ) SERİ & REMAKE BAĞLANTILI FİLMLERİ BULMA (BFS)
+  // ZİNCİRLEME (GEÇİŞLİ) SERİ & REMAKE BAĞLANTILI FİLMLERİ BULMA (BFS)
   // A -> B (Seri) ve B -> C (Remake) ise [A, B, C] kümesinin tamamını döndürür.
   // =========================================================================
   function getTransitiveRelatedMovieIds(startMovieId) {
@@ -1433,7 +1448,6 @@ def main():
       const g = getRemakeGroupForMovie(src);
       currentMembers = g ? g.slice(1) : [];
     } else {
-      // Tür için mevcut tüm türlerin üyelerini topla ki zaten bağlı olanı tekrar seçmesin
       const gs = getGenreGroupsForMovie(src);
       gs.forEach(g => currentMembers.push(...g.slice(1)));
     }
@@ -1452,8 +1466,6 @@ def main():
     }
 
     if (type === 'genre') {
-      // Many:Many Tür bağlama mantığı:
-      // Hedef filmin (tgt) zaten tür grupları varsa, src'yi (ve bağlı seri/remake kümesini) hedefin ilk tür grubuna ekle; yoksa yeni tür grubu oluştur.
       const tgtGroups = getGenreGroupsForMovie(tgt);
       if (tgtGroups.length === 0) {
         pendingGroupSource = src;
@@ -1473,7 +1485,6 @@ def main():
         if (!targetGroup.slice(1).includes(src)) {
           targetGroup.push(src);
         }
-        // Hem src hem de tgt kümesindeki tüm bağlı filmlere bu türü yay
         propagateGenreToRelatedMovies(src, targetGroup[0]);
         propagateGenreToRelatedMovies(tgt, targetGroup[0]);
         saveGenreGroups();
@@ -1482,7 +1493,6 @@ def main():
       return;
     }
 
-    // Seri ve Remake (1:1) bağlama mantığı
     let groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
     const srcGroupIdx = groupsList.findIndex(g => g.slice(1).includes(src));
     const tgtGroupIdx = groupsList.findIndex(g => g.slice(1).includes(tgt));
@@ -1519,7 +1529,6 @@ def main():
       if (customName) {
         genreGroupsNamesState[newKey] = customName;
       }
-      // Hem src hem tgt tarafındaki bağlı tüm seri/remake filmlerini bu yeni türe dahil et
       propagateGenreToRelatedMovies(src, newKey);
       propagateGenreToRelatedMovies(tgt, newKey);
       saveGenreGroups();
@@ -1579,7 +1588,6 @@ def main():
     if (type === 'series') saveSeriesGroups();
     else saveRemakeGroups();
 
-    // Yeni bağlanan seri/remake kümesindeki tüm mevcut türleri birleştirip eşitle
     syncGenresAcrossRelatedCluster(src, true);
 
     if (activeRelationFilterSet && activeRelationFilterSet.type === type && (activeRelationFilterSet.set.has(src) || activeRelationFilterSet.set.has(tgt))) {
@@ -1606,26 +1614,12 @@ def main():
     executeLinkingWithoutPrompt(src, tgt, type, save ? customName : null);
   }
 
-  function openGroupSelectPopup(movieId, type) {
-    activeMovieIdForGroupSelect = String(movieId);
-    activeGroupSelectType = type;
-
-    const targetSpan = document.getElementById("targetMovieIdForGroup");
-    if (targetSpan) targetSpan.innerText = activeMovieIdForGroupSelect;
-
-    const searchInputEl = document.getElementById("groupSearchInput");
-    if (searchInputEl) searchInputEl.value = "";
-
-    const sortSelEl = document.getElementById("groupPopupSortSelect");
-    if (sortSelEl) sortSelEl.value = (type === 'genre') ? "alpha_asc" : "default";
-
-    let modalTitle = "📁 Bir Gruba Dahil Et";
-    if (type === 'series') modalTitle = "📁 Bir Seri Grubuna Dahil Et";
-    else if (type === 'remake') modalTitle = "📁 Bir Remake Grubuna Dahil Et";
-    else if (type === 'genre') modalTitle = "📁 Bir Tür Grubuna Dahil Et";
-
-    const titleEl = document.getElementById("groupSelectModalTitle");
-    if (titleEl) titleEl.innerText = modalTitle;
+  // =========================================================================
+  // POPUP İÇİ GRUP LİSTESİ OLUŞTURMA, YENİ GRUP EKLEME VE AD DEĞİŞTİRME
+  // =========================================================================
+  function rebuildCachedGroupListForPopup(selectTargetKey = null) {
+    const type = activeGroupSelectType;
+    if (!type) return;
 
     let groupsList = null;
     if (type === 'series') groupsList = seriesMoviesGroupsState;
@@ -1633,16 +1627,20 @@ def main():
     else groupsList = genreMoviesGroupsState;
 
     const showHidden = document.getElementById("showHiddenCheckbox").checked;
-
     cachedGroupListForPopup = [];
+
     if (groupsList && Array.isArray(groupsList) && groupsList.length > 0) {
       groupsList.forEach((g, idx) => {
-        if (!g || !Array.isArray(g) || g.length < 2) return;
+        if (!g || !Array.isArray(g) || g.length === 0) return;
 
+        const gKey = g[0];
         const memberIds = g.slice(1);
         const visibleMembers = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
-        const minLimit = (type === 'genre') ? 1 : 2;
-        if (visibleMembers.length < minLimit) return;
+        const isNewlyCreatedInThisPopup = tempCreatedGroupKeysInPopup.includes(gKey);
+        const minLimit = 1;
+
+        // Yeni popup içinde oluşturulan gruplar henüz 0 filmli olsa bile listede görünsün
+        if (!isNewlyCreatedInThisPopup && visibleMembers.length < minLimit) return;
 
         let gName = "";
         if (type === 'series') gName = getSeriesGroupName(g);
@@ -1652,7 +1650,7 @@ def main():
         cachedGroupListForPopup.push({
           index: idx,
           originalIndex: idx,
-          groupKey: g[0],
+          groupKey: gKey,
           name: `${gName} (${visibleMembers.length} film)`,
           rawName: gName,
           count: visibleMembers.length,
@@ -1661,7 +1659,52 @@ def main():
       });
     }
 
-    filterAndSortGroupSelectDropdown();
+    filterAndSortGroupSelectDropdown(selectTargetKey);
+  }
+
+  function openGroupSelectPopup(movieId, type) {
+    activeMovieIdForGroupSelect = String(movieId);
+    activeGroupSelectType = type;
+    tempCreatedGroupKeysInPopup = [];
+
+    const targetSpan = document.getElementById("targetMovieIdForGroup");
+    if (targetSpan) targetSpan.innerText = activeMovieIdForGroupSelect;
+
+    const searchInputEl = document.getElementById("groupSearchInput");
+    if (searchInputEl) searchInputEl.value = "";
+
+    const newGroupInputEl = document.getElementById("newGroupInPopupInput");
+    if (newGroupInputEl) newGroupInputEl.value = "";
+
+    const renameInputEl = document.getElementById("renameGroupInPopupInput");
+    if (renameInputEl) renameInputEl.value = "";
+
+    const createBtnEl = document.getElementById("createNewGroupInPopupBtn");
+    if (createBtnEl) {
+      if (type === 'series') {
+        createBtnEl.innerText = "Yeni Seri Ekle";
+        createBtnEl.style.background = "#2563eb";
+      } else if (type === 'remake') {
+        createBtnEl.innerText = "Yeni Remake Ekle";
+        createBtnEl.style.background = "#7c3aed";
+      } else {
+        createBtnEl.innerText = "Yeni Tür Ekle";
+        createBtnEl.style.background = "#059669";
+      }
+    }
+
+    const sortSelEl = document.getElementById("groupPopupSortSelect");
+    if (sortSelEl) sortSelEl.value = (type === 'genre') ? "alpha_asc" : "default";
+
+    let modalTitle = "📁 Bir Gruba Dahil Et";
+    if (type === 'series') modalTitle = `📁 Bir Seri Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
+    else if (type === 'remake') modalTitle = `📁 Bir Remake Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
+    else if (type === 'genre') modalTitle = `📁 Bir Tür Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
+
+    const titleEl = document.getElementById("groupSelectModalTitle");
+    if (titleEl) titleEl.innerText = modalTitle;
+
+    rebuildCachedGroupListForPopup(null);
 
     const popupModal = document.getElementById("groupSelectPopupModal");
     if (popupModal) {
@@ -1672,7 +1715,106 @@ def main():
     }, 100);
   }
 
-  function filterAndSortGroupSelectDropdown() {
+  function createNewGroupFromPopup() {
+    const type = activeGroupSelectType;
+    if (!type) return;
+
+    const inputEl = document.getElementById("newGroupInPopupInput");
+    const newName = inputEl ? inputEl.value.trim() : "";
+    if (!newName) {
+      alert("Lütfen yeni grup için bir ad yazın.");
+      if (inputEl) inputEl.focus();
+      return;
+    }
+
+    let groupsList = null;
+    let namesObj = null;
+    if (type === 'series') {
+      groupsList = seriesMoviesGroupsState;
+      namesObj = seriesGroupsNamesState;
+    } else if (type === 'remake') {
+      groupsList = remakeMoviesGroupsState;
+      namesObj = remakeGroupsNamesState;
+    } else {
+      groupsList = genreMoviesGroupsState;
+      namesObj = genreGroupsNamesState;
+    }
+
+    // Aynı isimde bir grup zaten varsa oluşturmak yerine onu seç
+    const existingEntry = groupsList.find(g => {
+      const k = g[0];
+      return (namesObj[k] || "").trim().toLowerCase() === newName.toLowerCase();
+    });
+
+    if (existingEntry) {
+      if (inputEl) inputEl.value = "";
+      const searchEl = document.getElementById("groupSearchInput");
+      if (searchEl) searchEl.value = "";
+      rebuildCachedGroupListForPopup(existingEntry[0]);
+      return;
+    }
+
+    const newKey = generateUniqueGroupKey(type);
+    groupsList.push([newKey]);
+    namesObj[newKey] = newName;
+    tempCreatedGroupKeysInPopup.push(newKey);
+
+    if (inputEl) inputEl.value = "";
+    const searchEl = document.getElementById("groupSearchInput");
+    if (searchEl) searchEl.value = "";
+
+    rebuildCachedGroupListForPopup(newKey);
+  }
+
+  function renameSelectedGroupInPopup() {
+    const type = activeGroupSelectType;
+    if (!type) return;
+
+    const sel = document.getElementById("groupSelectDropdown");
+    const renameInputEl = document.getElementById("renameGroupInPopupInput");
+    if (!sel || sel.value === "" || isNaN(sel.value) || !renameInputEl) {
+      alert("Lütfen önce soldaki listeden adı değiştirilecek bir grup seçin.");
+      return;
+    }
+
+    const newName = renameInputEl.value.trim();
+    if (!newName) {
+      alert("Grup adı boş olamaz.");
+      renameInputEl.focus();
+      return;
+    }
+
+    const groupIdx = parseInt(sel.value, 10);
+    let groupsList = null;
+    let namesObj = null;
+
+    if (type === 'series') {
+      groupsList = seriesMoviesGroupsState;
+      namesObj = seriesGroupsNamesState;
+    } else if (type === 'remake') {
+      groupsList = remakeMoviesGroupsState;
+      namesObj = remakeGroupsNamesState;
+    } else {
+      groupsList = genreMoviesGroupsState;
+      namesObj = genreGroupsNamesState;
+    }
+
+    const group = groupsList[groupIdx];
+    if (!group || group.length === 0) return;
+
+    const gKey = group[0];
+    namesObj[gKey] = newName;
+
+    if (type === 'series') saveSeriesGroups();
+    else if (type === 'remake') saveRemakeGroups();
+    else saveGenreGroups();
+
+    rebuildCachedGroupListForPopup(gKey);
+    updateRelationBanner();
+    renderMovies(false);
+  }
+
+  function filterAndSortGroupSelectDropdown(selectTargetKey = null) {
     const queryEl = document.getElementById("groupSearchInput");
     const sortValEl = document.getElementById("groupPopupSortSelect");
     const query = queryEl ? queryEl.value.toLowerCase().trim() : "";
@@ -1708,29 +1850,40 @@ def main():
     if (list.length === 0) {
       sel.innerHTML = `<option value="">Eşleşen grup bulunamadı</option>`;
       updateGroupPreview(null);
+      const renameInputEl = document.getElementById("renameGroupInPopupInput");
+      if (renameInputEl) renameInputEl.value = "";
     } else {
-      list.forEach((item) => {
+      let targetSelectIndex = 0;
+      list.forEach((item, listIdx) => {
         const opt = document.createElement("option");
         opt.value = item.index;
         opt.textContent = item.name;
         sel.appendChild(opt);
+        if (selectTargetKey && item.groupKey === selectTargetKey) {
+          targetSelectIndex = listIdx;
+        }
       });
-      if (list.length > 0) {
-        sel.selectedIndex = 0;
-        updateGroupPreviewFromDropdown();
-      }
+      sel.selectedIndex = targetSelectIndex;
+      updateGroupPreviewFromDropdown();
     }
   }
 
   function updateGroupPreviewFromDropdown() {
     const sel = document.getElementById("groupSelectDropdown");
+    const renameInputEl = document.getElementById("renameGroupInPopupInput");
+
     if (!sel || sel.value === "" || isNaN(sel.value)) {
       updateGroupPreview(null);
+      if (renameInputEl) renameInputEl.value = "";
       return;
     }
     const groupIdx = parseInt(sel.value, 10);
     const matchedItem = cachedGroupListForPopup.find(item => item.index === groupIdx);
     updateGroupPreview(matchedItem ? matchedItem.members : null);
+
+    if (renameInputEl) {
+      renameInputEl.value = matchedItem ? matchedItem.rawName : "";
+    }
   }
 
   function updateGroupPreview(memberIds) {
@@ -1743,7 +1896,7 @@ def main():
 
     if (visibleMemberIds.length === 0) {
       countEl.innerText = "0";
-      previewListEl.innerHTML = `<span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Grup seçilmedi</span>`;
+      previewListEl.innerHTML = `<span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Bu grupta henüz film yok</span>`;
       return;
     }
 
@@ -1767,7 +1920,37 @@ def main():
     previewListEl.innerHTML = htmlContent;
   }
 
+  // Ekle'ye basılmadan iptal edilirse 0 filmli kalan geçici grupları temizler
+  function cleanupUnusedTempGroupsInPopup() {
+    if (!tempCreatedGroupKeysInPopup || tempCreatedGroupKeysInPopup.length === 0) return;
+
+    tempCreatedGroupKeysInPopup.forEach(tKey => {
+      if (tKey.startsWith("s_")) {
+        const idx = seriesMoviesGroupsState.findIndex(g => g[0] === tKey);
+        if (idx !== -1 && seriesMoviesGroupsState[idx].slice(1).length < 1) {
+          seriesMoviesGroupsState.splice(idx, 1);
+          delete seriesGroupsNamesState[tKey];
+        }
+      } else if (tKey.startsWith("r_")) {
+        const idx = remakeMoviesGroupsState.findIndex(g => g[0] === tKey);
+        if (idx !== -1 && remakeMoviesGroupsState[idx].slice(1).length < 1) {
+          remakeMoviesGroupsState.splice(idx, 1);
+          delete remakeGroupsNamesState[tKey];
+        }
+      } else if (tKey.startsWith("g_")) {
+        const idx = genreMoviesGroupsState.findIndex(g => g[0] === tKey);
+        if (idx !== -1 && genreMoviesGroupsState[idx].slice(1).length < 1) {
+          genreMoviesGroupsState.splice(idx, 1);
+          delete genreGroupsNamesState[tKey];
+        }
+      }
+    });
+
+    tempCreatedGroupKeysInPopup = [];
+  }
+
   function closeGroupSelectPopup() {
+    cleanupUnusedTempGroupsInPopup();
     const popupModal = document.getElementById("groupSelectPopupModal");
     if (popupModal) {
       popupModal.style.display = "none";
@@ -1803,7 +1986,6 @@ def main():
     const movieIdToAdd = activeMovieIdForGroupSelect;
     const type = activeGroupSelectType;
     const targetGroupKey = group[0];
-    closeGroupSelectPopup();
 
     // Seri ve Remake 1:1 olduğu için, film başka bir gruptaysa önce oradan çıkar
     if (type === 'series' || type === 'remake') {
@@ -1814,16 +1996,20 @@ def main():
     }
 
     if (type === 'genre') {
-      // Seçilen türü hem bu filme hem de bağlı tüm Seri/Remake kümesine yay
       propagateGenreToRelatedMovies(movieIdToAdd, targetGroupKey);
+      closeGroupSelectPopup();
+      saveGenreGroups();
       renderMovies(false);
-    } else if (!group.slice(1).includes(movieIdToAdd)) {
-      group.push(movieIdToAdd);
+    } else {
+      if (!group.slice(1).includes(movieIdToAdd)) {
+        group.push(movieIdToAdd);
+      }
+
+      closeGroupSelectPopup();
 
       if (type === 'series') saveSeriesGroups();
       else saveRemakeGroups();
 
-      // Yeni katılan filmin ve grubun türlerini küme boyunca senkronize et
       syncGenresAcrossRelatedCluster(movieIdToAdd, true);
       renderMovies(false);
     }
@@ -1855,7 +2041,6 @@ def main():
     const group = groupsList[idx];
     const groupKey = group[0];
 
-    // Tür silme işleminde, bu filme zincirleme bağlı tüm Seri/Remake filmlerinden de ilgili türü çıkar
     const idsToRemove = (type === 'genre')
       ? new Set(getTransitiveRelatedMovieIds(fid))
       : new Set([fid]);
@@ -1863,7 +2048,7 @@ def main():
     const filteredMembers = group.slice(1).filter(id => !idsToRemove.has(String(id)));
     groupsList[idx] = [groupKey, ...filteredMembers];
 
-    const minFilmLimit = (type === 'genre') ? 1 : 2;
+    const minFilmLimit = 1;
     const remainingFilmCount = filteredMembers.length;
 
     if (remainingFilmCount < minFilmLimit) {
@@ -1927,7 +2112,7 @@ def main():
     if (activeRelationFilterSet && activeRelationFilterSet.set.size > 0) {
       const showHidden = document.getElementById("showHiddenCheckbox").checked;
       const visibleIds = Array.from(activeRelationFilterSet.set).filter(id => showHidden || !hiddenMoviesState[id]);
-      const minLimit = (activeRelationFilterSet.type === 'genre') ? 1 : 2;
+      const minLimit = 1;
       if (visibleIds.length < minLimit) {
         activeRelationFilterSet = null;
         banner.classList.remove("visible");
@@ -1975,11 +2160,11 @@ def main():
 
   function exportUserData() {
     try {
-      const sRes = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 2, "series");
+      const sRes = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 1, "series");
       seriesMoviesGroupsState = sRes.groups;
       seriesGroupsNamesState = sRes.names;
 
-      const rRes = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 2, "remake");
+      const rRes = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 1, "remake");
       remakeMoviesGroupsState = rRes.groups;
       remakeGroupsNamesState = rRes.names;
 
@@ -2064,14 +2249,14 @@ def main():
           renderRecentDropdown();
         }
         if (Array.isArray(data.series_movies_groups)) {
-          const res = cleanAndSanitizeGroups(data.series_movies_groups, data.series_groups_names || {}, 2, "series");
+          const res = cleanAndSanitizeGroups(data.series_movies_groups, data.series_groups_names || {}, 1, "series");
           seriesMoviesGroupsState = res.groups;
           seriesGroupsNamesState = res.names;
         }
         saveSeriesGroups();
 
         if (Array.isArray(data.remake_movies_groups)) {
-          const res = cleanAndSanitizeGroups(data.remake_movies_groups, data.remake_groups_names || {}, 2, "remake");
+          const res = cleanAndSanitizeGroups(data.remake_movies_groups, data.remake_groups_names || {}, 1, "remake");
           remakeMoviesGroupsState = res.groups;
           remakeGroupsNamesState = res.names;
         }
@@ -2084,7 +2269,6 @@ def main():
         }
         saveGenreGroups();
 
-        // İçe aktarılan yedekteki bağlı filmlerin türlerini de otomatik eşitle
         syncAllConnectedGenres();
 
         if (data.alternative_urls_map) {
@@ -2571,7 +2755,6 @@ def main():
     return 0;
   }
 
-  // Kart HTML üretici yardımcı fonksiyon (contextPrefix: Türler görünümünde çoklu tür olan kartların DOM ID çakışmasını önler)
   function buildMovieCardElement(movie, showHidden, currentGeneralLastId, contextPrefix = "") {
     const fid = String(movie.film_ID);
     const card = document.createElement("div");
@@ -2614,23 +2797,23 @@ def main():
     const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
     const eyeBtnIcon = isHidden ? "🙈" : "👁️";
 
-    // Seri (1:1) - g[0] key, g.slice(1) film ID'leri
+    // Seri (1:1) - g[0] key, g.slice(1) film ID'leri (Minimum 1 film)
     const rawSeriesGroup = getSeriesGroupForMovie(fid);
     const seriesMembers = rawSeriesGroup ? (showHidden ? rawSeriesGroup.slice(1) : rawSeriesGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
-    const hasValidSeriesGroup = seriesMembers && seriesMembers.length >= 2;
+    const hasValidSeriesGroup = seriesMembers && seriesMembers.length >= 1;
     const isSeriesActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'series' && rawSeriesGroup && activeRelationFilterSet.groupKey === rawSeriesGroup[0];
-    const seriesOtherIds = hasValidSeriesGroup ? seriesMembers.filter(id => id !== fid).join(", ") : "";
+    const seriesOtherIds = hasValidSeriesGroup ? (seriesMembers.filter(id => id !== fid).join(", ") || "Tek film") : "";
     const seriesInputVal = rawSeriesGroup ? rawSeriesGroup.slice(1).filter(id => id !== fid).join(",") : "";
 
-    // Remake (1:1) - g[0] key, g.slice(1) film ID'leri
+    // Remake (1:1) - g[0] key, g.slice(1) film ID'leri (Minimum 1 film)
     const rawRemakeGroup = getRemakeGroupForMovie(fid);
     const remakeMembers = rawRemakeGroup ? (showHidden ? rawRemakeGroup.slice(1) : rawRemakeGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
-    const hasValidRemakeGroup = remakeMembers && remakeMembers.length >= 2;
+    const hasValidRemakeGroup = remakeMembers && remakeMembers.length >= 1;
     const isRemakeActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'remake' && rawRemakeGroup && activeRelationFilterSet.groupKey === rawRemakeGroup[0];
-    const remakeOtherIds = hasValidRemakeGroup ? remakeMembers.filter(id => id !== fid).join(", ") : "";
+    const remakeOtherIds = hasValidRemakeGroup ? (remakeMembers.filter(id => id !== fid).join(", ") || "Tek film") : "";
     const remakeInputVal = rawRemakeGroup ? rawRemakeGroup.slice(1).filter(id => id !== fid).join(",") : "";
 
-    // Tür (Many:Many) - O filme ait TÜM tür grupları
+    // Tür (Many:Many) - O filme ait TÜM tür grupları (Minimum 1 film)
     const rawGenreGroups = getGenreGroupsForMovie(fid);
     const validGenreGroups = rawGenreGroups.map(g => {
       const visibleM = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
@@ -2675,7 +2858,6 @@ def main():
       ? `<button class="btn-unlink" title="Remake'den ayır" onclick="unlinkMovie('${fid}', 'remake')" style="font-size:9px; background:#5b21b6; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Remake Ayır</button>`
       : "";
 
-    // Çoklu tür etiketleri ve her birinin yanında kendi X (ayır) butonu
     let genrePillsHtml = "";
     if (rawGenreGroups.length > 0) {
       genrePillsHtml = `<div class="genre-tags-list">`;
@@ -2729,7 +2911,7 @@ def main():
           <div class="relation-input-wrap" title="Seri ID'si yazıp Enter'a basın">
             <span class="relation-label">🎬 Seri:</span>
             <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(seriesInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'series');">
-            <button class="btn-add-group group-popup-trigger" type="button" data-type="series" data-movie-id="${fid}" title="Mevcut bir seri grubuna dahil et (+)">+</button>
+            <button class="btn-add-group group-popup-trigger" type="button" data-type="series" data-movie-id="${fid}" title="Mevcut bir seri grubuna dahil et veya yeni oluştur (+)">+</button>
           </div>
           ${unlinkSeriesHtml}
         </div>
@@ -2737,7 +2919,7 @@ def main():
           <div class="relation-input-wrap" title="Remake ID'si yazıp Enter'a basın">
             <span class="relation-label">🎥 Remake:</span>
             <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(remakeInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'remake');" style="color:#d8b4fe; border-color:#7c3aed;">
-            <button class="btn-add-remake group-popup-trigger" type="button" data-type="remake" data-movie-id="${fid}" title="Mevcut bir remake grubuna dahil et (+)">+</button>
+            <button class="btn-add-remake group-popup-trigger" type="button" data-type="remake" data-movie-id="${fid}" title="Mevcut bir remake grubuna dahil et veya yeni oluştur (+)">+</button>
           </div>
           ${unlinkRemakeHtml}
         </div>
@@ -2746,7 +2928,7 @@ def main():
             <div class="relation-input-wrap" title="Yeni tür grubu oluşturmak için başka bir film ID'si yazın veya + ile mevcut türlerden seçin">
               <span class="relation-label">🏷️ Tür:</span>
               <input type="text" inputmode="numeric" class="relation-input" value="" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'genre');" style="color:#a7f3d0; border-color:#10b981;">
-              <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut bir tür grubuna dahil et (+)">+</button>
+              <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut bir tür grubuna dahil et veya yeni oluştur (+)">+</button>
             </div>
           </div>
           ${genrePillsHtml}
@@ -2833,14 +3015,14 @@ def main():
           const g = getSeriesGroupForMovie(fid);
           if (!g) return false;
           const visibleG = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
-          if (visibleG.length < 2) return false;
+          if (visibleG.length < 1) return false;
         }
 
         if (watchlistSelection === "remake_only") {
           const g = getRemakeGroupForMovie(fid);
           if (!g) return false;
           const visibleG = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
-          if (visibleG.length < 2) return false;
+          if (visibleG.length < 1) return false;
         }
 
         if (watchlistSelection === "genre_only") {
@@ -3004,13 +3186,12 @@ def main():
           const groupKey = g[0];
           const memberIds = g.slice(1);
 
-          // Bu gruptaki filtreden geçmiş film nesneleri
           const matchedMembers = memberIds
             .map(id => filteredMovieMap.get(String(id)))
             .filter(Boolean);
 
           const visibleG = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
-          const minLimit = isGenreView ? 1 : 2;
+          const minLimit = 1;
           if (visibleG.length < minLimit || matchedMembers.length === 0) return;
 
           let gName = "";
@@ -3171,8 +3352,22 @@ def main():
 
   document.getElementById("closeGroupSelectModalBtn").addEventListener("click", closeGroupSelectPopup);
   document.getElementById("confirmGroupSelectBtn").addEventListener("click", confirmGroupSelect);
-  document.getElementById("groupSearchInput").addEventListener("input", filterAndSortGroupSelectDropdown);
-  document.getElementById("groupPopupSortSelect").addEventListener("change", filterAndSortGroupSelectDropdown);
+  document.getElementById("createNewGroupInPopupBtn").addEventListener("click", createNewGroupFromPopup);
+  document.getElementById("newGroupInPopupInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      createNewGroupFromPopup();
+    }
+  });
+  document.getElementById("renameGroupInPopupBtn").addEventListener("click", renameSelectedGroupInPopup);
+  document.getElementById("renameGroupInPopupInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      renameSelectedGroupInPopup();
+    }
+  });
+  document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown(null));
+  document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown(null));
   document.getElementById("groupSelectDropdown").addEventListener("change", updateGroupPreviewFromDropdown);
 
   function updateToggleAllButtonState() {
