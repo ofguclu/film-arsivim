@@ -57,7 +57,6 @@
   .btn-search { padding: 5px 8px; background: #262626; color: #e0e0e0; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer; line-height: 1.2; }
   .btn-search:hover { background: var(--accent-color); color: #fff; border-color: #fff; }
 
-  /* Geliştirilmiş Belirgin Slider Stil Konteynerleri */
   .filter-slider-container {
     display: flex;
     flex-direction: column;
@@ -84,7 +83,6 @@
     display: flex;
     align-items: center;
   }
-  /* Belirginleştirilmiş arka plan kaydırma çizgisi (track) */
   .filter-sliders-wrapper::before {
     content: '';
     position: absolute;
@@ -405,17 +403,15 @@
 
   .card-relation-bar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
     background: #101010;
-    padding: 4px 6px;
+    padding: 5px 6px;
     border-top: 1px solid #262626;
     border-bottom: 1px solid var(--border-color);
     font-size: 10px;
     color: #9ca3af;
-    white-space: nowrap;
-    overflow: hidden;
   }
   .relation-input-wrap { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
   .relation-label {
@@ -481,6 +477,50 @@
     flex-shrink: 0;
   }
   .btn-add-genre:hover { background: #059669; color: #fff; }
+
+  .genre-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .genre-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #064e3b;
+    color: #a7f3d0;
+    border: 1px solid #10b981;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 9px;
+    max-width: 100%;
+  }
+  .genre-tag-pill span.g-pill-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 145px;
+    cursor: pointer;
+  }
+  .genre-tag-pill span.g-pill-text:hover {
+    text-decoration: underline;
+    color: #fff;
+  }
+  .genre-tag-remove-btn {
+    background: transparent;
+    border: none;
+    color: #fca5a5;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .genre-tag-remove-btn:hover {
+    color: #ef4444;
+    transform: scale(1.2);
+  }
 
   .btn-unlink {
     flex-shrink: 0;
@@ -804,6 +844,7 @@
   let hiddenMoviesState = {};
   let recentMoviesState = [];
 
+  // Her grup dizisinin 0. elemanı bağımsız grup anahtarıdır: ["s_1", "45", "48"]
   let seriesMoviesGroupsState = [];
   let seriesGroupsNamesState = {};
 
@@ -814,6 +855,7 @@
   let genreGroupsNamesState = {};
 
   let alternativeUrlsState = {};
+  // activeRelationFilterSet: { type: 'series'|'remake'|'genre', groupKey: 'g_20', set: Set(['48', '45']) }
   let activeRelationFilterSet = null;
   let currentPopupMovieId = null;
 
@@ -829,25 +871,83 @@
   let minGlobalDuration = 0;
   let maxGlobalDuration = 300;
 
-  function sanitizeGroupNames(groupsArray, namesObj, minLimit) {
-    if (!Array.isArray(groupsArray) || typeof namesObj !== "object" || namesObj === null) return {};
-    const validGroups = groupsArray
-      .map(g => Array.from(new Set(g.map(String))))
-      .filter(g => g.length >= minLimit);
-    const cleanNames = {};
-    validGroups.forEach(group => {
-      let foundName = null;
-      for (let id of group) {
-        if (namesObj[id]) {
-          foundName = namesObj[id];
-          break;
+  // Benzersiz grup anahtarı üretici (s_X, r_X, g_X)
+  function generateUniqueGroupKey(type) {
+    let prefix = "g_";
+    let groupsList = genreMoviesGroupsState;
+    let namesObj = genreGroupsNamesState;
+
+    if (type === "series") {
+      prefix = "s_";
+      groupsList = seriesMoviesGroupsState;
+      namesObj = seriesGroupsNamesState;
+    } else if (type === "remake") {
+      prefix = "r_";
+      groupsList = remakeMoviesGroupsState;
+      namesObj = remakeGroupsNamesState;
+    }
+
+    let maxNum = 0;
+    const regex = new RegExp("^" + prefix + "(\\d+)$");
+
+    groupsList.forEach(g => {
+      if (Array.isArray(g) && g.length > 0) {
+        const m = String(g[0]).match(regex);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (n > maxNum) maxNum = n;
         }
       }
-      if (foundName && group.length > 0) {
-        cleanNames[group[0]] = foundName;
+    });
+
+    Object.keys(namesObj || {}).forEach(k => {
+      const m = String(k).match(regex);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > maxNum) maxNum = n;
       }
     });
-    return cleanNames;
+
+    return prefix + (maxNum + 1);
+  }
+
+  // g[0] bağımsız grup anahtarı, g.slice(1) film ID'leri olacak şekilde temizlik yapar
+  function cleanAndSanitizeGroups(groupsArray, namesObj, minFilmCount, type) {
+    if (!Array.isArray(groupsArray)) return { groups: [], names: {} };
+    const safeNames = (typeof namesObj === "object" && namesObj !== null) ? namesObj : {};
+    const cleanedGroups = [];
+    const cleanedNames = {};
+    const usedKeys = new Set();
+
+    groupsArray.forEach(rawGroup => {
+      if (!Array.isArray(rawGroup) || rawGroup.length === 0) return;
+
+      let key = String(rawGroup[0]);
+      let rawMembers = rawGroup.slice(1).map(String);
+
+      // Güvenlik: Eğer g[0] kazara saf sayısal bir film ID'si gibi gelirse yeni key üret
+      if (/^\d+$/.test(key)) {
+        rawMembers = rawGroup.map(String);
+        key = generateUniqueGroupKey(type);
+      }
+
+      while (usedKeys.has(key)) {
+        key = key + "_dup";
+      }
+      usedKeys.add(key);
+
+      // Tekrar eden film ID'lerini temizle ve key'in kendisini film sanmasını önle
+      const uniqueMembers = Array.from(new Set(rawMembers)).filter(id => id !== key);
+
+      if (uniqueMembers.length >= minFilmCount) {
+        cleanedGroups.push([key, ...uniqueMembers]);
+        if (safeNames[key]) {
+          cleanedNames[key] = safeNames[key];
+        }
+      }
+    });
+
+    return { groups: cleanedGroups, names: cleanedNames };
   }
 
   try {
@@ -881,55 +981,34 @@
     }
 
     const rGroups = localStorage.getItem("series_movies_groups");
-    if (rGroups) {
-      const parsed = JSON.parse(rGroups);
-      if (Array.isArray(parsed)) {
-        seriesMoviesGroupsState = parsed.map(g => g.map(String));
-      }
-    }
-
     const rGroupNames = localStorage.getItem("series_groups_names");
-    if (rGroupNames) {
-      const parsedNames = JSON.parse(rGroupNames);
-      if (typeof parsedNames === "object" && parsedNames !== null) {
-        seriesGroupsNamesState = parsedNames;
-      }
+    if (rGroups) {
+      const parsedG = JSON.parse(rGroups);
+      const parsedN = rGroupNames ? JSON.parse(rGroupNames) : {};
+      const res = cleanAndSanitizeGroups(parsedG, parsedN, 2, "series");
+      seriesMoviesGroupsState = res.groups;
+      seriesGroupsNamesState = res.names;
     }
-    seriesGroupsNamesState = sanitizeGroupNames(seriesMoviesGroupsState, seriesGroupsNamesState, 2);
 
     const rRemakeGroups = localStorage.getItem("remake_movies_groups");
-    if (rRemakeGroups) {
-      const parsed = JSON.parse(rRemakeGroups);
-      if (Array.isArray(parsed)) {
-        remakeMoviesGroupsState = parsed.map(g => g.map(String));
-      }
-    }
-
     const rRemakeNames = localStorage.getItem("remake_groups_names");
-    if (rRemakeNames) {
-      const parsedNames = JSON.parse(rRemakeNames);
-      if (typeof parsedNames === "object" && parsedNames !== null) {
-        remakeGroupsNamesState = parsedNames;
-      }
+    if (rRemakeGroups) {
+      const parsedG = JSON.parse(rRemakeGroups);
+      const parsedN = rRemakeNames ? JSON.parse(rRemakeNames) : {};
+      const res = cleanAndSanitizeGroups(parsedG, parsedN, 2, "remake");
+      remakeMoviesGroupsState = res.groups;
+      remakeGroupsNamesState = res.names;
     }
-    remakeGroupsNamesState = sanitizeGroupNames(remakeMoviesGroupsState, remakeGroupsNamesState, 2);
 
     const rGenreGroups = localStorage.getItem("genre_movies_groups");
-    if (rGenreGroups) {
-      const parsed = JSON.parse(rGenreGroups);
-      if (Array.isArray(parsed)) {
-        genreMoviesGroupsState = parsed.map(g => g.map(String));
-      }
-    }
-
     const rGenreNames = localStorage.getItem("genre_groups_names");
-    if (rGenreNames) {
-      const parsedNames = JSON.parse(rGenreNames);
-      if (typeof parsedNames === "object" && parsedNames !== null) {
-        genreGroupsNamesState = parsedNames;
-      }
+    if (rGenreGroups) {
+      const parsedG = JSON.parse(rGenreGroups);
+      const parsedN = rGenreNames ? JSON.parse(rGenreNames) : {};
+      const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "genre");
+      genreMoviesGroupsState = res.groups;
+      genreGroupsNamesState = res.names;
     }
-    genreGroupsNamesState = sanitizeGroupNames(genreMoviesGroupsState, genreGroupsNamesState, 1);
 
     const rAltUrls = localStorage.getItem("alternative_urls_map");
     if (rAltUrls) {
@@ -1000,10 +1079,9 @@
 
   function saveSeriesGroups() {
     try {
-      seriesMoviesGroupsState = seriesMoviesGroupsState
-        .map(g => Array.from(new Set(g.map(String))))
-        .filter(g => g.length >= 2);
-      seriesGroupsNamesState = sanitizeGroupNames(seriesMoviesGroupsState, seriesGroupsNamesState, 2);
+      const res = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 2, "series");
+      seriesMoviesGroupsState = res.groups;
+      seriesGroupsNamesState = res.names;
       localStorage.setItem("series_movies_groups", JSON.stringify(seriesMoviesGroupsState));
       localStorage.setItem("series_groups_names", JSON.stringify(seriesGroupsNamesState));
     } catch (e) {}
@@ -1011,10 +1089,9 @@
 
   function saveRemakeGroups() {
     try {
-      remakeMoviesGroupsState = remakeMoviesGroupsState
-        .map(g => Array.from(new Set(g.map(String))))
-        .filter(g => g.length >= 2);
-      remakeGroupsNamesState = sanitizeGroupNames(remakeMoviesGroupsState, remakeGroupsNamesState, 2);
+      const res = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 2, "remake");
+      remakeMoviesGroupsState = res.groups;
+      remakeGroupsNamesState = res.names;
       localStorage.setItem("remake_movies_groups", JSON.stringify(remakeMoviesGroupsState));
       localStorage.setItem("remake_groups_names", JSON.stringify(remakeGroupsNamesState));
     } catch (e) {}
@@ -1022,55 +1099,50 @@
 
   function saveGenreGroups() {
     try {
-      genreMoviesGroupsState = genreMoviesGroupsState
-        .map(g => Array.from(new Set(g.map(String))))
-        .filter(g => g.length >= 1);
-      genreGroupsNamesState = sanitizeGroupNames(genreMoviesGroupsState, genreGroupsNamesState, 1);
+      const res = cleanAndSanitizeGroups(genreMoviesGroupsState, genreGroupsNamesState, 1, "genre");
+      genreMoviesGroupsState = res.groups;
+      genreGroupsNamesState = res.names;
       localStorage.setItem("genre_movies_groups", JSON.stringify(genreMoviesGroupsState));
       localStorage.setItem("genre_groups_names", JSON.stringify(genreGroupsNamesState));
     } catch (e) {}
   }
 
+  // Seri ve Remake 1:1 olduğu için tek grup döndürür: ["s_1", "45", "48"]
   function getSeriesGroupForMovie(movieId) {
     const fid = String(movieId);
-    return seriesMoviesGroupsState.find(g => g.includes(fid)) || null;
+    return seriesMoviesGroupsState.find(g => g.slice(1).includes(fid)) || null;
   }
 
   function getRemakeGroupForMovie(movieId) {
     const fid = String(movieId);
-    return remakeMoviesGroupsState.find(g => g.includes(fid)) || null;
+    return remakeMoviesGroupsState.find(g => g.slice(1).includes(fid)) || null;
   }
 
-  function getGenreGroupForMovie(movieId) {
+  // Tür Many:Many olduğu için o filme ait TÜM tür gruplarının listesini döndürür: [ ["g_20", ...], ["g_69", ...] ]
+  function getGenreGroupsForMovie(movieId) {
     const fid = String(movieId);
-    return genreMoviesGroupsState.find(g => g.includes(fid)) || null;
+    return genreMoviesGroupsState.filter(g => g.slice(1).includes(fid));
   }
 
   function getSeriesGroupName(groupArray) {
-    for (let id of groupArray) {
-      if (seriesGroupsNamesState[id]) {
-        return seriesGroupsNamesState[id];
-      }
-    }
-    return `Seri Grup (${groupArray.join(", ")})`;
+    if (!groupArray || groupArray.length === 0) return "";
+    const key = groupArray[0];
+    if (seriesGroupsNamesState[key]) return seriesGroupsNamesState[key];
+    return `Seri Grup (${groupArray.slice(1).join(", ")})`;
   }
 
   function getRemakeGroupName(groupArray) {
-    for (let id of groupArray) {
-      if (remakeGroupsNamesState[id]) {
-        return remakeGroupsNamesState[id];
-      }
-    }
-    return `Remake Grup (${groupArray.join(", ")})`;
+    if (!groupArray || groupArray.length === 0) return "";
+    const key = groupArray[0];
+    if (remakeGroupsNamesState[key]) return remakeGroupsNamesState[key];
+    return `Remake Grup (${groupArray.slice(1).join(", ")})`;
   }
 
   function getGenreGroupName(groupArray) {
-    for (let id of groupArray) {
-      if (genreGroupsNamesState[id]) {
-        return genreGroupsNamesState[id];
-      }
-    }
-    return `Tür Grup (${groupArray.join(", ")})`;
+    if (!groupArray || groupArray.length === 0) return "";
+    const key = groupArray[0];
+    if (genreGroupsNamesState[key]) return genreGroupsNamesState[key];
+    return `Tür Grup (${groupArray.slice(1).join(", ")})`;
   }
 
   function findCommonSubstring(str1, str2) {
@@ -1094,18 +1166,58 @@
     return "";
   }
 
+  // Seri veya Remake görünümündeyken bir filme tür eklendiğinde, serideki/remake'teki diğer filmlere de sadece bu türü ekler (eski türlerini bozmaz)
+  function propagateGenreToRelatedMovies(movieId, targetGenreKey) {
+    const currentWatchlistSel = document.getElementById("watchlistDropdown").value;
+    const isStrictSeriesOrRemakeContext = (
+      currentWatchlistSel === "linked_only" ||
+      currentWatchlistSel === "remake_only" ||
+      (activeRelationFilterSet && (activeRelationFilterSet.type === 'series' || activeRelationFilterSet.type === 'remake'))
+    );
+
+    if (!isStrictSeriesOrRemakeContext || !targetGenreKey) return;
+
+    const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKey);
+    if (!genreGroup) return;
+
+    const relatedIds = new Set([String(movieId)]);
+    const sGrp = getSeriesGroupForMovie(movieId);
+    const rGrp = getRemakeGroupForMovie(movieId);
+    if (sGrp) sGrp.slice(1).forEach(id => relatedIds.add(String(id)));
+    if (rGrp) rGrp.slice(1).forEach(id => relatedIds.add(String(id)));
+
+    let addedAny = false;
+    relatedIds.forEach(relId => {
+      if (!genreGroup.slice(1).includes(relId)) {
+        genreGroup.push(relId);
+        addedAny = true;
+      }
+    });
+
+    if (addedAny) {
+      saveGenreGroups();
+    }
+  }
+
   function linkMovies(sourceId, targetIdInput, type) {
     const src = String(sourceId).trim();
     const rawTargets = String(targetIdInput).split(',').map(s => s.trim()).filter(Boolean);
     if (rawTargets.length === 0) return;
 
-    let currentGroup = null;
-    if (type === 'series') currentGroup = getSeriesGroupForMovie(src);
-    else if (type === 'remake') currentGroup = getRemakeGroupForMovie(src);
-    else currentGroup = getGenreGroupForMovie(src);
-    currentGroup = currentGroup || [];
+    let currentMembers = [];
+    if (type === 'series') {
+      const g = getSeriesGroupForMovie(src);
+      currentMembers = g ? g.slice(1) : [];
+    } else if (type === 'remake') {
+      const g = getRemakeGroupForMovie(src);
+      currentMembers = g ? g.slice(1) : [];
+    } else {
+      // Tür için mevcut tüm türlerin üyelerini topla ki zaten bağlı olanı tekrar seçmesin
+      const gs = getGenreGroupsForMovie(src);
+      gs.forEach(g => currentMembers.push(...g.slice(1)));
+    }
 
-    const newTargets = rawTargets.filter(t => t !== src && !currentGroup.includes(t));
+    const newTargets = rawTargets.filter(t => t !== src && !currentMembers.includes(t));
     const tgt = newTargets.length > 0 ? newTargets[0] : rawTargets[0];
 
     if (!tgt || isNaN(tgt)) return;
@@ -1118,13 +1230,39 @@
       return;
     }
 
-    let groupsList = null;
-    if (type === 'series') groupsList = seriesMoviesGroupsState;
-    else if (type === 'remake') groupsList = remakeMoviesGroupsState;
-    else groupsList = genreMoviesGroupsState;
+    if (type === 'genre') {
+      // Many:Many Tür bağlama mantığı:
+      // Hedef filmin (tgt) zaten tür grupları varsa, src'yi hedefin ilk tür grubuna ekle; yoksa ikisi için yeni tür grubu oluştur.
+      const tgtGroups = getGenreGroupsForMovie(tgt);
+      if (tgtGroups.length === 0) {
+        pendingGroupSource = src;
+        pendingGroupTarget = tgt;
+        pendingGroupType = 'genre';
 
-    const srcGroupIdx = groupsList.findIndex(g => g.includes(src));
-    const tgtGroupIdx = groupsList.findIndex(g => g.includes(tgt));
+        const m1 = allMovies.find(m => String(m.film_ID) === src);
+        const m2 = allMovies.find(m => String(m.film_ID) === tgt);
+        let suggestedName = (m1 && m2) ? findCommonSubstring(m1.film_name, m2.film_name) : "";
+
+        document.getElementById("groupNameModalTitle").innerText = "🏷️ Yeni Türler Grubu Adı Belirle";
+        document.getElementById("groupNameInput").value = suggestedName;
+        document.getElementById("groupNamePopupModal").style.display = "flex";
+        setTimeout(() => document.getElementById("groupNameInput").focus(), 100);
+      } else {
+        const targetGroup = tgtGroups[0];
+        if (!targetGroup.slice(1).includes(src)) {
+          targetGroup.push(src);
+          saveGenreGroups();
+        }
+        propagateGenreToRelatedMovies(src, targetGroup[0]);
+        renderMovies(false);
+      }
+      return;
+    }
+
+    // Seri ve Remake (1:1) bağlama mantığı
+    let groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
+    const srcGroupIdx = groupsList.findIndex(g => g.slice(1).includes(src));
+    const tgtGroupIdx = groupsList.findIndex(g => g.slice(1).includes(tgt));
 
     const isBrandNewGroupCreation = (srcGroupIdx === -1 && tgtGroupIdx === -1);
 
@@ -1135,15 +1273,11 @@
 
       const m1 = allMovies.find(m => String(m.film_ID) === src);
       const m2 = allMovies.find(m => String(m.film_ID) === tgt);
-      let suggestedName = "";
-      if (m1 && m2) {
-        suggestedName = findCommonSubstring(m1.film_name, m2.film_name);
-      }
+      let suggestedName = (m1 && m2) ? findCommonSubstring(m1.film_name, m2.film_name) : "";
 
-      let modalTitle = "📁 Yeni Grup Adı Belirle";
-      if (type === 'series') modalTitle = "🎬 Yeni Seri Filmler Grubu Adı Belirle";
-      else if (type === 'remake') modalTitle = "🎥 Yeni Remake-Benzer Filmler Grubu Adı Belirle";
-      else if (type === 'genre') modalTitle = "🏷️ Yeni Türler Grubu Adı Belirle";
+      const modalTitle = (type === 'series')
+        ? "🎬 Yeni Seri Filmler Grubu Adı Belirle"
+        : "🎥 Yeni Remake-Benzer Filmler Grubu Adı Belirle";
 
       document.getElementById("groupNameModalTitle").innerText = modalTitle;
       document.getElementById("groupNameInput").value = suggestedName;
@@ -1155,137 +1289,74 @@
   }
 
   function executeLinkingWithoutPrompt(src, tgt, type, customName = null) {
-    let existingName = customName;
-    let existingGroup = null;
-    let namesState = null;
-
-    if (type === 'series') {
-      existingGroup = getSeriesGroupForMovie(src) || getSeriesGroupForMovie(tgt);
-      namesState = seriesGroupsNamesState;
-    } else if (type === 'remake') {
-      existingGroup = getRemakeGroupForMovie(src) || getRemakeGroupForMovie(tgt);
-      namesState = remakeGroupsNamesState;
-    } else {
-      existingGroup = getGenreGroupForMovie(src) || getGenreGroupForMovie(tgt);
-      namesState = genreGroupsNamesState;
-    }
-
-    if (!existingName && existingGroup) {
-      for (let id of existingGroup) {
-        if (namesState[id]) {
-          existingName = namesState[id];
-          break;
-        }
+    if (type === 'genre') {
+      const newKey = generateUniqueGroupKey('genre');
+      const newGroup = [newKey, src, tgt];
+      genreMoviesGroupsState.push(newGroup);
+      if (customName) {
+        genreGroupsNamesState[newKey] = customName;
       }
+      saveGenreGroups();
+      propagateGenreToRelatedMovies(src, newKey);
+      renderMovies(false);
+      return;
     }
 
-    let groupsList = null;
-    if (type === 'series') groupsList = seriesMoviesGroupsState;
-    else if (type === 'remake') groupsList = remakeMoviesGroupsState;
-    else groupsList = genreMoviesGroupsState;
+    let groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
+    let namesState = (type === 'series') ? seriesGroupsNamesState : remakeGroupsNamesState;
 
-    const srcGroupIdx = groupsList.findIndex(g => g.includes(src));
-    const tgtGroupIdx = groupsList.findIndex(g => g.includes(tgt));
+    const srcGroupIdx = groupsList.findIndex(g => g.slice(1).includes(src));
+    const tgtGroupIdx = groupsList.findIndex(g => g.slice(1).includes(tgt));
     let affectedGroup = null;
 
     if (srcGroupIdx !== -1 && tgtGroupIdx !== -1) {
       if (srcGroupIdx !== tgtGroupIdx) {
-        const merged = Array.from(new Set([...groupsList[srcGroupIdx], ...groupsList[tgtGroupIdx]]));
+        const keepKey = groupsList[srcGroupIdx][0];
+        const dropKey = groupsList[tgtGroupIdx][0];
+        const keptName = namesState[keepKey] || namesState[dropKey] || customName;
 
-        groupsList[srcGroupIdx].forEach(id => delete namesState[id]);
-        groupsList[tgtGroupIdx].forEach(id => delete namesState[id]);
+        const mergedMembers = Array.from(new Set([
+          ...groupsList[srcGroupIdx].slice(1),
+          ...groupsList[tgtGroupIdx].slice(1)
+        ]));
 
-        if (type === 'series') seriesMoviesGroupsState = seriesMoviesGroupsState.filter((_, idx) => idx !== srcGroupIdx && idx !== tgtGroupIdx);
-        else if (type === 'remake') remakeMoviesGroupsState = remakeMoviesGroupsState.filter((_, idx) => idx !== srcGroupIdx && idx !== tgtGroupIdx);
-        else genreMoviesGroupsState = genreMoviesGroupsState.filter((_, idx) => idx !== srcGroupIdx && idx !== tgtGroupIdx);
+        delete namesState[dropKey];
+        const filteredGroups = groupsList.filter((_, idx) => idx !== srcGroupIdx && idx !== tgtGroupIdx);
+        affectedGroup = [keepKey, ...mergedMembers];
+        filteredGroups.push(affectedGroup);
 
-        groupsList.push(merged);
-        affectedGroup = merged;
+        if (type === 'series') seriesMoviesGroupsState = filteredGroups;
+        else remakeMoviesGroupsState = filteredGroups;
+
+        if (keptName) namesState[keepKey] = keptName;
       } else {
         affectedGroup = groupsList[srcGroupIdx];
       }
     } else if (srcGroupIdx !== -1) {
-      if (!groupsList[srcGroupIdx].includes(tgt)) {
+      if (!groupsList[srcGroupIdx].slice(1).includes(tgt)) {
         groupsList[srcGroupIdx].push(tgt);
       }
       affectedGroup = groupsList[srcGroupIdx];
     } else if (tgtGroupIdx !== -1) {
-      if (!groupsList[tgtGroupIdx].includes(src)) {
+      if (!groupsList[tgtGroupIdx].slice(1).includes(src)) {
         groupsList[tgtGroupIdx].push(src);
       }
       affectedGroup = groupsList[tgtGroupIdx];
     } else {
-      affectedGroup = [src, tgt];
+      const newKey = generateUniqueGroupKey(type);
+      affectedGroup = [newKey, src, tgt];
       groupsList.push(affectedGroup);
-    }
-
-    if (affectedGroup && existingName) {
-      namesState[affectedGroup[0]] = existingName;
-    }
-
-    if (type === 'series') saveSeriesGroups();
-    else if (type === 'remake') saveRemakeGroups();
-    else saveGenreGroups();
-
-    const currentWatchlistSel = document.getElementById("watchlistDropdown").value;
-    const isStrictSeriesOrRemakeContext = (currentWatchlistSel === "linked_only" || currentWatchlistSel === "remake_only" || (activeRelationFilterSet && (activeRelationFilterSet.type === 'series' || activeRelationFilterSet.type === 'remake')));
-
-    if (type === 'genre' && isStrictSeriesOrRemakeContext && affectedGroup && affectedGroup.length >= 1) {
-      let targetMovieIds = new Set();
-      affectedGroup.forEach(mId => {
-        let sGrp = getSeriesGroupForMovie(mId);
-        let rGrp = getRemakeGroupForMovie(mId);
-        if (sGrp) sGrp.forEach(id => targetMovieIds.add(String(id)));
-        if (rGrp) rGrp.forEach(id => targetMovieIds.add(String(id)));
-        targetMovieIds.add(String(mId));
-      });
-
-      if (targetMovieIds.size > 0) {
-        let groupNameToPreserve = null;
-        let allMergedGenreMembers = new Set(targetMovieIds);
-        targetMovieIds.forEach(mId => {
-          let existingGObj = getGenreGroupForMovie(mId);
-          if (existingGObj) {
-            existingGObj.forEach(id => allMergedGenreMembers.add(String(id)));
-            for (let gId of existingGObj) {
-              if (genreGroupsNamesState[gId]) {
-                groupNameToPreserve = genreGroupsNamesState[gId];
-                break;
-              }
-            }
-          }
-        });
-
-        if (!groupNameToPreserve && customName) {
-          groupNameToPreserve = customName;
-        }
-
-        allMergedGenreMembers.forEach(mId => {
-          let oldGIdx = genreMoviesGroupsState.findIndex(g => g.includes(mId));
-          if (oldGIdx !== -1) {
-            genreMoviesGroupsState[oldGIdx].forEach(id => delete genreGroupsNamesState[id]);
-            genreMoviesGroupsState.splice(oldGIdx, 1);
-          }
-        });
-
-        let finalGenreGroup = Array.from(allMergedGenreMembers);
-        genreMoviesGroupsState.push(finalGenreGroup);
-
-        if (groupNameToPreserve) {
-          genreGroupsNamesState[finalGenreGroup[0]] = groupNameToPreserve;
-        }
-
-        saveGenreGroups();
+      if (customName) {
+        namesState[newKey] = customName;
       }
     }
 
-    if (activeRelationFilterSet && activeRelationFilterSet.type === type && (activeRelationFilterSet.set.has(src) || activeRelationFilterSet.set.has(tgt))) {
-      let updatedGroup = null;
-      if (type === 'series') updatedGroup = getSeriesGroupForMovie(src);
-      else if (type === 'remake') updatedGroup = getRemakeGroupForMovie(src);
-      else updatedGroup = getGenreGroupForMovie(src);
+    if (type === 'series') saveSeriesGroups();
+    else saveRemakeGroups();
 
-      activeRelationFilterSet = updatedGroup ? { type: type, set: new Set(updatedGroup) } : null;
+    if (activeRelationFilterSet && activeRelationFilterSet.type === type && (activeRelationFilterSet.set.has(src) || activeRelationFilterSet.set.has(tgt))) {
+      const updatedGroup = (type === 'series') ? getSeriesGroupForMovie(src) : getRemakeGroupForMovie(src);
+      activeRelationFilterSet = updatedGroup ? { type: type, groupKey: updatedGroup[0], set: new Set(updatedGroup.slice(1)) } : null;
       updateRelationBanner();
     }
 
@@ -1338,9 +1409,10 @@
     cachedGroupListForPopup = [];
     if (groupsList && Array.isArray(groupsList) && groupsList.length > 0) {
       groupsList.forEach((g, idx) => {
-        if (!g || !Array.isArray(g)) return;
+        if (!g || !Array.isArray(g) || g.length < 2) return;
 
-        const visibleMembers = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
+        const memberIds = g.slice(1);
+        const visibleMembers = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
         const minLimit = (type === 'genre') ? 1 : 2;
         if (visibleMembers.length < minLimit) return;
 
@@ -1352,10 +1424,11 @@
         cachedGroupListForPopup.push({
           index: idx,
           originalIndex: idx,
+          groupKey: g[0],
           name: `${gName} (${visibleMembers.length} film)`,
           rawName: gName,
           count: visibleMembers.length,
-          members: g
+          members: memberIds
         });
       });
     }
@@ -1489,17 +1562,9 @@
     }
 
     let groupsList = null;
-    let namesState = null;
-    if (activeGroupSelectType === 'series') {
-      groupsList = seriesMoviesGroupsState;
-      namesState = seriesGroupsNamesState;
-    } else if (activeGroupSelectType === 'remake') {
-      groupsList = remakeMoviesGroupsState;
-      namesState = remakeGroupsNamesState;
-    } else {
-      groupsList = genreMoviesGroupsState;
-      namesState = genreGroupsNamesState;
-    }
+    if (activeGroupSelectType === 'series') groupsList = seriesMoviesGroupsState;
+    else if (activeGroupSelectType === 'remake') groupsList = remakeMoviesGroupsState;
+    else groupsList = genreMoviesGroupsState;
 
     const group = groupsList[idx];
     if (!group || group.length === 0) {
@@ -1509,79 +1574,33 @@
 
     const movieIdToAdd = activeMovieIdForGroupSelect;
     const type = activeGroupSelectType;
+    const targetGroupKey = group[0];
     closeGroupSelectPopup();
 
-    if (!group.includes(movieIdToAdd)) {
-      let groupName = null;
-      for (let id of group) {
-        if (namesState[id]) {
-          groupName = namesState[id];
-          break;
-        }
+    // Seri ve Remake 1:1 olduğu için, film başka bir gruptaysa önce oradan çıkar
+    if (type === 'series' || type === 'remake') {
+      const existingGroup = (type === 'series') ? getSeriesGroupForMovie(movieIdToAdd) : getRemakeGroupForMovie(movieIdToAdd);
+      if (existingGroup && existingGroup[0] !== targetGroupKey) {
+        unlinkMovie(movieIdToAdd, type, existingGroup[0], false);
       }
+    }
 
+    if (!group.slice(1).includes(movieIdToAdd)) {
       group.push(movieIdToAdd);
-
-      if (groupName) {
-        namesState[group[0]] = groupName;
-      }
 
       if (type === 'series') saveSeriesGroups();
       else if (type === 'remake') saveRemakeGroups();
-      else saveGenreGroups();
-
-      const currentWatchlistSel = document.getElementById("watchlistDropdown").value;
-      const isStrictSeriesOrRemakeContext = (currentWatchlistSel === "linked_only" || currentWatchlistSel === "remake_only" || (activeRelationFilterSet && (activeRelationFilterSet.type === 'series' || activeRelationFilterSet.type === 'remake')));
-
-      if (type === 'genre' && isStrictSeriesOrRemakeContext) {
-        let sGrp = getSeriesGroupForMovie(movieIdToAdd);
-        let rGrp = getRemakeGroupForMovie(movieIdToAdd);
-        let targetMovieIds = new Set([movieIdToAdd]);
-        if (sGrp) sGrp.forEach(id => targetMovieIds.add(String(id)));
-        if (rGrp) rGrp.forEach(id => targetMovieIds.add(String(id)));
-
-        if (targetMovieIds.size > 0) {
-          let targetGenreGroupKey = group[0];
-          let groupNameToPreserve = namesState[targetGenreGroupKey] || null;
-
-          let allMergedGenreMembers = new Set(group);
-          targetMovieIds.forEach(mId => allMergedGenreMembers.add(String(mId)));
-
-          allMergedGenreMembers.forEach(mId => {
-            let existingGObj = getGenreGroupForMovie(mId);
-            if (existingGObj) {
-              existingGObj.forEach(id => allMergedGenreMembers.add(String(id)));
-              for (let gId of existingGObj) {
-                if (namesState[gId]) {
-                  groupNameToPreserve = namesState[gId];
-                  break;
-                }
-              }
-            }
-          });
-
-          allMergedGenreMembers.forEach(mId => {
-            let oldGIdx = genreMoviesGroupsState.findIndex(g => g.includes(mId));
-            if (oldGIdx !== -1) {
-              genreMoviesGroupsState[oldGIdx].forEach(id => delete genreGroupsNamesState[id]);
-              genreMoviesGroupsState.splice(oldGIdx, 1);
-            }
-          });
-
-          let mergedGenreGroup = Array.from(allMergedGenreMembers);
-          genreMoviesGroupsState.push(mergedGenreGroup);
-          if (groupNameToPreserve) {
-            genreGroupsNamesState[mergedGenreGroup[0]] = groupNameToPreserve;
-          }
-          saveGenreGroups();
-        }
+      else {
+        saveGenreGroups();
+        propagateGenreToRelatedMovies(movieIdToAdd, targetGroupKey);
       }
 
       renderMovies(false);
     }
   }
 
-  function unlinkMovie(movieId, type) {
+  // specificGroupKey özellikle Many:Many olan Tür grubunda hangi türden ayıracağımızı belirler
+  function unlinkMovie(movieId, type, specificGroupKey = null, shouldRender = true) {
     const fid = String(movieId);
     let groupsList = null;
     let namesState = null;
@@ -1597,28 +1616,26 @@
       namesState = genreGroupsNamesState;
     }
 
-    const idx = groupsList.findIndex(g => g.includes(fid));
+    const idx = specificGroupKey
+      ? groupsList.findIndex(g => g[0] === specificGroupKey && g.slice(1).includes(fid))
+      : groupsList.findIndex(g => g.slice(1).includes(fid));
+
     if (idx === -1) return;
 
-    const oldGroup = groupsList[idx];
+    const group = groupsList[idx];
+    const groupKey = group[0];
 
-    let groupName = null;
-    for (let id of oldGroup) {
-      if (namesState[id]) {
-        if (!groupName) groupName = namesState[id];
-        delete namesState[id];
-      }
+    // Sadece 1. indeksten sonraki (film ID) kısmından çıkar, g[0] (key) daima sabit kalır
+    const memberPos = group.indexOf(fid, 1);
+    if (memberPos !== -1) {
+      group.splice(memberPos, 1);
     }
 
-    oldGroup.splice(oldGroup.indexOf(fid), 1);
+    const minFilmLimit = (type === 'genre') ? 1 : 2;
+    const remainingFilmCount = group.length - 1;
 
-    const minLimit = (type === 'genre') ? 1 : 2;
-
-    if (oldGroup.length >= minLimit) {
-      if (groupName) {
-        namesState[oldGroup[0]] = groupName;
-      }
-    } else {
+    if (remainingFilmCount < minFilmLimit) {
+      delete namesState[groupKey];
       groupsList.splice(idx, 1);
     }
 
@@ -1626,32 +1643,41 @@
     else if (type === 'remake') saveRemakeGroups();
     else saveGenreGroups();
 
-    if (activeRelationFilterSet && activeRelationFilterSet.type === type && activeRelationFilterSet.set.has(fid)) {
+    if (activeRelationFilterSet && activeRelationFilterSet.type === type && activeRelationFilterSet.groupKey === groupKey) {
       activeRelationFilterSet.set.delete(fid);
-      const activeMinLimit = (type === 'genre') ? 1 : 2;
-      if (activeRelationFilterSet.set.size < activeMinLimit) {
+      if (activeRelationFilterSet.set.size < minFilmLimit) {
         activeRelationFilterSet = null;
       }
       updateRelationBanner();
     }
 
-    renderMovies(false);
+    if (shouldRender) {
+      renderMovies(false);
+    }
   }
 
-  function filterByRelationGroup(movieId, type) {
+  function filterByRelationGroup(movieId, type, specificGroupKey = null) {
     let group = null;
-    if (type === 'series') group = getSeriesGroupForMovie(movieId);
-    else if (type === 'remake') group = getRemakeGroupForMovie(movieId);
-    else group = getGenreGroupForMovie(movieId);
+    if (type === 'series') {
+      group = getSeriesGroupForMovie(movieId);
+    } else if (type === 'remake') {
+      group = getRemakeGroupForMovie(movieId);
+    } else {
+      const allGenres = getGenreGroupsForMovie(movieId);
+      group = specificGroupKey
+        ? allGenres.find(g => g[0] === specificGroupKey)
+        : (allGenres.length > 0 ? allGenres[0] : null);
+    }
 
     if (!group) return;
+    const gKey = group[0];
 
-    if (activeRelationFilterSet && activeRelationFilterSet.type === type && activeRelationFilterSet.set.has(String(movieId))) {
+    if (activeRelationFilterSet && activeRelationFilterSet.type === type && activeRelationFilterSet.groupKey === gKey) {
       clearRelationFilter();
       return;
     }
 
-    activeRelationFilterSet = { type: type, set: new Set(group) };
+    activeRelationFilterSet = { type: type, groupKey: gKey, set: new Set(group.slice(1)) };
     updateRelationBanner();
     renderMovies(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1676,12 +1702,13 @@
         return;
       }
       const type = activeRelationFilterSet.type;
+      const gKey = activeRelationFilterSet.groupKey;
       let groupsList = null;
       if (type === 'series') groupsList = seriesMoviesGroupsState;
       else if (type === 'remake') groupsList = remakeMoviesGroupsState;
       else groupsList = genreMoviesGroupsState;
 
-      const groupObj = groupsList.find(g => g.includes(Array.from(activeRelationFilterSet.set)[0]));
+      const groupObj = groupsList.find(g => g[0] === gKey);
 
       let gName = "Grup";
       let prefixIcon = "🔗";
@@ -1716,9 +1743,17 @@
 
   function exportUserData() {
     try {
-      seriesGroupsNamesState = sanitizeGroupNames(seriesMoviesGroupsState, seriesGroupsNamesState, 2);
-      remakeGroupsNamesState = sanitizeGroupNames(remakeMoviesGroupsState, remakeGroupsNamesState, 2);
-      genreGroupsNamesState = sanitizeGroupNames(genreMoviesGroupsState, genreGroupsNamesState, 1);
+      const sRes = cleanAndSanitizeGroups(seriesMoviesGroupsState, seriesGroupsNamesState, 2, "series");
+      seriesMoviesGroupsState = sRes.groups;
+      seriesGroupsNamesState = sRes.names;
+
+      const rRes = cleanAndSanitizeGroups(remakeMoviesGroupsState, remakeGroupsNamesState, 2, "remake");
+      remakeMoviesGroupsState = rRes.groups;
+      remakeGroupsNamesState = rRes.names;
+
+      const gRes = cleanAndSanitizeGroups(genreMoviesGroupsState, genreGroupsNamesState, 1, "genre");
+      genreMoviesGroupsState = gRes.groups;
+      genreGroupsNamesState = gRes.names;
 
       const payload = {
         exported_at: new Date().toISOString(),
@@ -1797,26 +1832,23 @@
           renderRecentDropdown();
         }
         if (Array.isArray(data.series_movies_groups)) {
-          seriesMoviesGroupsState = data.series_movies_groups.map(g => g.map(String));
-        }
-        if (data.series_groups_names) {
-          seriesGroupsNamesState = sanitizeGroupNames(seriesMoviesGroupsState, data.series_groups_names, 2);
+          const res = cleanAndSanitizeGroups(data.series_movies_groups, data.series_groups_names || {}, 2, "series");
+          seriesMoviesGroupsState = res.groups;
+          seriesGroupsNamesState = res.names;
         }
         saveSeriesGroups();
 
         if (Array.isArray(data.remake_movies_groups)) {
-          remakeMoviesGroupsState = data.remake_movies_groups.map(g => g.map(String));
-        }
-        if (data.remake_groups_names) {
-          remakeGroupsNamesState = sanitizeGroupNames(remakeMoviesGroupsState, data.remake_groups_names, 2);
+          const res = cleanAndSanitizeGroups(data.remake_movies_groups, data.remake_groups_names || {}, 2, "remake");
+          remakeMoviesGroupsState = res.groups;
+          remakeGroupsNamesState = res.names;
         }
         saveRemakeGroups();
 
         if (Array.isArray(data.genre_movies_groups)) {
-          genreMoviesGroupsState = data.genre_movies_groups.map(g => g.map(String));
-        }
-        if (data.genre_groups_names) {
-          genreGroupsNamesState = sanitizeGroupNames(genreMoviesGroupsState, data.genre_groups_names, 1);
+          const res = cleanAndSanitizeGroups(data.genre_movies_groups, data.genre_groups_names || {}, 1, "genre");
+          genreMoviesGroupsState = res.groups;
+          genreGroupsNamesState = res.names;
         }
         saveGenreGroups();
 
@@ -2035,7 +2067,7 @@
   function scrollToMovie(movieId, highlight = true) {
     if (!movieId) return;
     const cleanId = String(movieId).trim();
-    const targetElem = document.getElementById("movie-card-" + cleanId);
+    const targetElem = document.querySelector(`[data-movie-id-card="${cleanId}"]`) || document.getElementById("movie-card-" + cleanId);
     if (targetElem) {
       targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (highlight) {
@@ -2304,6 +2336,203 @@
     return 0;
   }
 
+  // Kart HTML üretici yardımcı fonksiyon (contextPrefix: Türler görünümünde çoklu tür olan kartların DOM ID çakışmasını önler)
+  function buildMovieCardElement(movie, showHidden, currentGeneralLastId, contextPrefix = "") {
+    const fid = String(movie.film_ID);
+    const card = document.createElement("div");
+    card.className = "movie-card";
+    card.id = contextPrefix ? `movie-card-${contextPrefix}-${fid}` : `movie-card-${fid}`;
+    card.dataset.movieIdCard = fid;
+
+    const posterUrl = movie.poster || "";
+    const imdbText = movie.imdb_score ? "⭐ " + movie.imdb_score : "⭐ -";
+    const yearText = movie.year ? String(movie.year) : "-";
+    const durationText = movie.duration_mins ? `${Math.round(parseFloat(movie.duration_mins))}dk` : "";
+    const actorsStr = getActorsString(movie);
+    const domainText = getDomain(movie.web_scraper_start_url);
+
+    const altUrls = alternativeUrlsState[fid] || [];
+    let altLinksHtml = "";
+    altUrls.forEach((altUrl, idx) => {
+      const label = `URL${idx + 2}`;
+      altLinksHtml += ` | <a class="alt-url-link" href="${escapeHtml(altUrl)}" target="_blank" title="${escapeHtml(altUrl)}" onclick="handleCardClick('${fid}')">${label}</a>`;
+    });
+
+    const domainContainerHtml = domainText ? `
+      <div class="domain-container" title="URL'leri yönetmek için domain adına tıklayın">
+        <span class="domain-badge" onclick="openUrlPopup('${fid}')">${escapeHtml(domainText)}</span>
+        ${altLinksHtml}
+      </div>
+    ` : "";
+
+    const c1 = watchlist1State[fid] ? "checked" : "";
+    const c2 = watchlist2State[fid] ? "checked" : "";
+    const c3 = watchlist3State[fid] ? "checked" : "";
+    const cWatched = watchedState[fid] ? "checked" : "";
+    const cGlorious = gloriousState[fid] ? "checked" : "";
+    const isRadioChecked = (currentGeneralLastId === fid) ? "checked" : "";
+    const myScoreVal = myScoreState[fid] !== undefined ? myScoreState[fid] : "";
+    const isHidden = !!hiddenMoviesState[fid];
+    if (isHidden) {
+      card.classList.add("hidden-card");
+    }
+    const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
+    const eyeBtnIcon = isHidden ? "🙈" : "👁️";
+
+    // Seri (1:1) - g[0] key, g.slice(1) film ID'leri
+    const rawSeriesGroup = getSeriesGroupForMovie(fid);
+    const seriesMembers = rawSeriesGroup ? (showHidden ? rawSeriesGroup.slice(1) : rawSeriesGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
+    const hasValidSeriesGroup = seriesMembers && seriesMembers.length >= 2;
+    const isSeriesActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'series' && rawSeriesGroup && activeRelationFilterSet.groupKey === rawSeriesGroup[0];
+    const seriesOtherIds = hasValidSeriesGroup ? seriesMembers.filter(id => id !== fid).join(", ") : "";
+    const seriesInputVal = rawSeriesGroup ? rawSeriesGroup.slice(1).filter(id => id !== fid).join(",") : "";
+
+    // Remake (1:1) - g[0] key, g.slice(1) film ID'leri
+    const rawRemakeGroup = getRemakeGroupForMovie(fid);
+    const remakeMembers = rawRemakeGroup ? (showHidden ? rawRemakeGroup.slice(1) : rawRemakeGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
+    const hasValidRemakeGroup = remakeMembers && remakeMembers.length >= 2;
+    const isRemakeActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'remake' && rawRemakeGroup && activeRelationFilterSet.groupKey === rawRemakeGroup[0];
+    const remakeOtherIds = hasValidRemakeGroup ? remakeMembers.filter(id => id !== fid).join(", ") : "";
+    const remakeInputVal = rawRemakeGroup ? rawRemakeGroup.slice(1).filter(id => id !== fid).join(",") : "";
+
+    // Tür (Many:Many) - O filme ait TÜM tür grupları
+    const rawGenreGroups = getGenreGroupsForMovie(fid);
+    const validGenreGroups = rawGenreGroups.map(g => {
+      const visibleM = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
+      return {
+        key: g[0],
+        rawGroup: g,
+        name: getGenreGroupName(g),
+        visibleMembers: visibleM
+      };
+    }).filter(item => item.visibleMembers.length >= 1);
+
+    let groupNameBadgesHtml = "";
+    if (hasValidSeriesGroup) {
+      const gNameStr = getSeriesGroupName(rawSeriesGroup);
+      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(gNameStr)}" style="background: rgba(29, 78, 216, 0.85);">🎬 ${escapeHtml(gNameStr)}</div>`;
+    }
+    if (hasValidRemakeGroup) {
+      const rNameStr = getRemakeGroupName(rawRemakeGroup);
+      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(rNameStr)}" style="background: rgba(91, 33, 182, 0.85);">🎥 ${escapeHtml(rNameStr)}</div>`;
+    }
+    validGenreGroups.forEach(gItem => {
+      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(gItem.name)}" style="background: rgba(5, 150, 105, 0.85);">🏷️ ${escapeHtml(gItem.name)}</div>`;
+    });
+
+    let badgesRightHtml = "";
+    if (hasValidSeriesGroup) {
+      badgesRightHtml += `<button class="relation-badge-btn ${isSeriesActiveGroup ? 'active-group' : ''}" title="Seri Filmler: ${seriesOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'series')">🎬 ${seriesMembers.length}</button>`;
+    }
+    if (hasValidRemakeGroup) {
+      badgesRightHtml += `<button class="remake-badge-btn ${isRemakeActiveGroup ? 'active-group' : ''}" title="Remake Filmler: ${remakeOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'remake')">🎥 ${remakeMembers.length}</button>`;
+    }
+    validGenreGroups.forEach(gItem => {
+      const isThisGenreActive = activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey === gItem.key;
+      badgesRightHtml += `<button class="genre-badge-btn ${isThisGenreActive ? 'active-group' : ''}" title="Tür: ${escapeHtml(gItem.name)} (${gItem.visibleMembers.length} film)" onclick="filterByRelationGroup('${fid}', 'genre', '${gItem.key}')">🏷️ ${gItem.visibleMembers.length}</button>`;
+    });
+
+    const unlinkSeriesHtml = rawSeriesGroup
+      ? `<button class="btn-unlink" title="Seriden ayır" onclick="unlinkMovie('${fid}', 'series')" style="font-size:9px; background:#7f1d1d; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Seri Ayır</button>`
+      : "";
+
+    const unlinkRemakeHtml = rawRemakeGroup
+      ? `<button class="btn-unlink" title="Remake'den ayır" onclick="unlinkMovie('${fid}', 'remake')" style="font-size:9px; background:#5b21b6; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Remake Ayır</button>`
+      : "";
+
+    // Çoklu tür etiketleri ve her birinin yanında kendi X (ayır) butonu
+    let genrePillsHtml = "";
+    if (rawGenreGroups.length > 0) {
+      genrePillsHtml = `<div class="genre-tags-list">`;
+      rawGenreGroups.forEach(g => {
+        const gKey = g[0];
+        const gName = getGenreGroupName(g);
+        genrePillsHtml += `
+          <span class="genre-tag-pill" title="${escapeHtml(gName)}">
+            <span class="g-pill-text" onclick="filterByRelationGroup('${fid}', 'genre', '${gKey}')">${escapeHtml(gName)}</span>
+            <button type="button" class="genre-tag-remove-btn" title="${escapeHtml(gName)} türünden ayır" onclick="unlinkMovie('${fid}', 'genre', '${gKey}')">×</button>
+          </span>
+        `;
+      });
+      genrePillsHtml += `</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="watchlist-group" title="İzleme Listeleri (1, 2, 3)">
+        <input type="checkbox" class="watchlist-checkbox" ${c1} title="İzleme Listesi 1" onchange="updateWatchlist(1, '${fid}', this.checked)">
+        <input type="checkbox" class="watchlist-checkbox" ${c2} title="İzleme Listesi 2" onchange="updateWatchlist(2, '${fid}', this.checked)">
+        <input type="checkbox" class="watchlist-checkbox" ${c3} title="İzleme Listesi 3" onchange="updateWatchlist(3, '${fid}', this.checked)">
+      </div>
+      <div class="glorious-group" title="Muhteşem Filmler olarak işaretle">
+        <input type="checkbox" class="glorious-checkbox" ${cGlorious} title="Muhteşem Filmler" onchange="updateGlorious('${fid}', this.checked)">
+      </div>
+      <div class="poster-badges-right">
+        ${badgesRightHtml}
+      </div>
+      <div class="poster-wrapper">
+        <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok';">
+        <div class="select-id-radio-wrap" title="Bu filmin ID'sini Son ID kutucuğuna ata">
+          <input type="radio" name="selectedMovieRadio" class="select-id-radio" ${isRadioChecked} onchange="selectMovieIdFromCardRadio('${fid}')">
+        </div>
+        <div class="poster-badges-bottom">
+          ${groupNameBadgesHtml}
+        </div>
+        <button class="hide-movie-btn ${isHidden ? 'is-hidden' : ''}" title="${eyeBtnTitle}" onclick="toggleHiddenMovie('${fid}')">${eyeBtnIcon}</button>
+      </div>
+      <div class="card-user-actions">
+        <label class="watched-label" title="İzlediklerim">
+          <input type="checkbox" class="watched-checkbox" ${cWatched} onchange="updateWatched('${fid}', this.checked)"> İzledim
+        </label>
+        <span class="film-id-badge" title="Film ID">ID: ${fid}</span>
+        <div class="score-container" title="Puanım (1-10)">
+          <span>Puanım:</span>
+          <input type="number" class="score-input" min="0" max="10" step="0.1" value="${myScoreVal}" onchange="updateMyScore('${fid}', this.value)">
+        </div>
+      </div>
+      <div class="card-relation-bar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="relation-input-wrap" title="Seri ID'si yazıp Enter'a basın">
+            <span class="relation-label">🎬 Seri:</span>
+            <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(seriesInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'series');">
+            <button class="btn-add-group group-popup-trigger" type="button" data-type="series" data-movie-id="${fid}" title="Mevcut bir seri grubuna dahil et (+)">+</button>
+          </div>
+          ${unlinkSeriesHtml}
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="relation-input-wrap" title="Remake ID'si yazıp Enter'a basın">
+            <span class="relation-label">🎥 Remake:</span>
+            <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(remakeInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'remake');" style="color:#d8b4fe; border-color:#7c3aed;">
+            <button class="btn-add-remake group-popup-trigger" type="button" data-type="remake" data-movie-id="${fid}" title="Mevcut bir remake grubuna dahil et (+)">+</button>
+          </div>
+          ${unlinkRemakeHtml}
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="relation-input-wrap" title="Yeni tür grubu oluşturmak için başka bir film ID'si yazın veya + ile mevcut türlerden seçin">
+              <span class="relation-label">🏷️ Tür:</span>
+              <input type="text" inputmode="numeric" class="relation-input" value="" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'genre');" style="color:#a7f3d0; border-color:#10b981;">
+              <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut bir tür grubuna dahil et (+)">+</button>
+            </div>
+          </div>
+          ${genrePillsHtml}
+        </div>
+      </div>
+      <div class="card-details">
+        ${domainContainerHtml}
+        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
+        <div class="meta-info">
+          <span>${imdbText}</span>
+          <span>${durationText}</span>
+          <span>${yearText}</span>
+        </div>
+        <div class="summary-text" title="${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}">${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}</div>
+        <div class="actors-text" title="Oyuncular: ${escapeHtml(actorsStr || 'Bilgi yok')}">🎭 ${escapeHtml(actorsStr || 'Oyuncu bilgisi yok')}</div>
+      </div>
+    `;
+
+    return card;
+  }
+
   function renderMovies(forceSearch = false) {
     try {
       saveStateToStorage();
@@ -2368,27 +2597,30 @@
         if (watchlistSelection === "linked_only") {
           const g = getSeriesGroupForMovie(fid);
           if (!g) return false;
-          const visibleG = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
+          const visibleG = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
           if (visibleG.length < 2) return false;
         }
 
         if (watchlistSelection === "remake_only") {
           const g = getRemakeGroupForMovie(fid);
           if (!g) return false;
-          const visibleG = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
+          const visibleG = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
           if (visibleG.length < 2) return false;
         }
 
         if (watchlistSelection === "genre_only") {
-          const g = getGenreGroupForMovie(fid);
-          if (!g) return false;
-          const visibleG = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
-          if (visibleG.length < 1) return false;
+          const gs = getGenreGroupsForMovie(fid);
+          if (!gs || gs.length === 0) return false;
+          const hasVisible = gs.some(g => {
+            const visibleG = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
+            return visibleG.length >= 1;
+          });
+          if (!hasVisible) return false;
         }
 
         if (watchlistSelection === "no_genre") {
-          const g = getGenreGroupForMovie(fid);
-          if (g && g.length > 0) return false;
+          const gs = getGenreGroupsForMovie(fid);
+          if (gs && gs.length > 0) return false;
         }
 
         if (selectedDomain && getDomain(movie.web_scraper_start_url) !== selectedDomain) return false;
@@ -2430,7 +2662,7 @@
 
         const userScore = myScoreState[fid];
         let actualMyMin = Math.min(minMyScoreVal, maxMyScoreVal);
-        let actualMyMax = Math.max(minMyScoreRange ? parseFloat(minMyScoreRange.value) : minMyScoreVal, maxMyScoreVal);
+        let actualMyMax = Math.max(minMyScoreVal, maxMyScoreVal);
 
         if (actualMyMin > 0 || actualMyMax < 10) {
           if (userScore === undefined || userScore === null) return false;
@@ -2452,8 +2684,10 @@
         if (sg) groupNameStr += " " + getSeriesGroupName(sg).toLowerCase();
         const rg = getRemakeGroupForMovie(movie.film_ID);
         if (rg) groupNameStr += " " + getRemakeGroupName(rg).toLowerCase();
-        const gg = getGenreGroupForMovie(movie.film_ID);
-        if (gg) groupNameStr += " " + getGenreGroupName(gg).toLowerCase();
+        const ggs = getGenreGroupsForMovie(movie.film_ID);
+        ggs.forEach(gg => {
+          groupNameStr += " " + getGenreGroupName(gg).toLowerCase();
+        });
 
         return searchTerms.some(term =>
           name.includes(term) || summary.includes(term) || actors.includes(term) || groupNameStr.includes(term)
@@ -2476,16 +2710,18 @@
         if (includeLinkedInSearch) {
           baseMatchedIds.forEach(fid => {
             const sgrp = getSeriesGroupForMovie(fid);
-            if (sgrp) sgrp.forEach(linkedId => {
+            if (sgrp) sgrp.slice(1).forEach(linkedId => {
               if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
             });
             const rgrp = getRemakeGroupForMovie(fid);
-            if (rgrp) rgrp.forEach(linkedId => {
+            if (rgrp) rgrp.slice(1).forEach(linkedId => {
               if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
             });
-            const ggrp = getGenreGroupForMovie(fid);
-            if (ggrp) ggrp.forEach(linkedId => {
-              if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
+            const ggrps = getGenreGroupsForMovie(fid);
+            ggrps.forEach(ggrp => {
+              ggrp.slice(1).forEach(linkedId => {
+                if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
+              });
             });
           });
         }
@@ -2512,7 +2748,10 @@
         return true;
       });
 
-      if ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet) {
+      const currentGeneralLastId = String(localStorage.getItem("last_clicked_movie_id") || "").trim();
+      const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
+
+      if (isGroupedLinkedView) {
         const linkedSortVal = document.getElementById("linkedGroupsSortSelect").value;
         const isRemakeView = (watchlistSelection === "remake_only");
         const isGenreView = (watchlistSelection === "genre_only");
@@ -2521,47 +2760,48 @@
         if (isRemakeView) groupsList = remakeMoviesGroupsState;
         else if (isGenreView) groupsList = genreMoviesGroupsState;
 
-        const groupMap = new Map();
-        filtered.forEach(movie => {
-          const fid = String(movie.film_ID);
-          let g = null;
-          if (isRemakeView) g = getRemakeGroupForMovie(fid);
-          else if (isGenreView) g = getGenreGroupForMovie(fid);
-          else g = getSeriesGroupForMovie(fid);
+        const filteredMovieMap = new Map();
+        filtered.forEach(m => filteredMovieMap.set(String(m.film_ID), m));
 
-          if (g) {
-            const groupKey = g[0];
-            if (!groupMap.has(groupKey)) {
-              const visibleG = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
-              let gName = "";
-              if (isRemakeView) gName = getRemakeGroupName(g);
-              else if (isGenreView) gName = getGenreGroupName(g);
-              else gName = getSeriesGroupName(g);
+        const groupsArray = [];
+        groupsList.forEach((g, originalIndex) => {
+          if (!Array.isArray(g) || g.length < 2) return;
+          const groupKey = g[0];
+          const memberIds = g.slice(1);
 
-              const groupMovieObjs = g.map(id => allMovies.find(m => String(m.film_ID) === String(id))).filter(Boolean);
+          // Bu gruptaki filtreden geçmiş film nesneleri
+          const matchedMembers = memberIds
+            .map(id => filteredMovieMap.get(String(id)))
+            .filter(Boolean);
 
-              let maxImdb = 0;
-              let maxYear = 0;
-              groupMovieObjs.forEach(m => {
-                const sc = parseFloat(m.imdb_score || 0);
-                if (sc > maxImdb) maxImdb = sc;
-                const yr = parseInt(m.year || 0, 10);
-                if (yr > maxYear) maxYear = yr;
-              });
+          const visibleG = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
+          const minLimit = isGenreView ? 1 : 2;
+          if (visibleG.length < minLimit || matchedMembers.length === 0) return;
 
-              groupMap.set(groupKey, {
-                key: groupKey,
-                name: gName,
-                count: visibleG.length,
-                maxImdb: maxImdb,
-                maxYear: maxYear,
-                originalIndex: groupsList.findIndex(gr => gr.includes(groupKey))
-              });
-            }
-          }
+          let gName = "";
+          if (isRemakeView) gName = getRemakeGroupName(g);
+          else if (isGenreView) gName = getGenreGroupName(g);
+          else gName = getSeriesGroupName(g);
+
+          let maxImdb = 0;
+          let maxYear = 0;
+          matchedMembers.forEach(m => {
+            const sc = parseFloat(m.imdb_score || 0);
+            if (sc > maxImdb) maxImdb = sc;
+            const yr = parseInt(m.year || 0, 10);
+            if (yr > maxYear) maxYear = yr;
+          });
+
+          groupsArray.push({
+            key: groupKey,
+            name: gName,
+            count: visibleG.length,
+            maxImdb: maxImdb,
+            maxYear: maxYear,
+            originalIndex: originalIndex,
+            movies: matchedMembers
+          });
         });
-
-        let groupsArray = Array.from(groupMap.values());
 
         groupsArray.sort((a, b) => {
           if (linkedSortVal === "default") {
@@ -2589,21 +2829,46 @@
           return 0;
         });
 
-        let sortedFiltered = [];
-        groupsArray.forEach(grpInfo => {
-          const g = groupsList.find(gr => gr.includes(grpInfo.key));
-          if (g) {
-            g.forEach(fid => {
-              const movieObj = filtered.find(m => String(m.film_ID) === String(fid));
-              if (movieObj && !sortedFiltered.includes(movieObj)) {
-                sortedFiltered.push(movieObj);
-              }
-            });
-          }
-        });
-        filtered = sortedFiltered;
+        document.getElementById("countDisplay").innerText = filtered.length;
 
-      } else if (activeRelationFilterSet) {
+        const fragment = document.createDocumentFragment();
+        let iconPrefix = "🎬";
+        if (isRemakeView) iconPrefix = "🎥";
+        else if (isGenreView) iconPrefix = "🏷️";
+
+        groupsArray.forEach(grpInfo => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "group-section-wrapper";
+          wrapper.dataset.groupKey = grpInfo.key;
+
+          const secHeader = document.createElement("div");
+          secHeader.className = "group-section-header";
+
+          const isOpenPreviously = openGroupKeys.has(grpInfo.key);
+          const collapseClass = isOpenPreviously ? "" : "collapsed";
+          const collapseIconText = isOpenPreviously ? "▼" : "▶";
+
+          secHeader.innerHTML = `<span>${iconPrefix} ${escapeHtml(grpInfo.name)} (${grpInfo.count} Film)</span><span class="group-collapse-icon">${collapseIconText}</span>`;
+
+          const moviesContainer = document.createElement("div");
+          moviesContainer.className = `group-movies-container ${collapseClass}`;
+
+          grpInfo.movies.forEach(movie => {
+            const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, grpInfo.key);
+            moviesContainer.appendChild(card);
+          });
+
+          wrapper.appendChild(secHeader);
+          wrapper.appendChild(moviesContainer);
+          fragment.appendChild(wrapper);
+        });
+
+        container.appendChild(fragment);
+        updateToggleAllButtonState();
+        return;
+      }
+
+      if (activeRelationFilterSet) {
         filtered.sort((a, b) => {
           const yearA = a.year ? parseInt(a.year, 10) : Infinity;
           const yearB = b.year ? parseInt(b.year, 10) : Infinity;
@@ -2628,252 +2893,11 @@
 
       document.getElementById("countDisplay").innerText = filtered.length;
 
-      const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
-      let prevGroupKey = null;
-
-      let currentSectionWrapper = null;
-      let currentMoviesContainer = null;
-
       const fragment = document.createDocumentFragment();
-
-      const currentGeneralLastId = String(localStorage.getItem("last_clicked_movie_id") || "").trim();
-
       filtered.forEach(movie => {
-        const fid = String(movie.film_ID);
-
-        if (isGroupedLinkedView) {
-          const isRemakeView = (watchlistSelection === "remake_only");
-          const isGenreView = (watchlistSelection === "genre_only");
-
-          let g = null;
-          if (isRemakeView) g = getRemakeGroupForMovie(fid);
-          else if (isGenreView) g = getGenreGroupForMovie(fid);
-          else g = getSeriesGroupForMovie(fid);
-
-          const currentGroupKey = g ? g[0] : ("single_" + fid);
-
-          if (currentGroupKey !== prevGroupKey) {
-            if (prevGroupKey !== null && currentSectionWrapper) {
-              fragment.appendChild(currentSectionWrapper);
-            }
-
-            if (g) {
-              currentSectionWrapper = document.createElement("div");
-              currentSectionWrapper.className = "group-section-wrapper";
-              currentSectionWrapper.dataset.groupKey = currentGroupKey;
-
-              const secHeader = document.createElement("div");
-              secHeader.className = "group-section-header";
-
-              let gName = "";
-              let iconPrefix = "📁";
-              if (isRemakeView) {
-                gName = getRemakeGroupName(g);
-                iconPrefix = "🎥";
-              } else if (isGenreView) {
-                gName = getGenreGroupName(g);
-                iconPrefix = "🏷️";
-              } else {
-                gName = getSeriesGroupName(g);
-                iconPrefix = "🎬";
-              }
-
-              const visibleGroupMembers = showHidden ? g : g.filter(id => !hiddenMoviesState[id]);
-
-              const isOpenPreviously = openGroupKeys.has(currentGroupKey);
-              const collapseClass = isOpenPreviously ? "" : "collapsed";
-              const collapseIconText = isOpenPreviously ? "▼" : "▶";
-
-              secHeader.innerHTML = `<span>${iconPrefix} ${escapeHtml(gName)} (${visibleGroupMembers.length} Film)</span><span class="group-collapse-icon">${collapseIconText}</span>`;
-
-              currentMoviesContainer = document.createElement("div");
-              currentMoviesContainer.className = `group-movies-container ${collapseClass}`;
-
-              currentSectionWrapper.appendChild(secHeader);
-              currentSectionWrapper.appendChild(currentMoviesContainer);
-            }
-          }
-          prevGroupKey = currentGroupKey;
-        }
-
-        const card = document.createElement("div");
-        card.className = "movie-card";
-        card.id = "movie-card-" + fid;
-
-        const posterUrl = movie.poster || "";
-        const imdbText = movie.imdb_score ? "⭐ " + movie.imdb_score : "⭐ -";
-        const yearText = movie.year ? String(movie.year) : "-";
-        const durationText = movie.duration_mins ? `${Math.round(parseFloat(movie.duration_mins))}dk` : "";
-        const actorsStr = getActorsString(movie);
-        const domainText = getDomain(movie.web_scraper_start_url);
-
-        const altUrls = alternativeUrlsState[fid] || [];
-        let altLinksHtml = "";
-        altUrls.forEach((altUrl, idx) => {
-          const label = `URL${idx + 2}`;
-          altLinksHtml += ` | <a class="alt-url-link" href="${escapeHtml(altUrl)}" target="_blank" title="${escapeHtml(altUrl)}" onclick="handleCardClick('${fid}')">${label}</a>`;
-        });
-
-        const domainContainerHtml = domainText ? `
-          <div class="domain-container" title="URL'leri yönetmek için domain adına tıklayın">
-            <span class="domain-badge" onclick="openUrlPopup('${fid}')">${escapeHtml(domainText)}</span>
-            ${altLinksHtml}
-          </div>
-        ` : "";
-
-        const c1 = watchlist1State[fid] ? "checked" : "";
-        const c2 = watchlist2State[fid] ? "checked" : "";
-        const c3 = watchlist3State[fid] ? "checked" : "";
-        const cWatched = watchedState[fid] ? "checked" : "";
-        const cGlorious = gloriousState[fid] ? "checked" : "";
-        const isRadioChecked = (currentGeneralLastId === fid) ? "checked" : "";
-        const myScoreVal = myScoreState[fid] !== undefined ? myScoreState[fid] : "";
-        const isHidden = !!hiddenMoviesState[fid];
-        if (isHidden) {
-          card.classList.add("hidden-card");
-        }
-        const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
-        const eyeBtnIcon = isHidden ? "🙈" : "👁️";
-
-        const rawSeriesGroup = getSeriesGroupForMovie(fid);
-        const seriesGroup = rawSeriesGroup ? (showHidden ? rawSeriesGroup : rawSeriesGroup.filter(id => !hiddenMoviesState[id])) : null;
-        const hasValidSeriesGroup = seriesGroup && seriesGroup.length >= 2;
-        const isSeriesActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'series' && activeRelationFilterSet.set.has(fid);
-        const seriesOtherIds = hasValidSeriesGroup ? seriesGroup.filter(id => id !== fid).join(", ") : "";
-        const seriesInputVal = rawSeriesGroup ? rawSeriesGroup.filter(id => id !== fid).join(",") : "";
-
-        const rawRemakeGroup = getRemakeGroupForMovie(fid);
-        const remakeGroup = rawRemakeGroup ? (showHidden ? rawRemakeGroup : rawRemakeGroup.filter(id => !hiddenMoviesState[id])) : null;
-        const hasValidRemakeGroup = remakeGroup && remakeGroup.length >= 2;
-        const isRemakeActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'remake' && activeRelationFilterSet.set.has(fid);
-        const remakeOtherIds = hasValidRemakeGroup ? remakeGroup.filter(id => id !== fid).join(", ") : "";
-        const remakeInputVal = rawRemakeGroup ? rawRemakeGroup.filter(id => id !== fid).join(",") : "";
-
-        const rawGenreGroup = getGenreGroupForMovie(fid);
-        const genreGroup = rawGenreGroup ? (showHidden ? rawGenreGroup : rawGenreGroup.filter(id => !hiddenMoviesState[id])) : null;
-        const hasValidGenreGroup = genreGroup && genreGroup.length >= 1;
-        const isGenreActiveGroup = activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.set.has(fid);
-        const genreOtherIds = hasValidGenreGroup ? genreGroup.filter(id => id !== fid).join(", ") : "";
-        const genreInputVal = rawGenreGroup ? rawGenreGroup.filter(id => id !== fid).join(",") : "";
-
-        let groupNameBadgesHtml = "";
-        if (hasValidSeriesGroup) {
-          const gNameStr = getSeriesGroupName(seriesGroup);
-          groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(gNameStr)}" style="background: rgba(29, 78, 216, 0.85);">🎬 ${escapeHtml(gNameStr)}</div>`;
-        }
-        if (hasValidRemakeGroup) {
-          const rNameStr = getRemakeGroupName(remakeGroup);
-          groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(rNameStr)}" style="background: rgba(91, 33, 182, 0.85);">🎥 ${escapeHtml(rNameStr)}</div>`;
-        }
-        if (hasValidGenreGroup) {
-          const tNameStr = getGenreGroupName(genreGroup);
-          groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(tNameStr)}" style="background: rgba(5, 150, 105, 0.85);">🏷️ ${escapeHtml(tNameStr)}</div>`;
-        }
-
-        let badgesRightHtml = "";
-        if (hasValidSeriesGroup) {
-          badgesRightHtml += `<button class="relation-badge-btn ${isSeriesActiveGroup ? 'active-group' : ''}" title="Seri Filmler: ${seriesOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'series')">🎬 ${seriesGroup.length}</button>`;
-        }
-        if (hasValidRemakeGroup) {
-          badgesRightHtml += `<button class="remake-badge-btn ${isRemakeActiveGroup ? 'active-group' : ''}" title="Remake Filmler: ${remakeOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'remake')">🎥 ${remakeGroup.length}</button>`;
-        }
-        if (hasValidGenreGroup) {
-          badgesRightHtml += `<button class="genre-badge-btn ${isGenreActiveGroup ? 'active-group' : ''}" title="Türler: ${genreOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'genre')">🏷️ ${genreGroup.length}</button>`;
-        }
-
-        const unlinkSeriesHtml = rawSeriesGroup
-          ? `<button class="btn-unlink" title="Seriden ayır" onclick="unlinkMovie('${fid}', 'series')" style="font-size:9px; background:#7f1d1d; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Seri Ayır</button>`
-          : "";
-
-        const unlinkRemakeHtml = rawRemakeGroup
-          ? `<button class="btn-unlink" title="Remake'den ayır" onclick="unlinkMovie('${fid}', 'remake')" style="font-size:9px; background:#5b21b6; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Remake Ayır</button>`
-          : "";
-
-        const unlinkGenreHtml = rawGenreGroup
-          ? `<button class="btn-unlink" title="Türden ayır" onclick="unlinkMovie('${fid}', 'genre')" style="font-size:9px; background:#065f46; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Tür Ayır</button>`
-          : "";
-
-        card.innerHTML = `
-          <div class="watchlist-group" title="İzleme Listeleri (1, 2, 3)">
-            <input type="checkbox" class="watchlist-checkbox" ${c1} title="İzleme Listesi 1" onchange="updateWatchlist(1, '${fid}', this.checked)">
-            <input type="checkbox" class="watchlist-checkbox" ${c2} title="İzleme Listesi 2" onchange="updateWatchlist(2, '${fid}', this.checked)">
-            <input type="checkbox" class="watchlist-checkbox" ${c3} title="İzleme Listesi 3" onchange="updateWatchlist(3, '${fid}', this.checked)">
-          </div>
-          <div class="glorious-group" title="Muhteşem Filmler olarak işaretle">
-            <input type="checkbox" class="glorious-checkbox" ${cGlorious} title="Muhteşem Filmler" onchange="updateGlorious('${fid}', this.checked)">
-          </div>
-          <div class="poster-badges-right">
-            ${badgesRightHtml}
-          </div>
-          <div class="poster-wrapper">
-            <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok';">
-            <div class="select-id-radio-wrap" title="Bu filmin ID'sini Son ID kutucuğuna ata">
-              <input type="radio" name="selectedMovieRadio" class="select-id-radio" ${isRadioChecked} onchange="selectMovieIdFromCardRadio('${fid}')">
-            </div>
-            <div class="poster-badges-bottom">
-              ${groupNameBadgesHtml}
-            </div>
-            <button class="hide-movie-btn ${isHidden ? 'is-hidden' : ''}" title="${eyeBtnTitle}" onclick="toggleHiddenMovie('${fid}')">${eyeBtnIcon}</button>
-          </div>
-          <div class="card-user-actions">
-            <label class="watched-label" title="İzlediklerim">
-              <input type="checkbox" class="watched-checkbox" ${cWatched} onchange="updateWatched('${fid}', this.checked)"> İzledim
-            </label>
-            <span class="film-id-badge" title="Film ID">ID: ${fid}</span>
-            <div class="score-container" title="Puanım (1-10)">
-              <span>Puanım:</span>
-              <input type="number" class="score-input" min="0" max="10" step="0.1" value="${myScoreVal}" onchange="updateMyScore('${fid}', this.value)">
-            </div>
-          </div>
-          <div class="card-relation-bar" style="flex-direction: column; align-items: stretch; gap: 3px; padding: 5px 6px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="relation-input-wrap" title="Seri ID'si yazıp Enter'a basın">
-                <span class="relation-label">🎬 Seri:</span>
-                <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(seriesInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'series');">
-                <button class="btn-add-group group-popup-trigger" type="button" data-type="series" data-movie-id="${fid}" title="Mevcut bir seri grubuna dahil et (+)">+</button>
-              </div>
-              ${unlinkSeriesHtml}
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="relation-input-wrap" title="Remake ID'si yazıp Enter'a basın">
-                <span class="relation-label">🎥 Remake:</span>
-                <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(remakeInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'remake');" style="color:#d8b4fe; border-color:#7c3aed;">
-                <button class="btn-add-remake group-popup-trigger" type="button" data-type="remake" data-movie-id="${fid}" title="Mevcut bir remake grubuna dahil et (+)">+</button>
-              </div>
-              ${unlinkRemakeHtml}
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="relation-input-wrap" title="Tür ID'si yazıp Enter'a basın">
-                <span class="relation-label">🏷️ Tür:</span>
-                <input type="text" inputmode="numeric" class="relation-input" value="${escapeHtml(genreInputVal)}" placeholder="ID" onfocus="this.select()" onkeydown="if(event.key==='Enter'){ this.blur(); }" onblur="linkMovies('${fid}', this.value, 'genre');" style="color:#a7f3d0; border-color:#10b981;">
-                <button class="btn-add-genre group-popup-trigger" type="button" data-type="genre" data-movie-id="${fid}" title="Mevcut bir tür grubuna dahil et (+)">+</button>
-              </div>
-              ${unlinkGenreHtml}
-            </div>
-          </div>
-          <div class="card-details">
-            ${domainContainerHtml}
-            <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
-            <div class="meta-info">
-              <span>${imdbText}</span>
-              <span>${durationText}</span>
-              <span>${yearText}</span>
-            </div>
-            <div class="summary-text" title="${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}">${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}</div>
-            <div class="actors-text" title="Oyuncular: ${escapeHtml(actorsStr || 'Bilgi yok')}">🎭 ${escapeHtml(actorsStr || 'Oyuncu bilgisi yok')}</div>
-          </div>
-        `;
-
-        if (isGroupedLinkedView && currentMoviesContainer) {
-          currentMoviesContainer.appendChild(card);
-        } else {
-          fragment.appendChild(card);
-        }
+        const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "");
+        fragment.appendChild(card);
       });
-
-      if (isGroupedLinkedView && currentSectionWrapper) {
-        fragment.appendChild(currentSectionWrapper);
-      }
 
       container.appendChild(fragment);
       updateToggleAllButtonState();
@@ -3052,7 +3076,7 @@
   });
 
   const searchInput = document.getElementById("searchInput");
-  document.getElementById("searchIdBtn")?.addEventListener("click", () => renderMovies(true)); // safe guard
+  document.getElementById("searchIdBtn")?.addEventListener("click", () => renderMovies(true));
 
   document.getElementById("searchBtn").addEventListener("click", () => {
     renderMovies(true);
