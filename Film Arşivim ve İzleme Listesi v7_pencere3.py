@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP RESIZE v20 (EXCLUDE EXISTING GENRE MOVIES)")
+    print("   ANA KOD.PY - POPUP RESIZE v21 (LIVE BULK CASCADE SELECTION)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -1223,7 +1223,7 @@ def main():
 
     <!-- Alt Butonlar -->
     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:10px;">
-      <span style="font-size:11px; color:#9ca3af;">* Seçilen filmler bağlı oldukları Seri ve Remake zincirindeki filmlerle birlikte bu türe eklenir.</span>
+      <span style="font-size:11px; color:#9ca3af;">* Bir film seçildiğinde bağlı olduğu Seri ve Remake zincirindeki filmler de anında otomatik seçilir.</span>
       <div style="display:flex; gap:8px;">
         <button type="button" id="closeBulkAddModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:7px 14px;">İptal</button>
         <button type="button" id="confirmBulkAddBtn" style="background:#10b981; color:#fff; border:none; padding:7px 16px; font-weight:bold;">Seçilenleri Ekle</button>
@@ -1903,6 +1903,39 @@ def main():
     }
   }
 
+  // Checkbox işaretlendiği veya kaldırıldığı AN bağlı seri/remake filmlerini de
+  // hem bellekte (bulkSelectedMovieIds) hem de DOM üzerinde anında işaretler / kaldırır.
+  function applyBulkSelectionCascade(movieId, shouldSelect) {
+    const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKeyForBulkAdd);
+    const existingMemberSet = new Set(genreGroup ? genreGroup.slice(1).map(String) : []);
+    const relatedIds = getTransitiveRelatedMovieIds(movieId);
+
+    relatedIds.forEach(relId => {
+      const idStr = String(relId);
+      if (existingMemberSet.has(idStr)) return;
+
+      if (shouldSelect) {
+        bulkSelectedMovieIds.add(idStr);
+      } else {
+        bulkSelectedMovieIds.delete(idStr);
+      }
+
+      const cardEl = document.querySelector(`#bulkMoviesGrid .bulk-movie-item[data-bulk-movie-id="${idStr}"]`);
+      if (cardEl) {
+        const cbEl = cardEl.querySelector(".bulk-movie-cb");
+        if (shouldSelect) {
+          cardEl.classList.add("selected");
+          if (cbEl) cbEl.checked = true;
+        } else {
+          cardEl.classList.remove("selected");
+          if (cbEl) cbEl.checked = false;
+        }
+      }
+    });
+
+    updateBulkSelectedCountBadge();
+  }
+
   function renderBulkAddMoviesGrid() {
     const gridEl = document.getElementById("bulkMoviesGrid");
     if (!gridEl || !targetGenreKeyForBulkAdd) return;
@@ -1988,6 +2021,7 @@ def main():
 
       const itemEl = document.createElement("div");
       itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "");
+      itemEl.dataset.bulkMovieId = fid;
 
       const posterUrl = movie.poster || "";
       const imdbTxt = movie.imdb_score ? `⭐ ${movie.imdb_score}` : "⭐ -";
@@ -1998,32 +2032,15 @@ def main():
       cb.className = "bulk-movie-cb";
       cb.checked = isSelected;
 
-      const toggleSelection = () => {
-        if (bulkSelectedMovieIds.has(fid)) {
-          bulkSelectedMovieIds.delete(fid);
-          itemEl.classList.remove("selected");
-          cb.checked = false;
-        } else {
-          bulkSelectedMovieIds.add(fid);
-          itemEl.classList.add("selected");
-          cb.checked = true;
-        }
-        updateBulkSelectedCountBadge();
-      };
-
       cb.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (cb.checked) {
-          bulkSelectedMovieIds.add(fid);
-          itemEl.classList.add("selected");
-        } else {
-          bulkSelectedMovieIds.delete(fid);
-          itemEl.classList.remove("selected");
-        }
-        updateBulkSelectedCountBadge();
+        applyBulkSelectionCascade(fid, cb.checked);
       });
 
-      itemEl.addEventListener("click", toggleSelection);
+      itemEl.addEventListener("click", () => {
+        const nextState = !bulkSelectedMovieIds.has(fid);
+        applyBulkSelectionCascade(fid, nextState);
+      });
 
       itemEl.innerHTML = `
         <img class="bulk-movie-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/160x220?text=Afi%C5%9F+Yok';">

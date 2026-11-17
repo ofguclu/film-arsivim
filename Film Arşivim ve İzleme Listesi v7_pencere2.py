@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "önceki geliştirmede film o türde varsa Türde Mevcut ibaresi ile o filmi de gösteriyordu. göstermemesi sağlandı"
+SURUM_NOTU = "türlere film ekleyen popup'ta bir filmi seçersem, seri ve remark'lerini de seçili hale getirecek seçenek eklendi"
 
 #kaydet ve 30 sn bekle
 import time
