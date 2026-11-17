@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "türlere film ekleyen popup'ta bir filmi seçersem, seri ve remark'lerini de seçili hale getirecek seçenek eklendi"
+SURUM_NOTU = "Tüm Arşiv sayfasına Sade görünüm / Kompleks görünüm seçeneği eklendi"
 
 #kaydet ve 30 sn bekle
 import time

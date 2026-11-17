@@ -48,6 +48,10 @@
   a.btn-editor { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
   a.btn-editor:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
 
+  .btn-view-mode { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; font-size: 11px; padding: 5px 9px; }
+  .btn-view-mode:hover { background: #059669; color: #fff; border-color: #34d399; }
+  .btn-view-mode.is-simple { background: #10b981; color: #052e16; border-color: #6ee7b7; }
+
   .last-id-container { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #bbb; background: #111; padding: 3px 7px; border-radius: 4px; border: 1px solid #333; }
   .last-id-container input { width: 52px; padding: 3px 5px; text-align: center; font-weight: bold; color: #f5c518; }
   .btn-go { padding: 3px 8px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; font-size: 11px; cursor: pointer; }
@@ -220,6 +224,25 @@
   .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
   .movie-card:hover { transform: translateY(-4px); border-color: #555; }
   .movie-card.highlight { outline: 4px solid var(--accent-color); }
+
+  /* Sade Görünüm (Simple View) Kuralları */
+  body.simple-view .card-user-actions,
+  body.simple-view .card-relation-bar,
+  body.simple-view .domain-container {
+    display: none !important;
+  }
+  body.simple-view .movie-title {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 18px;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+  }
+  body.simple-view .add-movie-to-genre-card {
+    min-height: 360px;
+  }
 
   /* Tür Sayfasında En Sona Eklenen "+ Film Ekle" Kartı */
   .add-movie-to-genre-card {
@@ -923,6 +946,8 @@
 
     <a href="film_editor.html" target="_blank" class="btn-link btn-editor" id="editorLinkBtn" title="details.js Veri Düzenleyicisini Aç">🎬 Film Editörü</a>
 
+    <button type="button" class="btn-view-mode" id="toggleViewModeBtn" title="Sade Görünüm ve Kompleks Görünüm arasında geçiş yap">Sade Görünüm</button>
+
     <button class="btn-reset-filters" id="resetFiltersBtn" title="Sıralamalar hariç tüm filtreleri, aramayı ve aktif grup seçimini sıfırla">🧹 Filtreleri Temizle</button>
 
     <button type="button" id="toggleAllGroupsBtn" class="btn-group-toggle" title="Tüm grupları aç/kapat">📂 Tümünü Aç</button>
@@ -1095,6 +1120,7 @@
   let myScoreState = {};
   let hiddenMoviesState = {};
   let recentMoviesState = [];
+  let isSimpleViewMode = false;
 
   // Her grup dizisinin 0. elemanı bağımsız grup anahtarıdır: ["s_1", "45", "48"]
   let seriesMoviesGroupsState = [];
@@ -1129,6 +1155,38 @@
   let maxGlobalYear = 2030;
   let minGlobalDuration = 0;
   let maxGlobalDuration = 300;
+
+  function applyViewModeUI() {
+    const btn = document.getElementById("toggleViewModeBtn");
+    if (isSimpleViewMode) {
+      document.body.classList.add("simple-view");
+      if (btn) {
+        btn.innerText = "Kompleks Görünüm";
+        btn.classList.add("is-simple");
+      }
+    } else {
+      document.body.classList.remove("simple-view");
+      if (btn) {
+        btn.innerText = "Sade Görünüm";
+        btn.classList.remove("is-simple");
+      }
+    }
+  }
+
+  function toggleViewMode() {
+    isSimpleViewMode = !isSimpleViewMode;
+    try {
+      localStorage.setItem("archive_simple_view_mode", isSimpleViewMode ? "1" : "0");
+    } catch (e) {}
+    applyViewModeUI();
+  }
+
+  try {
+    isSimpleViewMode = localStorage.getItem("archive_simple_view_mode") === "1";
+  } catch (e) {
+    isSimpleViewMode = false;
+  }
+  applyViewModeUI();
 
   // Benzersiz grup anahtarı üretici (s_X, r_X, g_X)
   function generateUniqueGroupKey(type) {
@@ -3420,7 +3478,7 @@
       </div>
       <div class="card-details">
         ${domainContainerHtml}
-        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
+        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" title="${escapeHtml(movie.film_name)}" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
         <div class="meta-info">
           <span>${imdbText}</span>
           <span>${durationText}</span>
@@ -3934,6 +3992,7 @@
     }
   });
 
+  document.getElementById("toggleViewModeBtn").addEventListener("click", toggleViewMode);
   document.getElementById("goBtn").addEventListener("click", executeGoToId);
   document.getElementById("lastIdInput").addEventListener("keypress", (e) => {
     if (e.key === 'Enter') {
