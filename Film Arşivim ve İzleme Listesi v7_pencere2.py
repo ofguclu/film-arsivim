@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Tür sayfasındaki 'Film Ekle' popup penceresine, 'Gizlileri Göster' seçeneği eklendi"
+SURUM_NOTU = "Filmin altındaki artı butolarına basınca çıkan popup yüksekliği biraz daha artırıldı"
 
 #kaydet ve 30 sn bekle
 import time
