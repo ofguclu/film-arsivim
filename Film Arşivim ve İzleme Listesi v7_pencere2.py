@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Önceki süründeki popup'ın soldaki listesi 4 sütunlu hale getirildi"
+SURUM_NOTU = "Önceki süründeki popup'ın soldaki listesinin sıralaması değiştirildi (önce yukarıdan aşağı, sonra soldan sağa)"
 
 #kaydet ve 30 sn bekle
 import time
