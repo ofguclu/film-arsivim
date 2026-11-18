@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP 5 COLUMNS & NO COUNT v29")
+    print("   ANA KOD.PY - POPUP 5 COLUMNS & TALL HEIGHT v30")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -922,10 +922,10 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - 5 Kolon (5 Satır) Yapılandırması */
+  /* Tekli Seçim Listesi (Seri / Remake) - 5 Kolon (24 Satır) Yüksek Yapılandırma */
   .single-grid-list {
     width: 100%;
-    height: 135px;
+    height: 540px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -936,7 +936,7 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(5, 22px);
+    grid-template-rows: repeat(24, 22px);
     grid-auto-columns: 235px;
     align-content: start;
     gap: 3px;
@@ -966,10 +966,10 @@ def main():
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 5 Kolon (5 Satır) Yapılandırması */
+  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 5 Kolon (24 Satır) Yüksek Yapılandırma */
   .multi-checkbox-list {
     width: 100%;
-    height: 135px;
+    height: 540px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -980,7 +980,7 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(5, 22px);
+    grid-template-rows: repeat(24, 22px);
     grid-auto-columns: 235px;
     align-content: start;
     gap: 3px;
@@ -1201,7 +1201,7 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal - 5 Kolon ve Sayısız Sade İsim Yapısı -->
+<!-- Grup Seçim Modal - 5 Kolon ve Sayısız Sade İsim Yapısı (Yüksek Yapı) -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1250px; max-width:97%; max-height:96vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
@@ -1226,7 +1226,7 @@ def main():
       <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar) -->
       <div style="width: 300px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 125px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 510px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
@@ -1330,7 +1330,6 @@ def main():
   let recentMoviesState = [];
   let isSimpleViewMode = false;
 
-  // Her grup dizisinin 0. elemanı bağımsız grup anahtarıdır: ["s_1", "45", "48"]
   let seriesMoviesGroupsState = [];
   let seriesGroupsNamesState = {};
 
@@ -1341,7 +1340,6 @@ def main():
   let genreGroupsNamesState = {};
 
   let alternativeUrlsState = {};
-  // activeRelationFilterSet: { type: 'series'|'remake'|'genre', groupKey: 'g_20', set: Set(['48', '45']) }
   let activeRelationFilterSet = null;
   let currentPopupMovieId = null;
 
@@ -1356,7 +1354,6 @@ def main():
   let focusedGenreKeyInPopup = null;
   let selectedSingleGroupIndexInPopup = null;
 
-  // Toplu Film Ekleme Popup State'leri
   let targetGenreKeyForBulkAdd = null;
   let bulkSelectedMovieIds = new Set();
 
@@ -1397,7 +1394,6 @@ def main():
   }
   applyViewModeUI();
 
-  // Benzersiz grup anahtarı üretici (s_X, r_X, g_X)
   function generateUniqueGroupKey(type) {
     let prefix = "g_";
     let groupsList = genreMoviesGroupsState;
@@ -1437,7 +1433,6 @@ def main():
     return prefix + (maxNum + 1);
   }
 
-  // g[0] bağımsız grup anahtarı, g.slice(1) film ID'leri olacak şekilde temizlik yapar
   function cleanAndSanitizeGroups(groupsArray, namesObj, minFilmCount, type) {
     if (!Array.isArray(groupsArray)) return { groups: [], names: {} };
     const safeNames = (typeof namesObj === "object" && namesObj !== null) ? namesObj : {};
@@ -1451,7 +1446,6 @@ def main():
       let key = String(rawGroup[0]);
       let rawMembers = rawGroup.slice(1).map(String);
 
-      // Güvenlik: Eğer g[0] kazara saf sayısal bir film ID'si gibi gelirse yeni key üret
       if (/^\d+$/.test(key)) {
         rawMembers = rawGroup.map(String);
         key = generateUniqueGroupKey(type);
@@ -1462,7 +1456,6 @@ def main():
       }
       usedKeys.add(key);
 
-      // Tekrar eden film ID'lerini temizle ve key'in kendisini film sanmasını önle
       const uniqueMembers = Array.from(new Set(rawMembers)).filter(id => id !== key);
 
       if (uniqueMembers.length >= minFilmCount) {
@@ -1633,7 +1626,6 @@ def main():
     } catch (e) {}
   }
 
-  // Seri ve Remake 1:1 olduğu için tek grup döndürür: ["s_1", "45", "48"]
   function getSeriesGroupForMovie(movieId) {
     const fid = String(movieId);
     return seriesMoviesGroupsState.find(g => g.slice(1).includes(fid)) || null;
@@ -1644,7 +1636,6 @@ def main():
     return remakeMoviesGroupsState.find(g => g.slice(1).includes(fid)) || null;
   }
 
-  // Tür Many:Many olduğu için o filme ait TÜM tür gruplarının listesini döndürür: [ ["g_20", ...], ["g_69", ...] ]
   function getGenreGroupsForMovie(movieId) {
     const fid = String(movieId);
     return genreMoviesGroupsState.filter(g => g.slice(1).includes(fid));
@@ -1692,10 +1683,6 @@ def main():
     return "";
   }
 
-  // =========================================================================
-  // ZİNCİRLEME (GEÇİŞLİ) SERİ & REMAKE BAĞLANTILI FİLMLERİ BULMA (BFS)
-  // A -> B (Seri) ve B -> C (Remake) ise [A, B, C] kümesinin tamamını döndürür.
-  // =========================================================================
   function getTransitiveRelatedMovieIds(startMovieId) {
     const startId = String(startMovieId);
     const visited = new Set([startId]);
@@ -1720,7 +1707,6 @@ def main():
     return Array.from(visited);
   }
 
-  // Hangi görünümde olunursa olunsun, bir filme eklenen türü bağlı tüm Seri/Remake kümesine yayar
   function propagateGenreToRelatedMovies(movieId, targetGenreKey, shouldSave = true) {
     if (!targetGenreKey) return;
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKey);
@@ -1741,7 +1727,6 @@ def main():
     }
   }
 
-  // Bir kümedeki (Seri/Remake zincirindeki) tüm filmlerin mevcut türlerini birleştirip herkese eşitler
   function syncGenresAcrossRelatedCluster(seedMovieId, shouldSave = true) {
     const clusterIds = getTransitiveRelatedMovieIds(seedMovieId);
     if (clusterIds.length <= 1) return false;
@@ -1767,7 +1752,6 @@ def main():
     return changed;
   }
 
-  // Tüm arşivdeki seri/remake kümelerini tarayıp eksik kalan türleri otomatik senkronize eder
   function syncAllConnectedGenres() {
     const processed = new Set();
     let anyChanged = false;
@@ -1792,7 +1776,6 @@ def main():
     }
   }
 
-  // Başlangıçta mevcut kayıtları da otomatik onar
   syncAllConnectedGenres();
 
   function linkMovies(sourceId, targetIdInput, type) {
@@ -1974,9 +1957,6 @@ def main():
     executeLinkingWithoutPrompt(src, tgt, type, save ? customName : null);
   }
 
-  // =========================================================================
-  // TÜR SAYFASINDAN 5x5 TOPLU FİLM EKLEME POPUP FONKSİYONLARI
-  // =========================================================================
   function openBulkAddMoviesToGenrePopup(genreKey) {
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === genreKey);
     if (!genreGroup) return;
@@ -1994,7 +1974,6 @@ def main():
     document.getElementById("bulkSortSelect").value = "imdb_desc";
     document.getElementById("bulkShowHiddenCheckbox").checked = false;
 
-    // Domain listesini doldur
     const bulkDomainSel = document.getElementById("bulkDomainFilter");
     const mainDomainSel = document.getElementById("domainFilter");
     if (bulkDomainSel && mainDomainSel) {
@@ -2022,8 +2001,6 @@ def main():
     }
   }
 
-  // Checkbox işaretlendiği veya kaldırıldığı AN bağlı seri/remake filmlerini de
-  // hem bellekte (bulkSelectedMovieIds) hem de DOM üzerinde anında işaretler / kaldırır.
   function applyBulkSelectionCascade(movieId, shouldSelect) {
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKeyForBulkAdd);
     const existingMemberSet = new Set(genreGroup ? genreGroup.slice(1).map(String) : []);
@@ -2081,7 +2058,6 @@ def main():
 
     let filteredList = allMovies.filter(movie => {
       const fid = String(movie.film_ID);
-      // Türde zaten mevcut olan filmleri hiç gösterme
       if (existingMemberSet.has(fid)) return false;
 
       if (hiddenMoviesState[fid] && !showHidden) return false;
@@ -2195,7 +2171,6 @@ def main():
       });
       saveGenreGroups();
 
-      // Eğer tekil bir tür filtresi açıksa yeni eklenen (seri/remake yayılımı dahil) filmleri set içine al
       if (activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey === gKey) {
         const updatedGroup = genreMoviesGroupsState.find(g => g[0] === gKey);
         if (updatedGroup) {
@@ -2209,9 +2184,6 @@ def main():
     renderMovies(false);
   }
 
-  // =========================================================================
-  // POPUP İÇİ GRUP LİSTESİ OLUŞTURMA, YENİ GRUP EKLEME VE AD DEĞİŞTİRME
-  // =========================================================================
   function rebuildCachedGroupListForPopup(selectTargetKey = null) {
     const type = activeGroupSelectType;
     if (!type) return;
@@ -2234,7 +2206,6 @@ def main():
         const isNewlyCreatedInThisPopup = tempCreatedGroupKeysInPopup.includes(gKey);
         const minLimit = 1;
 
-        // Yeni popup içinde oluşturulan gruplar henüz 0 filmli olsa bile listede görünsün
         if (!isNewlyCreatedInThisPopup && visibleMembers.length < minLimit) return;
 
         let gName = "";
@@ -2281,7 +2252,6 @@ def main():
       if (singleGridEl) singleGridEl.style.display = "none";
       if (checkboxListEl) checkboxListEl.style.display = "grid";
 
-      // Filmin halihazırda bağlı olduğu türleri başlangıçta işaretle
       const existingGenres = getGenreGroupsForMovie(activeMovieIdForGroupSelect);
       existingGenres.forEach(g => selectedGenreKeysInPopup.add(g[0]));
       if (existingGenres.length > 0) {
@@ -2345,7 +2315,6 @@ def main():
       namesObj = genreGroupsNamesState;
     }
 
-    // Aynı isimde bir grup zaten varsa oluşturmak yerine onu seç
     const existingEntry = groupsList.find(g => {
       const k = g[0];
       return (namesObj[k] || "").trim().toLowerCase() === newName.toLowerCase();
@@ -2502,7 +2471,6 @@ def main():
       return 0;
     });
 
-    // Tür (genre) için 5 Kolonlu Multiple-Choice Checkbox Izgarası render et
     if (activeGroupSelectType === 'genre') {
       const checkboxListEl = document.getElementById("groupSelectCheckboxList");
       if (!checkboxListEl) return;
@@ -2567,7 +2535,6 @@ def main():
       return;
     }
 
-    // Seri ve Remake için 5 Kolonlu Tekli Seçim Izgarası render et
     const singleGridEl = document.getElementById("groupSelectDropdown");
     if (!singleGridEl) return;
     singleGridEl.innerHTML = "";
@@ -2644,7 +2611,6 @@ def main():
     previewListEl.innerHTML = htmlContent;
   }
 
-  // Ekle'ye basılmadan iptal edilirse 0 filmli kalan geçici grupları temizler
   function cleanupUnusedTempGroupsInPopup() {
     if (!tempCreatedGroupKeysInPopup || tempCreatedGroupKeysInPopup.length === 0) return;
 
@@ -2696,18 +2662,15 @@ def main():
     const movieIdToAdd = activeMovieIdForGroupSelect;
     const type = activeGroupSelectType;
 
-    // Tür (genre) için Çoklu Seçim (Checkbox) kaydı
     if (type === 'genre') {
       const currentAssignedKeys = new Set(getGenreGroupsForMovie(movieIdToAdd).map(g => g[0]));
 
-      // Yeni işaretlenen türleri ekle (bağlı seri/remake kümesine de yay)
       selectedGenreKeysInPopup.forEach(gKey => {
         if (!currentAssignedKeys.has(gKey)) {
           propagateGenreToRelatedMovies(movieIdToAdd, gKey, false);
         }
       });
 
-      // İşareti kaldırılan eski türleri çıkar
       currentAssignedKeys.forEach(oldKey => {
         if (!selectedGenreKeysInPopup.has(oldKey)) {
           unlinkMovie(movieIdToAdd, 'genre', oldKey, false);
@@ -2720,7 +2683,6 @@ def main():
       return;
     }
 
-    // Seri ve Remake için Tekli Seçim kaydı
     if (selectedSingleGroupIndexInPopup === null || isNaN(selectedSingleGroupIndexInPopup)) {
       closeGroupSelectPopup();
       return;
@@ -2736,7 +2698,6 @@ def main():
 
     const targetGroupKey = group[0];
 
-    // Seri ve Remake 1:1 olduğu için, film başka bir gruptaysa önce oradan çıkar
     const existingGroup = (type === 'series') ? getSeriesGroupForMovie(movieIdToAdd) : getRemakeGroupForMovie(movieIdToAdd);
     if (existingGroup && existingGroup[0] !== targetGroupKey) {
       unlinkMovie(movieIdToAdd, type, existingGroup[0], false);
@@ -2755,7 +2716,6 @@ def main():
     renderMovies(false);
   }
 
-  // specificGroupKey özellikle Many:Many olan Tür grubunda hangi türden ayıracağımızı belirler
   function unlinkMovie(movieId, type, specificGroupKey = null, shouldRender = true) {
     const fid = String(movieId);
     let groupsList = null;
@@ -3495,7 +3455,6 @@ def main():
     return 0;
   }
 
-  // Tür sayfasında son filmin sağındaki boşluğa konulan "+ Film Ekle" kartı üreticisi
   function buildAddMovieToGenreCard(genreKey) {
     const card = document.createElement("div");
     card.className = "add-movie-to-genre-card";
@@ -3553,7 +3512,6 @@ def main():
     const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
     const eyeBtnIcon = isHidden ? "🙈" : "👁️";
 
-    // Seri (1:1) - g[0] key, g.slice(1) film ID'leri (Minimum 1 film)
     const rawSeriesGroup = getSeriesGroupForMovie(fid);
     const seriesMembers = rawSeriesGroup ? (showHidden ? rawSeriesGroup.slice(1) : rawSeriesGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
     const hasValidSeriesGroup = seriesMembers && seriesMembers.length >= 1;
@@ -3561,7 +3519,6 @@ def main():
     const seriesOtherIds = hasValidSeriesGroup ? (seriesMembers.filter(id => id !== fid).join(", ") || "Tek film") : "";
     const seriesInputVal = rawSeriesGroup ? rawSeriesGroup.slice(1).filter(id => id !== fid).join(",") : "";
 
-    // Remake (1:1) - g[0] key, g.slice(1) film ID'leri (Minimum 1 film)
     const rawRemakeGroup = getRemakeGroupForMovie(fid);
     const remakeMembers = rawRemakeGroup ? (showHidden ? rawRemakeGroup.slice(1) : rawRemakeGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
     const hasValidRemakeGroup = remakeMembers && remakeMembers.length >= 1;
@@ -3569,7 +3526,6 @@ def main():
     const remakeOtherIds = hasValidRemakeGroup ? (remakeMembers.filter(id => id !== fid).join(", ") || "Tek film") : "";
     const remakeInputVal = rawRemakeGroup ? rawRemakeGroup.slice(1).filter(id => id !== fid).join(",") : "";
 
-    // Tür (Many:Many) - O filme ait TÜM tür grupları (Minimum 1 film)
     const rawGenreGroups = getGenreGroupsForMovie(fid);
     const validGenreGroups = rawGenreGroups.map(g => {
       const visibleM = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
@@ -4030,7 +3986,6 @@ def main():
             moviesContainer.appendChild(card);
           });
 
-          // Türler sayfasındayken her tür grubunun en son filminin sağına "+ Film Ekle" kartı koy
           if (isGenreView) {
             moviesContainer.appendChild(buildAddMovieToGenreCard(grpInfo.key));
           }
@@ -4076,7 +4031,6 @@ def main():
         fragment.appendChild(card);
       });
 
-      // Tekil bir Tür filtrelenmişse (banner açıkken) en son filmin sağına "+ Film Ekle" kartı ekle
       if (activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey) {
         fragment.appendChild(buildAddMovieToGenreCard(activeRelationFilterSet.groupKey));
       }
@@ -4135,7 +4089,6 @@ def main():
   document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown(null));
   document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown(null));
 
-  // Toplu Film Ekleme Popup Event Listener'ları
   document.getElementById("closeBulkAddModalBtn").addEventListener("click", closeBulkAddMoviesToGenrePopup);
   document.getElementById("confirmBulkAddBtn").addEventListener("click", confirmBulkAddMoviesToGenre);
   document.getElementById("bulkSearchInput").addEventListener("input", renderBulkAddMoviesGrid);

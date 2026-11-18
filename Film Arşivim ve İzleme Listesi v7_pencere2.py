@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "liste 5 kolon yapıldı"
+SURUM_NOTU = "popup yükseliği önceki kodda çokküçülmüştü, normale çekildi"
 
 #kaydet ve 30 sn bekle
 import time
