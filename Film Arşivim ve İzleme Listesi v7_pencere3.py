@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP 5 COLUMNS & REDUCED WIDTH v31")
+    print("   ANA KOD.PY - POPUP 7 COLUMNS & WIDE v32")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -922,10 +922,10 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - 5 Kolon (24 Satır) ve Daraltılmış Kolon Genişliği (165px) */
+  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (Yüksek Yapılandırma) */
   .single-grid-list {
     width: 100%;
-    height: 540px;
+    height: 756px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -966,10 +966,10 @@ def main():
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 5 Kolon (24 Satır) ve Daraltılmış Kolon Genişliği (165px) */
+  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (Yüksek Yapılandırma) */
   .multi-checkbox-list {
     width: 100%;
-    height: 540px;
+    height: 756px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -1201,11 +1201,11 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal - 5 Kolon ve Daraltılmış Kolon Genişliği (1050px) -->
+<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş (%40 Büyütülmüş Genişlik ve Yükseklik) ve %10 Daraltılmış Sağ Liste -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1050px; max-width:97%; max-height:96vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
+  <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1470px; max-width:98%; max-height:98vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
-      <!-- Sol Taraf: 5 Kolonlu Izgara Liste ve Arama -->
+      <!-- Sol Taraf: 7 Kolonlu Izgara Liste ve Arama -->
       <div style="flex: 1; min-width: 0; display:flex; flex-direction:column;">
         <div style="display:flex; gap:6px; margin-bottom:8px;">
           <input type="text" id="groupSearchInput" placeholder="Grup ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:12px; box-sizing:border-box;">
@@ -1217,16 +1217,16 @@ def main():
             <option value="count_desc">Film Sayısı (Azalan)</option>
           </select>
         </div>
-        <!-- Seri / Remake için 5 Kolon Tekli Seçim Izgarası (165px) -->
+        <!-- Seri / Remake için 7 Kolon Tekli Seçim Izgarası -->
         <div id="groupSelectDropdown" class="single-grid-list"></div>
-        <!-- Tür için 5 Kolon Çoklu Seçim (Checkbox Izgarası) (165px) -->
+        <!-- Tür için 7 Kolon Çoklu Seçim (Checkbox Izgarası) -->
         <div id="groupSelectCheckboxList" class="multi-checkbox-list" style="display:none;"></div>
       </div>
 
-      <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar) -->
-      <div style="width: 280px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
+      <!-- Sağ Taraf: Seçilen Grubun Filmleri (%10 Daraltılmış Width: 252px) -->
+      <div style="width: 252px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 510px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 720px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
@@ -2602,7 +2602,7 @@ def main():
 
       htmlContent += `
         <div style="background: #1e1e1e; border: 1px solid #333; padding: 5px 9px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="${escapeHtml(mName)}">${escapeHtml(mName)} ${mYear}</span>
+          <span style="color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;" title="${escapeHtml(mName)}">${escapeHtml(mName)} ${mYear}</span>
           <span style="color: #f5c518; font-size: 10px; flex-shrink: 0;">${mImdb}</span>
         </div>
       `;
