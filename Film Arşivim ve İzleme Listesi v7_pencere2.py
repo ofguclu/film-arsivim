@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "popup'ın yükeskliğini ve genişliğini %40 genişlet,liste kolonlarını 7 kolon yap (sığarsa daha fazla). sağdaki listeyi %10 daralt"
+SURUM_NOTU = "listenin sütunundaki mevcut 24 satır sayısı 8 artırılarak 32 satıra çıkarıldı"
 
 #kaydet ve 30 sn bekle
 import time
