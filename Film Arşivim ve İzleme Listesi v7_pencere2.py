@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Filmin altındaki artı butolarına basınca çıkan popup yüksekliği biraz daha artırıldı"
+SURUM_NOTU = "Önceki süründeki popup'ın soldaki listesi 4 sütunlu hale getirildi"
 
 #kaydet ve 30 sn bekle
 import time

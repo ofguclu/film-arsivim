@@ -773,44 +773,81 @@
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Dropdown (Seri / Remake) - Satır yüksekliği daraltıldı */
-  #groupSelectDropdown option {
-    padding: 2px 6px;
-    line-height: 1.25;
-    font-size: 12.5px;
-  }
-
-  /* Checkbox Multiple-Choice Listesi (Tür Popup için) - Yükseklik %40 daha artırıldı ve satır araları daraltıldı */
-  .multi-checkbox-list {
+  /* 4 Kolonlu Tekli Seçim Listesi (Seri / Remake) - Yükseklik %20 düşürüldü (425px) */
+  .single-grid-list {
     width: 100%;
-    height: 665px;
+    height: 425px;
     overflow-y: auto;
     background: #121212;
     color: #e0e0e0;
     border: 1px solid #444;
     border-radius: 4px;
-    padding: 3px;
+    padding: 4px;
     box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+    gap: 3px;
+  }
+  .single-grid-item {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1.2;
+    user-select: none;
+    border: 1px solid #1f1f1f;
+    background: #181818;
+    min-height: 20px;
+    box-sizing: border-box;
+  }
+  .single-grid-item:hover {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .single-grid-item.active-row {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  /* 4 Kolonlu Checkbox Multiple-Choice Listesi (Tür Popup için) - Yükseklik %20 düşürüldü (425px) */
+  .multi-checkbox-list {
+    width: 100%;
+    height: 425px;
+    overflow-y: auto;
+    background: #121212;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 4px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+    gap: 3px;
   }
   .multi-checkbox-item {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 3px 8px;
+    gap: 5px;
+    padding: 2px 6px;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 12.5px;
-    line-height: 1.25;
+    font-size: 11px;
+    line-height: 1.2;
     user-select: none;
-    border: 1px solid transparent;
-    min-height: 22px;
+    border: 1px solid #1f1f1f;
+    background: #181818;
+    min-height: 20px;
     box-sizing: border-box;
   }
   .multi-checkbox-item:hover {
     background: #1f2937;
+    border-color: #374151;
   }
   .multi-checkbox-item.active-row {
     background: #1e3a8a;
@@ -818,8 +855,8 @@
     color: #fff;
   }
   .multi-checkbox-item input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     accent-color: #10b981;
     cursor: pointer;
     margin: 0;
@@ -1009,18 +1046,18 @@
   </div>
 </div>
 
-<!-- Grup Seçim Modal (+ Butonu ile direkt ekleme, yeni grup ekleme ve ad değiştirme için) - Yükseklik %40 daha artırıldı ve liste daraltıldı -->
+<!-- Grup Seçim Modal - %30 Geniş (1250px), %20 Kısa (425px), 4 Kolonlu Izgara -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:#1e1e1e; border:1px solid #333; padding:18px 22px; border-radius:8px; width:960px; max-width:96%; max-height:94vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
-    <h3 style="margin-top:0; margin-bottom:6px; color:#f5c518;" id="groupSelectModalTitle">📁 Bir Gruba Dahil Et (ID: <span id="targetMovieIdForGroup"></span>)</h3>
-    <p style="font-size:12px; color:#aaa; margin-top:0; margin-bottom:10px;" id="groupSelectModalSubtitle">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
+  <div style="background:#1e1e1e; border:1px solid #333; padding:14px 18px; border-radius:8px; width:1250px; max-width:97%; max-height:90vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+    <h3 style="margin-top:0; margin-bottom:4px; color:#f5c518;" id="groupSelectModalTitle">📁 Bir Gruba Dahil Et (ID: <span id="targetMovieIdForGroup"></span>)</h3>
+    <p style="font-size:12px; color:#aaa; margin-top:0; margin-bottom:8px;" id="groupSelectModalSubtitle">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
 
-    <div style="display:flex; gap:18px;">
-      <!-- Sol Taraf: Liste ve Arama -->
-      <div style="flex: 1; display:flex; flex-direction:column;">
+    <div style="display:flex; gap:14px;">
+      <!-- Sol Taraf: 4 Kolonlu Izgara Liste ve Arama -->
+      <div style="flex: 1; min-width: 0; display:flex; flex-direction:column;">
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <input type="text" id="groupSearchInput" placeholder="Grup ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:7px 8px; border-radius:4px; font-size:12px; box-sizing:border-box;">
-          <select id="groupPopupSortSelect" style="background:#121212; color:#e0e0e0; border:1px solid #444; padding:6px; border-radius:4px; font-size:11px;">
+          <input type="text" id="groupSearchInput" placeholder="Grup ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:12px; box-sizing:border-box;">
+          <select id="groupPopupSortSelect" style="background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px; border-radius:4px; font-size:11px;">
             <option value="default">Varsayılan</option>
             <option value="alpha_asc">Alfabetik (A-Z)</option>
             <option value="alpha_desc">Alfabetik (Z-A)</option>
@@ -1028,39 +1065,39 @@
             <option value="count_desc">Film Sayısı (Azalan)</option>
           </select>
         </div>
-        <!-- Seri / Remake için Tekli Seçim (size 23 -> 36) -->
-        <select id="groupSelectDropdown" size="36" style="width:100%; background:#121212; color:#e0e0e0; border:1px solid #444; padding:4px; border-radius:4px; font-size:12.5px; box-sizing:border-box;"></select>
-        <!-- Tür için Çoklu Seçim (Checkbox Listesi - height 665px) -->
+        <!-- Seri / Remake için 4 Kolonlu Tekli Seçim Izgarası (height 425px) -->
+        <div id="groupSelectDropdown" class="single-grid-list"></div>
+        <!-- Tür için 4 Kolonlu Çoklu Seçim (Checkbox Izgarası - height 425px) -->
         <div id="groupSelectCheckboxList" class="multi-checkbox-list" style="display:none;"></div>
       </div>
 
-      <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar - max-height 650px) -->
-      <div style="width: 350px; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
+      <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar - max-height 415px) -->
+      <div style="width: 300px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 650px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 415px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
     </div>
 
     <!-- Alt Çubuk: Sol Altta Yeni Grup Ekle, Alt Ortada Adı Değiştir, Sağ Altta İptal & Ekle -->
-    <div style="margin-top:14px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:12px;">
+    <div style="margin-top:10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:8px;">
       <!-- Sol Alt: Yeni Grup Ekle -->
       <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
-        <input type="text" id="newGroupInPopupInput" placeholder="Yeni grup adı..." style="flex:1; min-width:130px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:7px 9px; border-radius:4px; font-size:12px;">
-        <button type="button" id="createNewGroupInPopupBtn" style="background:#059669; color:#fff; border:none; padding:7px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Yeni Tür Ekle</button>
+        <input type="text" id="newGroupInPopupInput" placeholder="Yeni grup adı..." style="flex:1; min-width:130px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 9px; border-radius:4px; font-size:12px;">
+        <button type="button" id="createNewGroupInPopupBtn" style="background:#059669; color:#fff; border:none; padding:5px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Yeni Tür Ekle</button>
       </div>
 
       <!-- Alt Orta: Seçili Grubun Adını Değiştir -->
       <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
-        <input type="text" id="renameGroupInPopupInput" placeholder="Seçili grup adı..." style="flex:1; min-width:130px; background:#121212; color:#f5c518; border:1px solid #444; padding:7px 9px; border-radius:4px; font-size:12px;">
-        <button type="button" id="renameGroupInPopupBtn" style="background:#d97706; color:#fff; border:none; padding:7px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Adı Değiştir</button>
+        <input type="text" id="renameGroupInPopupInput" placeholder="Seçili grup adı..." style="flex:1; min-width:130px; background:#121212; color:#f5c518; border:1px solid #444; padding:5px 9px; border-radius:4px; font-size:12px;">
+        <button type="button" id="renameGroupInPopupBtn" style="background:#d97706; color:#fff; border:none; padding:5px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Adı Değiştir</button>
       </div>
 
       <!-- Sağ Alt: İptal & Ekle -->
       <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
-        <button type="button" id="closeGroupSelectModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:7px 14px; border-radius:4px; cursor:pointer;">İptal</button>
-        <button type="button" id="confirmGroupSelectBtn" style="background:#3b82f6; color:#fff; border:none; padding:7px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">Ekle</button>
+        <button type="button" id="closeGroupSelectModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer;">İptal</button>
+        <button type="button" id="confirmGroupSelectBtn" style="background:#3b82f6; color:#fff; border:none; padding:5px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">Ekle</button>
       </div>
     </div>
   </div>
@@ -1165,6 +1202,7 @@
   let tempCreatedGroupKeysInPopup = [];
   let selectedGenreKeysInPopup = new Set();
   let focusedGenreKeyInPopup = null;
+  let selectedSingleGroupIndexInPopup = null;
 
   // Toplu Film Ekleme Popup State'leri
   let targetGenreKeyForBulkAdd = null;
@@ -2073,6 +2111,7 @@
     tempCreatedGroupKeysInPopup = [];
     selectedGenreKeysInPopup = new Set();
     focusedGenreKeyInPopup = null;
+    selectedSingleGroupIndexInPopup = null;
 
     const targetSpan = document.getElementById("targetMovieIdForGroup");
     if (targetSpan) targetSpan.innerText = activeMovieIdForGroupSelect;
@@ -2086,13 +2125,13 @@
     const renameInputEl = document.getElementById("renameGroupInPopupInput");
     if (renameInputEl) renameInputEl.value = "";
 
-    const singleSelectEl = document.getElementById("groupSelectDropdown");
+    const singleGridEl = document.getElementById("groupSelectDropdown");
     const checkboxListEl = document.getElementById("groupSelectCheckboxList");
     const subtitleEl = document.getElementById("groupSelectModalSubtitle");
 
     if (type === 'genre') {
-      if (singleSelectEl) singleSelectEl.style.display = "none";
-      if (checkboxListEl) checkboxListEl.style.display = "flex";
+      if (singleGridEl) singleGridEl.style.display = "none";
+      if (checkboxListEl) checkboxListEl.style.display = "grid";
       if (subtitleEl) subtitleEl.innerText = "Birden fazla tür seçebilir, yeni tür ekleyebilir veya seçili türün adını düzenleyebilirsiniz:";
 
       // Filmin halihazırda bağlı olduğu türleri başlangıçta işaretle
@@ -2102,7 +2141,7 @@
         focusedGenreKeyInPopup = existingGenres[0][0];
       }
     } else {
-      if (singleSelectEl) singleSelectEl.style.display = "block";
+      if (singleGridEl) singleGridEl.style.display = "grid";
       if (checkboxListEl) checkboxListEl.style.display = "none";
       if (subtitleEl) subtitleEl.innerText = "Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:";
     }
@@ -2229,12 +2268,11 @@
         return;
       }
     } else {
-      const sel = document.getElementById("groupSelectDropdown");
-      if (!sel || sel.value === "" || isNaN(sel.value)) {
+      if (selectedSingleGroupIndexInPopup === null || isNaN(selectedSingleGroupIndexInPopup)) {
         alert("Lütfen önce soldaki listeden adı değiştirilecek bir grup seçin.");
         return;
       }
-      const groupIdx = parseInt(sel.value, 10);
+      const groupIdx = parseInt(selectedSingleGroupIndexInPopup, 10);
       const groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
       namesObj = (type === 'series') ? seriesGroupsNamesState : remakeGroupsNamesState;
       const group = groupsList[groupIdx];
@@ -2275,6 +2313,28 @@
     }
   }
 
+  function setFocusedSingleGroupRow(groupIndex) {
+    selectedSingleGroupIndexInPopup = groupIndex;
+    const matchedItem = cachedGroupListForPopup.find(item => item.index === groupIndex);
+    updateGroupPreview(matchedItem ? matchedItem.members : null);
+
+    const renameInputEl = document.getElementById("renameGroupInPopupInput");
+    if (renameInputEl) {
+      renameInputEl.value = matchedItem ? matchedItem.rawName : "";
+    }
+
+    const singleGridEl = document.getElementById("groupSelectDropdown");
+    if (singleGridEl) {
+      singleGridEl.querySelectorAll(".single-grid-item").forEach(row => {
+        if (parseInt(row.dataset.groupIndex, 10) === groupIndex) {
+          row.classList.add("active-row");
+        } else {
+          row.classList.remove("active-row");
+        }
+      });
+    }
+  }
+
   function filterAndSortGroupSelectDropdown(selectTargetKey = null) {
     const queryEl = document.getElementById("groupSearchInput");
     const sortValEl = document.getElementById("groupPopupSortSelect");
@@ -2304,14 +2364,14 @@
       return 0;
     });
 
-    // Tür (genre) için Multiple-Choice Checkbox Listesi render et
+    // Tür (genre) için 4 Kolonlu Multiple-Choice Checkbox Izgarası render et
     if (activeGroupSelectType === 'genre') {
       const checkboxListEl = document.getElementById("groupSelectCheckboxList");
       if (!checkboxListEl) return;
       checkboxListEl.innerHTML = "";
 
       if (list.length === 0) {
-        checkboxListEl.innerHTML = `<div style="color:#888; padding:12px; text-align:center; font-style:italic;">Eşleşen tür bulunamadı</div>`;
+        checkboxListEl.innerHTML = `<div style="grid-column: 1 / -1; color:#888; padding:12px; text-align:center; font-style:italic;">Eşleşen tür bulunamadı</div>`;
         updateGroupPreview(null);
         const renameInputEl = document.getElementById("renameGroupInPopupInput");
         if (renameInputEl) renameInputEl.value = "";
@@ -2369,47 +2429,46 @@
       return;
     }
 
-    // Seri ve Remake için Tekli <select> render et
-    const sel = document.getElementById("groupSelectDropdown");
-    if (!sel) return;
-    sel.innerHTML = "";
+    // Seri ve Remake için 4 Kolonlu Tekli Seçim Izgarası render et
+    const singleGridEl = document.getElementById("groupSelectDropdown");
+    if (!singleGridEl) return;
+    singleGridEl.innerHTML = "";
 
     if (list.length === 0) {
-      sel.innerHTML = `<option value="">Eşleşen grup bulunamadı</option>`;
+      singleGridEl.innerHTML = `<div style="grid-column: 1 / -1; color:#888; padding:12px; text-align:center; font-style:italic;">Eşleşen grup bulunamadı</div>`;
+      selectedSingleGroupIndexInPopup = null;
       updateGroupPreview(null);
       const renameInputEl = document.getElementById("renameGroupInPopupInput");
       if (renameInputEl) renameInputEl.value = "";
     } else {
-      let targetSelectIndex = 0;
-      list.forEach((item, listIdx) => {
-        const opt = document.createElement("option");
-        opt.value = item.index;
-        opt.textContent = item.name;
-        sel.appendChild(opt);
-        if (selectTargetKey && item.groupKey === selectTargetKey) {
-          targetSelectIndex = listIdx;
-        }
+      let targetItem = list[0];
+      if (selectTargetKey) {
+        const found = list.find(i => i.groupKey === selectTargetKey);
+        if (found) targetItem = found;
+      } else if (selectedSingleGroupIndexInPopup !== null) {
+        const found = list.find(i => i.index === selectedSingleGroupIndexInPopup);
+        if (found) targetItem = found;
+      }
+
+      list.forEach(item => {
+        const cell = document.createElement("div");
+        cell.className = "single-grid-item" + (item.index === targetItem.index ? " active-row" : "");
+        cell.dataset.groupIndex = item.index;
+        cell.title = item.name;
+
+        const lbl = document.createElement("span");
+        lbl.className = "multi-checkbox-label";
+        lbl.textContent = item.name;
+
+        cell.appendChild(lbl);
+        cell.addEventListener("click", () => {
+          setFocusedSingleGroupRow(item.index);
+        });
+
+        singleGridEl.appendChild(cell);
       });
-      sel.selectedIndex = targetSelectIndex;
-      updateGroupPreviewFromDropdown();
-    }
-  }
 
-  function updateGroupPreviewFromDropdown() {
-    const sel = document.getElementById("groupSelectDropdown");
-    const renameInputEl = document.getElementById("renameGroupInPopupInput");
-
-    if (!sel || sel.value === "" || isNaN(sel.value)) {
-      updateGroupPreview(null);
-      if (renameInputEl) renameInputEl.value = "";
-      return;
-    }
-    const groupIdx = parseInt(sel.value, 10);
-    const matchedItem = cachedGroupListForPopup.find(item => item.index === groupIdx);
-    updateGroupPreview(matchedItem ? matchedItem.members : null);
-
-    if (renameInputEl) {
-      renameInputEl.value = matchedItem ? matchedItem.rawName : "";
+      setFocusedSingleGroupRow(targetItem.index);
     }
   }
 
@@ -2438,7 +2497,7 @@
 
       htmlContent += `
         <div style="background: #1e1e1e; border: 1px solid #333; padding: 5px 9px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;" title="${escapeHtml(mName)}">${escapeHtml(mName)} ${mYear}</span>
+          <span style="color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;" title="${escapeHtml(mName)}">${escapeHtml(mName)} ${mYear}</span>
           <span style="color: #f5c518; font-size: 10px; flex-shrink: 0;">${mImdb}</span>
         </div>
       `;
@@ -2487,6 +2546,7 @@
     cachedGroupListForPopup = [];
     selectedGenreKeysInPopup = new Set();
     focusedGenreKeyInPopup = null;
+    selectedSingleGroupIndexInPopup = null;
   }
 
   function confirmGroupSelect() {
@@ -2523,16 +2583,11 @@
     }
 
     // Seri ve Remake için Tekli Seçim kaydı
-    const sel = document.getElementById("groupSelectDropdown");
-    if (!sel) {
+    if (selectedSingleGroupIndexInPopup === null || isNaN(selectedSingleGroupIndexInPopup)) {
       closeGroupSelectPopup();
       return;
     }
-    const idx = sel.value;
-    if (idx === "" || isNaN(idx)) {
-      closeGroupSelectPopup();
-      return;
-    }
+    const idx = parseInt(selectedSingleGroupIndexInPopup, 10);
 
     const groupsList = (type === 'series') ? seriesMoviesGroupsState : remakeMoviesGroupsState;
     const group = groupsList[idx];
@@ -3941,7 +3996,6 @@
   });
   document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown(null));
   document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown(null));
-  document.getElementById("groupSelectDropdown").addEventListener("change", updateGroupPreviewFromDropdown);
 
   // Toplu Film Ekleme Popup Event Listener'ları
   document.getElementById("closeBulkAddModalBtn").addEventListener("click", closeBulkAddMoviesToGenrePopup);
