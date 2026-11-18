@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP COLUMN-FIRST FLOW & BOTTOM SCROLL v27")
+    print("   ANA KOD.PY - POPUP 5 COLUMNS & NO COUNT v29")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -922,10 +922,10 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - Önce Yukarıdan Aşağı, Sonra Soldan Sağa, Altta Yatay Kaydırma Çubuğu */
+  /* Tekli Seçim Listesi (Seri / Remake) - 5 Kolon (5 Satır) Yapılandırması */
   .single-grid-list {
     width: 100%;
-    height: 425px;
+    height: 135px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -936,8 +936,8 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(16, 22px);
-    grid-auto-columns: 215px;
+    grid-template-rows: repeat(5, 22px);
+    grid-auto-columns: 235px;
     align-content: start;
     gap: 3px;
   }
@@ -966,10 +966,10 @@ def main():
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - Önce Yukarıdan Aşağı, Sonra Soldan Sağa, Altta Yatay Kaydırma Çubuğu */
+  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 5 Kolon (5 Satır) Yapılandırması */
   .multi-checkbox-list {
     width: 100%;
-    height: 425px;
+    height: 135px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -980,8 +980,8 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(16, 22px);
-    grid-auto-columns: 215px;
+    grid-template-rows: repeat(5, 22px);
+    grid-auto-columns: 235px;
     align-content: start;
     gap: 3px;
   }
@@ -1201,14 +1201,11 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal - Önce Yukarıdan Aşağı, Sonra Soldan Sağa Akış ve Altta Yatay Scrollbar -->
-<div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:#1e1e1e; border:1px solid #333; padding:14px 18px; border-radius:8px; width:1250px; max-width:97%; max-height:90vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
-    <h3 style="margin-top:0; margin-bottom:4px; color:#f5c518;" id="groupSelectModalTitle">📁 Bir Gruba Dahil Et (ID: <span id="targetMovieIdForGroup"></span>)</h3>
-    <p style="font-size:12px; color:#aaa; margin-top:0; margin-bottom:8px;" id="groupSelectModalSubtitle">Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:</p>
-
+<!-- Grup Seçim Modal - 5 Kolon ve Sayısız Sade İsim Yapısı -->
+<div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1250px; max-width:97%; max-height:96vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
-      <!-- Sol Taraf: Yukarıdan Aşağı -> Soldan Sağa Izgara Liste ve Arama -->
+      <!-- Sol Taraf: 5 Kolonlu Izgara Liste ve Arama -->
       <div style="flex: 1; min-width: 0; display:flex; flex-direction:column;">
         <div style="display:flex; gap:6px; margin-bottom:8px;">
           <input type="text" id="groupSearchInput" placeholder="Grup ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:12px; box-sizing:border-box;">
@@ -1220,23 +1217,23 @@ def main():
             <option value="count_desc">Film Sayısı (Azalan)</option>
           </select>
         </div>
-        <!-- Seri / Remake için Yukarıdan Aşağıya -> Soldan Sağa Tekli Seçim Izgarası -->
+        <!-- Seri / Remake için 5 Kolon Tekli Seçim Izgarası -->
         <div id="groupSelectDropdown" class="single-grid-list"></div>
-        <!-- Tür için Yukarıdan Aşağıya -> Soldan Sağa Çoklu Seçim (Checkbox Izgarası) -->
+        <!-- Tür için 5 Kolon Çoklu Seçim (Checkbox Izgarası) -->
         <div id="groupSelectCheckboxList" class="multi-checkbox-list" style="display:none;"></div>
       </div>
 
-      <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar - max-height 415px) -->
+      <!-- Sağ Taraf: Seçilen Grubun Filmleri (Alt Elemanlar) -->
       <div style="width: 300px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 415px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 125px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
     </div>
 
     <!-- Alt Çubuk: Sol Altta Yeni Grup Ekle, Alt Ortada Adı Değiştir, Sağ Altta İptal & Ekle -->
-    <div style="margin-top:10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:8px;">
+    <div style="margin-top:8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:8px;">
       <!-- Sol Alt: Yeni Grup Ekle -->
       <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
         <input type="text" id="newGroupInPopupInput" placeholder="Yeni grup adı..." style="flex:1; min-width:130px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 9px; border-radius:4px; font-size:12px;">
@@ -2249,7 +2246,7 @@ def main():
           index: idx,
           originalIndex: idx,
           groupKey: gKey,
-          name: `${gName} (${visibleMembers.length} film)`,
+          name: gName,
           rawName: gName,
           count: visibleMembers.length,
           members: memberIds
@@ -2268,9 +2265,6 @@ def main():
     focusedGenreKeyInPopup = null;
     selectedSingleGroupIndexInPopup = null;
 
-    const targetSpan = document.getElementById("targetMovieIdForGroup");
-    if (targetSpan) targetSpan.innerText = activeMovieIdForGroupSelect;
-
     const searchInputEl = document.getElementById("groupSearchInput");
     if (searchInputEl) searchInputEl.value = "";
 
@@ -2282,12 +2276,10 @@ def main():
 
     const singleGridEl = document.getElementById("groupSelectDropdown");
     const checkboxListEl = document.getElementById("groupSelectCheckboxList");
-    const subtitleEl = document.getElementById("groupSelectModalSubtitle");
 
     if (type === 'genre') {
       if (singleGridEl) singleGridEl.style.display = "none";
       if (checkboxListEl) checkboxListEl.style.display = "grid";
-      if (subtitleEl) subtitleEl.innerText = "Birden fazla tür seçebilir, yeni tür ekleyebilir veya seçili türün adını düzenleyebilirsiniz:";
 
       // Filmin halihazırda bağlı olduğu türleri başlangıçta işaretle
       const existingGenres = getGenreGroupsForMovie(activeMovieIdForGroupSelect);
@@ -2298,7 +2290,6 @@ def main():
     } else {
       if (singleGridEl) singleGridEl.style.display = "grid";
       if (checkboxListEl) checkboxListEl.style.display = "none";
-      if (subtitleEl) subtitleEl.innerText = "Eklemek istediğiniz grubu seçin veya alttan yeni grup oluşturup mevcut grubun adını düzenleyin:";
     }
 
     const createBtnEl = document.getElementById("createNewGroupInPopupBtn");
@@ -2317,14 +2308,6 @@ def main():
 
     const sortSelEl = document.getElementById("groupPopupSortSelect");
     if (sortSelEl) sortSelEl.value = (type === 'genre') ? "alpha_asc" : "default";
-
-    let modalTitle = "📁 Bir Gruba Dahil Et";
-    if (type === 'series') modalTitle = `📁 Bir Seri Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
-    else if (type === 'remake') modalTitle = `📁 Bir Remake Grubuna Dahil Et (ID: ${activeMovieIdForGroupSelect})`;
-    else if (type === 'genre') modalTitle = `🏷️ Tür Seç / Yönet (ID: ${activeMovieIdForGroupSelect})`;
-
-    const titleEl = document.getElementById("groupSelectModalTitle");
-    if (titleEl) titleEl.innerText = modalTitle;
 
     rebuildCachedGroupListForPopup(focusedGenreKeyInPopup);
 
@@ -2519,7 +2502,7 @@ def main():
       return 0;
     });
 
-    // Tür (genre) için Yukarıdan Aşağı -> Soldan Sağa Multiple-Choice Checkbox Izgarası render et
+    // Tür (genre) için 5 Kolonlu Multiple-Choice Checkbox Izgarası render et
     if (activeGroupSelectType === 'genre') {
       const checkboxListEl = document.getElementById("groupSelectCheckboxList");
       if (!checkboxListEl) return;
@@ -2584,7 +2567,7 @@ def main():
       return;
     }
 
-    // Seri ve Remake için Yukarıdan Aşağı -> Soldan Sağa Tekli Seçim Izgarası render et
+    // Seri ve Remake için 5 Kolonlu Tekli Seçim Izgarası render et
     const singleGridEl = document.getElementById("groupSelectDropdown");
     if (!singleGridEl) return;
     singleGridEl.innerHTML = "";
@@ -3206,7 +3189,7 @@ def main():
       maxVal = temp;
     }
 
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
+    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(minRange.max)) {
       label.innerText = "Tümü";
     } else {
       label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
@@ -3228,7 +3211,7 @@ def main():
       maxVal = temp;
     }
 
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
+    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(minRange.max)) {
       label.innerText = "Tümü";
     } else {
       label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
