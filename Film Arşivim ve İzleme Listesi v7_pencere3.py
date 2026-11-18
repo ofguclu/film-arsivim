@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP RESIZE v22 (SIMPLE/COMPLEX VIEW TOGGLE)")
+    print("   ANA KOD.PY - POPUP RESIZE v23 (BULK SHOW HIDDEN CHECKBOX)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -475,6 +475,10 @@ def main():
   .bulk-movie-item.selected {
     border: 2px solid #10b981;
     background: #064e3b;
+  }
+  .bulk-movie-item.hidden-card {
+    opacity: 0.65;
+    border-color: #7f1d1d;
   }
   .bulk-movie-cb {
     position: absolute;
@@ -1211,22 +1215,22 @@ def main():
 
     <!-- Filtre ve Sıralama Çubuğu -->
     <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:#141414; padding:10px; border-radius:6px; border:1px solid #2e2e2e;">
-      <input type="text" id="bulkSearchInput" placeholder="Film adı, oyuncu, özet (||)..." style="width:200px;">
+      <input type="text" id="bulkSearchInput" placeholder="Film adı, oyuncu, özet (||)..." style="width:190px;">
 
       <select id="bulkDomainFilter"><option value="">Tüm Domainler</option></select>
 
       <div style="display:flex; align-items:center; gap:4px; background:#1e1e1e; border:1px solid #333; padding:4px 8px; border-radius:4px; font-size:11px;">
         <span style="color:#f5c518; font-weight:bold;">Yıl:</span>
-        <input type="number" id="bulkMinYear" placeholder="Min" style="width:58px; padding:3px 5px; text-align:center;">
+        <input type="number" id="bulkMinYear" placeholder="Min" style="width:54px; padding:3px 5px; text-align:center;">
         <span>-</span>
-        <input type="number" id="bulkMaxYear" placeholder="Max" style="width:58px; padding:3px 5px; text-align:center;">
+        <input type="number" id="bulkMaxYear" placeholder="Max" style="width:54px; padding:3px 5px; text-align:center;">
       </div>
 
       <div style="display:flex; align-items:center; gap:4px; background:#1e1e1e; border:1px solid #333; padding:4px 8px; border-radius:4px; font-size:11px;">
         <span style="color:#f5c518; font-weight:bold;">IMDb:</span>
-        <input type="number" id="bulkMinImdb" step="0.1" min="0" max="10" placeholder="Min" style="width:52px; padding:3px 5px; text-align:center;">
+        <input type="number" id="bulkMinImdb" step="0.1" min="0" max="10" placeholder="Min" style="width:48px; padding:3px 5px; text-align:center;">
         <span>-</span>
-        <input type="number" id="bulkMaxImdb" step="0.1" min="0" max="10" placeholder="Max" style="width:52px; padding:3px 5px; text-align:center;">
+        <input type="number" id="bulkMaxImdb" step="0.1" min="0" max="10" placeholder="Max" style="width:48px; padding:3px 5px; text-align:center;">
       </div>
 
       <select id="bulkSortSelect">
@@ -1238,6 +1242,11 @@ def main():
         <option value="title_asc">İsim (A-Z)</option>
         <option value="title_desc">İsim (Z-A)</option>
       </select>
+
+      <label class="show-hidden-label" title="Gizlenen filmleri göster/aramalara dahil et" style="padding:4px 8px; font-size:11px;">
+        <input type="checkbox" id="bulkShowHiddenCheckbox" class="show-hidden-checkbox">
+        <span>👁️ Gizlileri Göster</span>
+      </label>
 
       <button type="button" id="bulkResetFiltersBtn" style="background:#2d1b1b; color:#fca5a5; border:1px solid #7f1d1d; font-size:11px;">Filtreleri Sıfırla</button>
       <span style="margin-left:auto; font-size:11px; color:#aaa;" id="bulkFilteredCountLabel">0 Film</span>
@@ -1932,6 +1941,7 @@ def main():
     document.getElementById("bulkMinImdb").value = "";
     document.getElementById("bulkMaxImdb").value = "";
     document.getElementById("bulkSortSelect").value = "imdb_desc";
+    document.getElementById("bulkShowHiddenCheckbox").checked = false;
 
     // Domain listesini doldur
     const bulkDomainSel = document.getElementById("bulkDomainFilter");
@@ -2000,7 +2010,7 @@ def main():
 
     const genreGroup = genreMoviesGroupsState.find(g => g[0] === targetGenreKeyForBulkAdd);
     const existingMemberSet = new Set(genreGroup ? genreGroup.slice(1).map(String) : []);
-    const showHidden = document.getElementById("showHiddenCheckbox").checked;
+    const showHidden = document.getElementById("bulkShowHiddenCheckbox").checked;
 
     const searchVal = document.getElementById("bulkSearchInput").value.toLowerCase().trim();
     const searchTerms = searchVal ? searchVal.split("||").map(t => t.trim()).filter(Boolean) : [];
@@ -2076,9 +2086,10 @@ def main():
     filteredList.forEach(movie => {
       const fid = String(movie.film_ID);
       const isSelected = bulkSelectedMovieIds.has(fid);
+      const isHidden = !!hiddenMoviesState[fid];
 
       const itemEl = document.createElement("div");
-      itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "");
+      itemEl.className = "bulk-movie-item" + (isSelected ? " selected" : "") + (isHidden ? " hidden-card" : "");
       itemEl.dataset.bulkMovieId = fid;
 
       const posterUrl = movie.poster || "";
@@ -4081,6 +4092,7 @@ def main():
   document.getElementById("bulkMinImdb").addEventListener("input", renderBulkAddMoviesGrid);
   document.getElementById("bulkMaxImdb").addEventListener("input", renderBulkAddMoviesGrid);
   document.getElementById("bulkSortSelect").addEventListener("change", renderBulkAddMoviesGrid);
+  document.getElementById("bulkShowHiddenCheckbox").addEventListener("change", renderBulkAddMoviesGrid);
   document.getElementById("bulkResetFiltersBtn").addEventListener("click", () => {
     document.getElementById("bulkSearchInput").value = "";
     document.getElementById("bulkDomainFilter").value = "";
@@ -4089,6 +4101,7 @@ def main():
     document.getElementById("bulkMinImdb").value = "";
     document.getElementById("bulkMaxImdb").value = "";
     document.getElementById("bulkSortSelect").value = "imdb_desc";
+    document.getElementById("bulkShowHiddenCheckbox").checked = false;
     renderBulkAddMoviesGrid();
   });
 

@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Tüm Arşiv sayfasına Sade görünüm / Kompleks görünüm seçeneği eklendi"
+SURUM_NOTU = "Tür sayfasındaki 'Film Ekle' popup penceresine, 'Gizlileri Göster' seçeneği eklendi"
 
 #kaydet ve 30 sn bekle
 import time
