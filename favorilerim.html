@@ -770,10 +770,10 @@
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (32 Satır Yapılandırması) */
+  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (35 Satır Yapılandırması) */
   .single-grid-list {
     width: 100%;
-    height: 850px;
+    height: 925px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -784,7 +784,7 @@
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(32, 22px);
+    grid-template-rows: repeat(35, 22px);
     grid-auto-columns: 165px;
     align-content: start;
     gap: 3px;
@@ -814,10 +814,10 @@
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (32 Satır Yapılandırması) */
+  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (35 Satır Yapılandırması) */
   .multi-checkbox-list {
     width: 100%;
-    height: 850px;
+    height: 925px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -828,7 +828,7 @@
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(32, 22px);
+    grid-template-rows: repeat(35, 22px);
     grid-auto-columns: 165px;
     align-content: start;
     gap: 3px;
@@ -852,10 +852,20 @@
     background: #1f2937;
     border-color: #374151;
   }
+  .multi-checkbox-item.checked-row {
+    background: #10b981;
+    border-color: #34d399;
+    color: #052e16;
+    font-weight: bold;
+  }
   .multi-checkbox-item.active-row {
-    background: #1e3a8a;
-    border-color: #3b82f6;
-    color: #fff;
+    outline: 2px solid #3b82f6;
+    border-color: #60a5fa;
+  }
+  .multi-checkbox-item.checked-row.active-row {
+    background: #059669;
+    color: #ffffff;
+    font-weight: bold;
   }
   .multi-checkbox-item input[type="checkbox"] {
     width: 12px;
@@ -1049,7 +1059,7 @@
   </div>
 </div>
 
-<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş ve 32 Satır Yapılandırması -->
+<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş ve 35 Satır Yapılandırması -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1470px; max-width:98%; max-height:98vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
@@ -1074,7 +1084,7 @@
       <!-- Sağ Taraf: Seçilen Grubun Filmleri (%10 Daraltılmış Width: 252px) -->
       <div style="width: 252px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 820px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 895px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
@@ -2330,19 +2340,24 @@
       }
 
       list.forEach(item => {
+        const isCheckedInitially = selectedGenreKeysInPopup.has(item.groupKey);
         const row = document.createElement("div");
-        row.className = "multi-checkbox-item" + (item.groupKey === focusedGenreKeyInPopup ? " active-row" : "");
+        row.className = "multi-checkbox-item"
+          + (isCheckedInitially ? " checked-row" : "")
+          + (item.groupKey === focusedGenreKeyInPopup ? " active-row" : "");
         row.dataset.groupKey = item.groupKey;
 
         const cb = document.createElement("input");
         cb.type = "checkbox";
-        cb.checked = selectedGenreKeysInPopup.has(item.groupKey);
+        cb.checked = isCheckedInitially;
         cb.addEventListener("change", (e) => {
           e.stopPropagation();
           if (cb.checked) {
             selectedGenreKeysInPopup.add(item.groupKey);
+            row.classList.add("checked-row");
           } else {
             selectedGenreKeysInPopup.delete(item.groupKey);
+            row.classList.remove("checked-row");
           }
           setFocusedGenreRow(item.groupKey);
         });
@@ -2360,8 +2375,10 @@
             cb.checked = !cb.checked;
             if (cb.checked) {
               selectedGenreKeysInPopup.add(item.groupKey);
+              row.classList.add("checked-row");
             } else {
               selectedGenreKeysInPopup.delete(item.groupKey);
+              row.classList.remove("checked-row");
             }
           }
           setFocusedGenreRow(item.groupKey);

@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "listenin sütunundaki mevcut 24 satır sayısı 8 artırılarak 32 satıra çıkarıldı"
+SURUM_NOTU = "listenin sütunundaki mevcut 32 satır sayısı 3 artırılarak 35 satıra çıkarıldı"
 
 #kaydet ve 30 sn bekle
 import time
