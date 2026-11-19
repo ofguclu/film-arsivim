@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP 35 ROWS & CHECKED STYLE v34")
+    print("   ANA KOD.PY - POPUP 850PX HEIGHT & 35 ROWS v36")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -919,10 +919,10 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (35 Satır Yapılandırması) */
+  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (850px Yükseklikte 35 Satır) */
   .single-grid-list {
     width: 100%;
-    height: 925px;
+    height: 850px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -933,23 +933,22 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(35, 22px);
+    grid-template-rows: repeat(35, minmax(0, 1fr));
     grid-auto-columns: 165px;
-    align-content: start;
     gap: 3px;
   }
   .single-grid-item {
     display: flex;
     align-items: center;
-    padding: 2px 6px;
+    padding: 1px 6px;
     border-radius: 3px;
     cursor: pointer;
     font-size: 11px;
-    line-height: 1.2;
+    line-height: 1.15;
     user-select: none;
     border: 1px solid #1f1f1f;
     background: #181818;
-    height: 22px;
+    height: 100%;
     box-sizing: border-box;
   }
   .single-grid-item:hover {
@@ -963,10 +962,10 @@ def main():
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (35 Satır Yapılandırması) */
+  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (850px Yükseklikte 35 Satır) */
   .multi-checkbox-list {
     width: 100%;
-    height: 925px;
+    height: 850px;
     overflow-x: auto;
     overflow-y: hidden;
     background: #121212;
@@ -977,24 +976,23 @@ def main():
     box-sizing: border-box;
     display: grid;
     grid-auto-flow: column;
-    grid-template-rows: repeat(35, 22px);
+    grid-template-rows: repeat(35, minmax(0, 1fr));
     grid-auto-columns: 165px;
-    align-content: start;
     gap: 3px;
   }
   .multi-checkbox-item {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 2px 6px;
+    padding: 1px 6px;
     border-radius: 3px;
     cursor: pointer;
     font-size: 11px;
-    line-height: 1.2;
+    line-height: 1.15;
     user-select: none;
     border: 1px solid #1f1f1f;
     background: #181818;
-    height: 22px;
+    height: 100%;
     box-sizing: border-box;
   }
   .multi-checkbox-item:hover {
@@ -1208,7 +1206,7 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş ve 35 Satır Yapılandırması -->
+<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş, 850px Yükseklik ve 35 Satır -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1470px; max-width:98%; max-height:98vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
@@ -1233,7 +1231,7 @@ def main():
       <!-- Sağ Taraf: Seçilen Grubun Filmleri (%10 Daraltılmış Width: 252px) -->
       <div style="width: 252px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
-        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 895px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
+        <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 850px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
           <span style="color: #666; font-style: italic; padding: 10px; text-align: center;">Soldan bir grup seçin...</span>
         </div>
       </div>
@@ -3154,7 +3152,7 @@ def main():
       maxVal = temp;
     }
 
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(minRange.max)) {
+    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
       label.innerText = "Tümü";
     } else {
       label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
@@ -3176,7 +3174,7 @@ def main():
       maxVal = temp;
     }
 
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(minRange.max)) {
+    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
       label.innerText = "Tümü";
     } else {
       label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
