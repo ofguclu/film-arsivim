@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Çoklu Seçim, Gizli olanları Göster'in yanına gelsin. birde Çoklu Seçim seçilince kendisinin değil, sayfanın bacground'u mat yeşil olsun"
+SURUM_NOTU = "paging eklendi"
 
 #kaydet ve 30 sn bekle
 import time

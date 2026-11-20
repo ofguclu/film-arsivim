@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP 850PX HEIGHT & 35 ROWS v38")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v40")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -164,7 +164,16 @@ def main():
     --border-color: #333;
   }
   body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; transition: background-color 0.2s ease; }
-  body.multi-select-page-bg { background-color: #16382b; }
+  body.multi-select-page-bg { background-color: #199e46; }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
   .header-container {
     position: sticky;
@@ -174,7 +183,7 @@ def main():
     padding-top: 4px;
     padding-bottom: 11px;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 
   .controls {
@@ -193,6 +202,7 @@ def main():
   input, select, button, a.btn-link { padding: 6px 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
   input:focus, select:focus { border-color: var(--accent-color); outline: none; }
   button, a.btn-link { cursor: pointer; font-weight: bold; transition: background 0.2s; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.active, a.btn-link.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
   a.btn-editor { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
@@ -305,6 +315,46 @@ def main():
 
   .film-count-badge { background: #111; color: #f5c518; border: 1px solid #333; padding: 4px 9px; border-radius: 4px; font-size: 12px; font-weight: bold; white-space: nowrap; }
 
+  .pagination-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0;
+    padding: 8px 12px;
+    background: #181818;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+  .pagination-bar.hidden-bar {
+    display: none;
+  }
+  .page-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #222;
+    color: #e0e0e0;
+    border: 1px solid #3d3d3d;
+    border-radius: 4px;
+    min-width: 34px;
+  }
+  .page-btn:hover:not(:disabled) {
+    background: #333;
+    border-color: var(--accent-color);
+  }
+  .page-btn.active-page {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+  }
+  .page-info-text {
+    font-size: 12px;
+    color: #f5c518;
+    font-weight: bold;
+    margin: 0 6px;
+  }
+
   .relation-banner {
     display: none;
     justify-content: center;
@@ -329,16 +379,17 @@ def main():
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
-    margin-top: 15px;
-    margin-bottom: 5px;
+    margin-top: 2px;
+    margin-bottom: 1px;
   }
   .group-section-header {
     background: #1e293b;
     color: #93c5fd;
-    padding: 8px 14px;
-    font-size: 14px;
+    padding: 5px 12px;
+    min-height: 24px;
+    font-size: 13px;
     font-weight: bold;
-    border-radius: 6px;
+    border-radius: 5px;
     border: 1px solid #3b82f6;
     display: flex;
     justify-content: space-between;
@@ -346,13 +397,14 @@ def main():
     cursor: pointer;
     user-select: none;
     transition: background 0.15s;
+    box-sizing: border-box;
   }
   .group-section-header:hover {
     background: #2563eb;
     color: #fff;
   }
   .group-collapse-icon {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     margin-left: 8px;
     cursor: pointer;
@@ -360,10 +412,10 @@ def main():
   .group-movies-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    row-gap: 10px;
+    row-gap: 8px;
     column-gap: 20px;
-    margin-top: 10px;
-    margin-bottom: 15px;
+    margin-top: 2px;
+    margin-bottom: 2px;
     padding-left: 5px;
     border-left: 2px dashed #3b82f6;
   }
@@ -373,7 +425,12 @@ def main():
 
   .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
   .movie-card:hover { transform: translateY(-4px); border-color: #555; }
-  .movie-card.highlight { outline: 4px solid var(--accent-color); }
+  /* Go ile bulunan film için kalıcı kırmızı çerçeve */
+  .movie-card.highlight {
+    outline: 4px solid #e50914;
+    box-shadow: 0 0 18px rgba(229, 9, 20, 0.85);
+    z-index: 25;
+  }
 
   body.simple-view .card-user-actions,
   body.simple-view .card-relation-bar,
@@ -732,12 +789,6 @@ def main():
     border-radius: 3px;
     font-size: 10px;
     font-weight: bold;
-    -moz-appearance: textfield;
-  }
-  .relation-input::-webkit-outer-spin-button,
-  .relation-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
   }
   .relation-input::placeholder { color: #555; font-weight: normal; font-size: 9px; }
 
@@ -926,7 +977,6 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
-  /* Tekli Seçim Listesi (Seri / Remake) - 7 Kolon (850px Yükseklikte 35 Satır) */
   .single-grid-list {
     width: 100%;
     height: 850px;
@@ -969,7 +1019,6 @@ def main():
     font-weight: bold;
   }
 
-  /* Checkbox Multiple-Choice Listesi (Tür Popup) - 7 Kolon (850px Yükseklikte 35 Satır) */
   .multi-checkbox-list {
     width: 100%;
     height: 850px;
@@ -1048,7 +1097,6 @@ def main():
 
     <select id="domainFilter"><option value="">Tüm Domainler</option></select>
 
-    <!-- Yıl Slider -->
     <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi">
       <div class="filter-slider-header">
         <span>Yıl Aralığı:</span>
@@ -1062,7 +1110,6 @@ def main():
 
     <select id="countryFilter"><option value="">Tüm Ülkeler</option></select>
 
-    <!-- Süre Slider -->
     <div class="filter-slider-container" title="Film Süre Aralığı Filtresi (Dakika)">
       <div class="filter-slider-header">
         <span>Süre (dk):</span>
@@ -1074,7 +1121,6 @@ def main():
       </div>
     </div>
 
-    <!-- IMDb Puanı Slider -->
     <div class="filter-slider-container" title="IMDb Puan Aralığı Filtresi">
       <div class="filter-slider-header">
         <span>IMDb Puanı:</span>
@@ -1086,7 +1132,6 @@ def main():
       </div>
     </div>
 
-    <!-- Puanlarım Slider -->
     <div class="filter-slider-container" title="Kendi Puanım Aralığı Filtresi">
       <div class="filter-slider-header">
         <span>Puanlarım:</span>
@@ -1190,7 +1235,9 @@ def main():
   </div>
 </div>
 
+<div class="pagination-bar" id="paginationTopBar"></div>
 <div class="movie-grid" id="movieGridContainer"></div>
+<div class="pagination-bar" id="paginationBottomBar"></div>
 
 <!-- URL Düzenleme Popup Modal -->
 <div id="urlPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
@@ -1218,11 +1265,10 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal - 7 Kolon, %40 Genişletilmiş, 850px Yükseklik ve 35 Satır -->
+<!-- Grup Seçim Modal -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1470px; max-width:98%; max-height:98vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
-      <!-- Sol Taraf: 7 Kolonlu Izgara Liste ve Arama -->
       <div style="flex: 1; min-width: 0; display:flex; flex-direction:column;">
         <div style="display:flex; gap:6px; margin-bottom:8px;">
           <input type="text" id="groupSearchInput" placeholder="Grup ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:12px; box-sizing:border-box;">
@@ -1234,13 +1280,10 @@ def main():
             <option value="count_desc">Film Sayısı (Azalan)</option>
           </select>
         </div>
-        <!-- Seri / Remake için 7 Kolon Tekli Seçim Izgarası -->
         <div id="groupSelectDropdown" class="single-grid-list"></div>
-        <!-- Tür için 7 Kolon Çoklu Seçim (Checkbox Izgarası) -->
         <div id="groupSelectCheckboxList" class="multi-checkbox-list" style="display:none;"></div>
       </div>
 
-      <!-- Sağ Taraf: Seçilen Grubun Filmleri (%10 Daraltılmış Width: 252px) -->
       <div style="width: 252px; flex-shrink: 0; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column;">
         <div style="font-size: 12px; font-weight: bold; color: #f5c518; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 5px;">🎬 Grubun Filmleri (<span id="previewGroupCount">0</span>)</div>
         <div id="groupPreviewList" style="flex: 1; overflow-y: auto; max-height: 850px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #bbb;">
@@ -1249,21 +1292,17 @@ def main():
       </div>
     </div>
 
-    <!-- Alt Çubuk -->
     <div style="margin-top:8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid #2c2c2c; padding-top:8px;">
-      <!-- Sol Alt: Yeni Grup Ekle -->
       <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
         <input type="text" id="newGroupInPopupInput" placeholder="Yeni grup adı..." style="flex:1; min-width:130px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 9px; border-radius:4px; font-size:12px;">
         <button type="button" id="createNewGroupInPopupBtn" style="background:#059669; color:#fff; border:none; padding:5px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Yeni Tür Ekle</button>
       </div>
 
-      <!-- Alt Orta: Seçili Grubun Adını Değiştir -->
       <div style="display:flex; align-items:center; gap:6px; flex: 1 1 250px;">
         <input type="text" id="renameGroupInPopupInput" placeholder="Seçili grup adı..." style="flex:1; min-width:130px; background:#121212; color:#f5c518; border:1px solid #444; padding:5px 9px; border-radius:4px; font-size:12px;">
         <button type="button" id="renameGroupInPopupBtn" style="background:#d97706; color:#fff; border:none; padding:5px 11px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Adı Değiştir</button>
       </div>
 
-      <!-- Sağ Alt: İptal & Ekle -->
       <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
         <button type="button" id="closeGroupSelectModalBtn" style="background:#333; color:#fff; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer;">İptal</button>
         <button type="button" id="confirmGroupSelectBtn" style="background:#3b82f6; color:#fff; border:none; padding:5px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">Ekle</button>
@@ -1328,6 +1367,12 @@ def main():
   const allMovies = JSON.parse(decodeURIComponent('__MOVIES_JSON_PLACEHOLDER__'));
   const validMovieIds = new Set(allMovies.map(m => String(m.film_ID)));
 
+  const PAGE_SIZE = 60;
+  let currentPage = 1;
+  let activeOrderedMovieIds = [];
+  let activeGroupedDataCache = new Map();
+  let persistentHighlightedMovieId = null;
+
   let watchlist1State = {};
   let watchlist2State = {};
   let watchlist3State = {};
@@ -1370,6 +1415,17 @@ def main():
   let maxGlobalYear = 2030;
   let minGlobalDuration = 0;
   let maxGlobalDuration = 300;
+
+  function applyPersistentHighlight() {
+    document.querySelectorAll(".movie-card.highlight").forEach(el => {
+      el.classList.remove("highlight");
+    });
+    if (!persistentHighlightedMovieId) return;
+    const targetElem = document.querySelector(`[data-movie-id-card="${String(persistentHighlightedMovieId)}"]`);
+    if (targetElem) {
+      targetElem.classList.add("highlight");
+    }
+  }
 
   function updateMultiSelectUI() {
     const cb = document.getElementById("multiSelectCheckbox");
@@ -2839,6 +2895,7 @@ def main():
       return;
     }
 
+    currentPage = 1;
     activeRelationFilterSet = { type: type, groupKey: gKey, set: new Set(group.slice(1)) };
     updateRelationBanner();
     renderMovies(false);
@@ -2846,6 +2903,7 @@ def main():
   }
 
   function clearRelationFilter() {
+    currentPage = 1;
     activeRelationFilterSet = null;
     updateRelationBanner();
     renderMovies(false);
@@ -3021,6 +3079,7 @@ def main():
           localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
         }
 
+        currentPage = 1;
         activeRelationFilterSet = null;
         updateRelationBanner();
         renderMovies(false);
@@ -3228,17 +3287,77 @@ def main():
     return actors.join(", ");
   }
 
-  function scrollToMovie(movieId, highlight = true) {
+  function scrollToMovie(movieId, keepHighlight = true) {
     if (!movieId) return;
     const cleanId = String(movieId).trim();
+    if (keepHighlight) {
+      persistentHighlightedMovieId = cleanId;
+    }
+    applyPersistentHighlight();
     const targetElem = document.querySelector(`[data-movie-id-card="${cleanId}"]`) || document.getElementById("movie-card-" + cleanId);
     if (targetElem) {
       targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (highlight) {
-        targetElem.classList.add("highlight");
-        setTimeout(() => targetElem.classList.remove("highlight"), 5000);
-      }
     }
+  }
+
+  function goToPage(pageNum, scrollTop = true) {
+    const totalPages = Math.max(1, Math.ceil(activeOrderedMovieIds.length / PAGE_SIZE));
+    const targetPage = Math.min(Math.max(1, parseInt(pageNum, 10) || 1), totalPages);
+    if (targetPage === currentPage && !scrollTop) return;
+    currentPage = targetPage;
+    renderMovies(false, true);
+    if (scrollTop) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function renderPaginationBars(totalItems) {
+    const topBar = document.getElementById("paginationTopBar");
+    const botBar = document.getElementById("paginationBottomBar");
+    if (!topBar || !botBar) return;
+
+    const watchlistSelection = document.getElementById("watchlistDropdown").value;
+    const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
+
+    if (isGroupedLinkedView || totalItems <= PAGE_SIZE) {
+      topBar.classList.add("hidden-bar");
+      botBar.classList.add("hidden-bar");
+      topBar.innerHTML = "";
+      botBar.innerHTML = "";
+      return;
+    }
+
+    topBar.classList.remove("hidden-bar");
+    botBar.classList.remove("hidden-bar");
+
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    let html = `<button type="button" class="page-btn" onclick="goToPage(1)" ${currentPage === 1 ? "disabled" : ""}>« İlk</button>`;
+    html += `<button type="button" class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? "disabled" : ""}>‹ Önceki</button>`;
+
+    const windowSize = 3;
+    const pagesToShow = new Set([1, totalPages]);
+    for (let p = currentPage - windowSize; p <= currentPage + windowSize; p++) {
+      if (p >= 1 && p <= totalPages) pagesToShow.add(p);
+    }
+
+    const sortedPages = Array.from(pagesToShow).sort((a, b) => a - b);
+    let prev = 0;
+    for (const p of sortedPages) {
+      if (prev && p - prev > 1) {
+        html += `<span style="color:#777; padding:0 4px;">...</span>`;
+      }
+      html += `<button type="button" class="page-btn ${p === currentPage ? "active-page" : ""}" onclick="goToPage(${p})">${p}</button>`;
+      prev = p;
+    }
+
+    html += `<button type="button" class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? "disabled" : ""}>Sonraki ›</button>`;
+    html += `<button type="button" class="page-btn" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? "disabled" : ""}>Son »</button>`;
+    html += `<span class="page-info-text">Sayfa ${currentPage} / ${totalPages} (${totalItems} film)</span>`;
+
+    topBar.innerHTML = html;
+    botBar.innerHTML = html;
   }
 
   function saveStateToStorage() {
@@ -3485,8 +3604,20 @@ def main():
         saveStateToStorage();
       } catch (e) {}
 
-      renderMovies(false);
-      scrollToMovie(manualId, true);
+      renderMovies(false, true);
+
+      const idxInList = activeOrderedMovieIds.indexOf(String(manualId));
+      if (idxInList !== -1) {
+        const targetPage = Math.floor(idxInList / PAGE_SIZE) + 1;
+        if (targetPage !== currentPage) {
+          currentPage = targetPage;
+          renderMovies(false, true);
+        }
+      }
+
+      requestAnimationFrame(() => {
+        scrollToMovie(manualId, true);
+      });
     }
   }
 
@@ -3519,6 +3650,9 @@ def main():
     const fid = String(movie.film_ID);
     const card = document.createElement("div");
     card.className = "movie-card";
+    if (persistentHighlightedMovieId && String(persistentHighlightedMovieId) === fid) {
+      card.classList.add("highlight");
+    }
     card.id = contextPrefix ? `movie-card-${contextPrefix}-${fid}` : `movie-card-${fid}`;
     card.dataset.movieIdCard = fid;
 
@@ -3652,7 +3786,7 @@ def main():
         ${badgesRightHtml}
       </div>
       <div class="poster-wrapper">
-        <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok';">
+        <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok';">
         <div class="select-id-radio-wrap" title="Bu filmin ID'sini Son ID kutucuğuna ata">
           <input type="radio" name="selectedMovieRadio" class="select-id-radio" ${isRadioChecked} onchange="selectMovieIdFromCardRadio('${fid}')">
         </div>
@@ -3715,9 +3849,34 @@ def main():
     return card;
   }
 
-  function renderMovies(forceSearch = false) {
+  function populateGroupMoviesContainer(moviesContainer, groupKey, expand) {
+    if (!moviesContainer) return;
+    if (!expand) {
+      moviesContainer.innerHTML = "";
+      return;
+    }
+    if (moviesContainer.children.length > 0) return;
+
+    const cached = activeGroupedDataCache.get(groupKey);
+    if (!cached) return;
+
+    const frag = document.createDocumentFragment();
+    cached.grpInfo.movies.forEach(movie => {
+      frag.appendChild(buildMovieCardElement(movie, cached.showHidden, cached.currentGeneralLastId, cached.grpInfo.key));
+    });
+    if (cached.isGenreView) {
+      frag.appendChild(buildAddMovieToGenreCard(cached.grpInfo.key));
+    }
+    moviesContainer.appendChild(frag);
+  }
+
+  function renderMovies(forceSearch = false, preservePage = false) {
     try {
       saveStateToStorage();
+
+      if (!preservePage) {
+        currentPage = 1;
+      }
 
       const openGroupKeys = new Set();
       document.querySelectorAll(".group-section-wrapper").forEach(wrapper => {
@@ -3731,6 +3890,7 @@ def main():
 
       const container = document.getElementById("movieGridContainer");
       container.innerHTML = "";
+      activeGroupedDataCache.clear();
 
       const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
       const selectedDomain = document.getElementById("domainFilter").value;
@@ -4011,7 +4171,9 @@ def main():
         });
 
         currentlyRenderedMovieIds = filtered.map(m => String(m.film_ID));
+        activeOrderedMovieIds = [...currentlyRenderedMovieIds];
         document.getElementById("countDisplay").innerText = filtered.length;
+        renderPaginationBars(filtered.length);
 
         const fragment = document.createDocumentFragment();
         let iconPrefix = "🎬";
@@ -4019,6 +4181,13 @@ def main():
         else if (isGenreView) iconPrefix = "🏷️";
 
         groupsArray.forEach(grpInfo => {
+          activeGroupedDataCache.set(grpInfo.key, {
+            grpInfo,
+            showHidden,
+            currentGeneralLastId,
+            isGenreView
+          });
+
           const wrapper = document.createElement("div");
           wrapper.className = "group-section-wrapper";
           wrapper.dataset.groupKey = grpInfo.key;
@@ -4035,13 +4204,8 @@ def main():
           const moviesContainer = document.createElement("div");
           moviesContainer.className = `group-movies-container ${collapseClass}`;
 
-          grpInfo.movies.forEach(movie => {
-            const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, grpInfo.key);
-            moviesContainer.appendChild(card);
-          });
-
-          if (isGenreView) {
-            moviesContainer.appendChild(buildAddMovieToGenreCard(grpInfo.key));
+          if (isOpenPreviously) {
+            populateGroupMoviesContainer(moviesContainer, grpInfo.key, true);
           }
 
           wrapper.appendChild(secHeader);
@@ -4050,6 +4214,7 @@ def main():
         });
 
         container.appendChild(fragment);
+        applyPersistentHighlight();
         updateToggleAllButtonState();
         return;
       }
@@ -4077,11 +4242,18 @@ def main():
         });
       }
 
-      currentlyRenderedMovieIds = filtered.map(m => String(m.film_ID));
+      activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
       document.getElementById("countDisplay").innerText = filtered.length;
+      renderPaginationBars(filtered.length);
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const pageMovies = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+      currentlyRenderedMovieIds = pageMovies.map(m => String(m.film_ID));
 
       const fragment = document.createDocumentFragment();
-      filtered.forEach(movie => {
+      pageMovies.forEach(movie => {
         const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "");
         fragment.appendChild(card);
       });
@@ -4091,6 +4263,7 @@ def main():
       }
 
       container.appendChild(fragment);
+      applyPersistentHighlight();
       updateToggleAllButtonState();
 
     } catch (err) {
@@ -4121,6 +4294,9 @@ def main():
       if (iconSpan) {
         iconSpan.innerText = isCollapsed ? "▶" : "▼";
       }
+
+      populateGroupMoviesContainer(moviesContainer, wrapper.dataset.groupKey, !isCollapsed);
+      applyPersistentHighlight();
       updateToggleAllButtonState();
     }
   });
@@ -4181,27 +4357,37 @@ def main():
   }
 
   function toggleAllGroups() {
-    const containers = document.querySelectorAll(".group-movies-container");
+    const wrappers = document.querySelectorAll(".group-section-wrapper");
     const toggleBtn = document.getElementById("toggleAllGroupsBtn");
-    if (containers.length === 0 || !toggleBtn) return;
+    if (wrappers.length === 0 || !toggleBtn) return;
 
-    const isCurrentlyAllCollapsed = Array.from(containers).every(el => el.classList.contains("collapsed"));
+    const containers = Array.from(wrappers).map(w => w.querySelector(".group-movies-container")).filter(Boolean);
+    const isCurrentlyAllCollapsed = containers.every(el => el.classList.contains("collapsed"));
 
     if (isCurrentlyAllCollapsed) {
-      containers.forEach(el => el.classList.remove("collapsed"));
-      document.querySelectorAll(".group-section-header").forEach(header => {
-        const icon = header.querySelector(".group-collapse-icon");
+      wrappers.forEach(w => {
+        const mc = w.querySelector(".group-movies-container");
+        const icon = w.querySelector(".group-collapse-icon");
+        if (mc) {
+          mc.classList.remove("collapsed");
+          populateGroupMoviesContainer(mc, w.dataset.groupKey, true);
+        }
         if (icon) icon.innerText = "▼";
       });
       toggleBtn.innerText = "📁 Tümünü Kapat";
     } else {
-      containers.forEach(el => el.classList.add("collapsed"));
-      document.querySelectorAll(".group-section-header").forEach(header => {
-        const icon = header.querySelector(".group-collapse-icon");
+      wrappers.forEach(w => {
+        const mc = w.querySelector(".group-movies-container");
+        const icon = w.querySelector(".group-collapse-icon");
+        if (mc) {
+          mc.classList.add("collapsed");
+          populateGroupMoviesContainer(mc, w.dataset.groupKey, false);
+        }
         if (icon) icon.innerText = "▶";
       });
       toggleBtn.innerText = "📂 Tümünü Aç";
     }
+    applyPersistentHighlight();
   }
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -4258,8 +4444,20 @@ def main():
         saveStateToStorage();
       } catch (err) {}
 
-      renderMovies(false);
-      scrollToMovie(selectedId, true);
+      renderMovies(false, true);
+
+      const idxInList = activeOrderedMovieIds.indexOf(String(selectedId));
+      if (idxInList !== -1) {
+        const targetPage = Math.floor(idxInList / PAGE_SIZE) + 1;
+        if (targetPage !== currentPage) {
+          currentPage = targetPage;
+          renderMovies(false, true);
+        }
+      }
+
+      requestAnimationFrame(() => {
+        scrollToMovie(selectedId, true);
+      });
       e.target.value = "";
     }
   });
@@ -4285,6 +4483,7 @@ def main():
     document.getElementById("includeLinkedInSearchCheckbox").checked = false;
     document.getElementById("showHiddenCheckbox").checked = false;
 
+    currentPage = 1;
     activeRelationFilterSet = null;
     updateRelationBanner();
     renderMovies(false);
