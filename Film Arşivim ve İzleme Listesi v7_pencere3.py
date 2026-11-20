@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v40")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v42")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -2966,6 +2966,7 @@ def main():
       saveStateToStorage();
       addRecentMovie(fid);
     } catch (e) {}
+    scrollToMovie(fid, true);
   }
 
   function exportUserData() {

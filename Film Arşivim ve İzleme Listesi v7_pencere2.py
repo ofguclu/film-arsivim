@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "tür ekleyince ilk sayfaya gitme hatası düzeltildi"
+SURUM_NOTU = "sol alt köşedeki checkbox'a bastığım an kırmızı çerçevede o filme gelmeli"
 
 #kaydet ve 30 sn bekle
 import time
