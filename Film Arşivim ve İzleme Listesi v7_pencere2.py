@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "bir filmin linkini tıklayınca da sol alt köşedeki checkbox seçili hale gelmiyor hatası düzeltildi"
+SURUM_NOTU = "üst ortaya gösterilen film / toplam film sayacı eklendi"
 
 #kaydet ve 30 sn bekle
 import time

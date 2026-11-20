@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v42")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v43")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -599,6 +599,26 @@ def main():
     opacity: 0.9;
   }
   .watchlist-checkbox:hover { opacity: 1; transform: scale(1.15); }
+
+  .card-position-badge {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    background: rgba(0, 0, 0, 0.78);
+    color: #f5c518;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1.1;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    white-space: nowrap;
+    pointer-events: none;
+  }
 
   .glorious-group {
     position: absolute;
@@ -3667,7 +3687,7 @@ def main():
     return card;
   }
 
-  function buildMovieCardElement(movie, showHidden, currentGeneralLastId, contextPrefix = "") {
+  function buildMovieCardElement(movie, showHidden, currentGeneralLastId, contextPrefix = "", positionIndex = null, totalCount = null) {
     const fid = String(movie.film_ID);
     const card = document.createElement("div");
     card.className = "movie-card";
@@ -3719,6 +3739,10 @@ def main():
     }
     const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
     const eyeBtnIcon = isHidden ? "🙈" : "👁️";
+
+    const positionBadgeHtml = (positionIndex !== null && totalCount !== null)
+      ? `<div class="card-position-badge" title="Mevcut görünümdeki sırası: ${positionIndex} / ${totalCount}">${positionIndex} / ${totalCount}</div>`
+      : "";
 
     const rawSeriesGroup = getSeriesGroupForMovie(fid);
     const seriesMembers = rawSeriesGroup ? (showHidden ? rawSeriesGroup.slice(1) : rawSeriesGroup.slice(1).filter(id => !hiddenMoviesState[id])) : null;
@@ -3800,6 +3824,7 @@ def main():
         <input type="checkbox" class="watchlist-checkbox" ${c2} title="İzleme Listesi 2" onchange="updateWatchlist(2, '${fid}', this.checked)">
         <input type="checkbox" class="watchlist-checkbox" ${c3} title="İzleme Listesi 3" onchange="updateWatchlist(3, '${fid}', this.checked)">
       </div>
+      ${positionBadgeHtml}
       <div class="glorious-group" title="Muhteşem Filmler olarak işaretle">
         <input type="checkbox" class="glorious-checkbox" ${cGlorious} title="Muhteşem Filmler" onchange="updateGlorious('${fid}', this.checked)">
       </div>
@@ -3882,8 +3907,9 @@ def main():
     if (!cached) return;
 
     const frag = document.createDocumentFragment();
-    cached.grpInfo.movies.forEach(movie => {
-      frag.appendChild(buildMovieCardElement(movie, cached.showHidden, cached.currentGeneralLastId, cached.grpInfo.key));
+    const totalInGroup = cached.grpInfo.movies.length;
+    cached.grpInfo.movies.forEach((movie, idx) => {
+      frag.appendChild(buildMovieCardElement(movie, cached.showHidden, cached.currentGeneralLastId, cached.grpInfo.key, idx + 1, totalInGroup));
     });
     if (cached.isGenreView) {
       frag.appendChild(buildAddMovieToGenreCard(cached.grpInfo.key));
@@ -4264,18 +4290,20 @@ def main():
       }
 
       activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
-      document.getElementById("countDisplay").innerText = filtered.length;
-      renderPaginationBars(filtered.length);
+      const totalFilteredCount = filtered.length;
+      document.getElementById("countDisplay").innerText = totalFilteredCount;
+      renderPaginationBars(totalFilteredCount);
 
-      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      const totalPages = Math.max(1, Math.ceil(totalFilteredCount / PAGE_SIZE));
       if (currentPage > totalPages) currentPage = totalPages;
       const startIdx = (currentPage - 1) * PAGE_SIZE;
       const pageMovies = filtered.slice(startIdx, startIdx + PAGE_SIZE);
       currentlyRenderedMovieIds = pageMovies.map(m => String(m.film_ID));
 
       const fragment = document.createDocumentFragment();
-      pageMovies.forEach(movie => {
-        const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "");
+      pageMovies.forEach((movie, pageIdx) => {
+        const globalPos = startIdx + pageIdx + 1;
+        const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "", globalPos, totalFilteredCount);
         fragment.appendChild(card);
       });
 
