@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "listenin sütunundaki mevcut 32 satır sayısı 3 artırılarak 35 satıra çıkarıldı (nihayet oldu)"
+SURUM_NOTU = "Çoklu Seçim, Gizli olanları Göster'in yanına gelsin. birde Çoklu Seçim seçilince kendisinin değil, sayfanın bacground'u mat yeşil olsun"
 
 #kaydet ve 30 sn bekle
 import time

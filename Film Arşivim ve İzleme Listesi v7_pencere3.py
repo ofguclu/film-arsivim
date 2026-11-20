@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - POPUP 850PX HEIGHT & 35 ROWS v36")
+    print("   ANA KOD.PY - POPUP 850PX HEIGHT & 35 ROWS v38")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -163,13 +163,14 @@ def main():
     --accent-color: #e50914;
     --border-color: #333;
   }
-  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; transition: background-color 0.2s ease; }
+  body.multi-select-page-bg { background-color: #16382b; }
 
   .header-container {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background-color: var(--bg-color);
+    background-color: inherit;
     padding-top: 4px;
     padding-bottom: 11px;
     border-bottom: 1px solid var(--border-color);
@@ -894,6 +895,7 @@ def main():
     color: var(--text-color);
     cursor: pointer;
     user-select: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
   .show-hidden-label:hover {
     border-color: var(--accent-color);
@@ -905,12 +907,17 @@ def main():
     cursor: pointer;
     margin: 0;
   }
+  #multiSelectCheckbox {
+    accent-color: #10b981;
+  }
   .card-details { padding: 10px; display: flex; flex-direction: column; flex-grow: 1; font-size: 12px; gap: 4px; }
-  .domain-container { display: flex; align-items: center; gap: 3px; margin-bottom: -1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .domain-container { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: -1px; white-space: nowrap; overflow: hidden; }
+  .domain-left { display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .domain-badge { color: #60a5fa; font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: underline; }
   .domain-badge:hover { color: #93c5fd; }
   .alt-url-link { color: #93c5fd; font-size: 11px; text-decoration: none; font-weight: bold; }
   .alt-url-link:hover { color: #fff; text-decoration: underline; }
+  .country-badge { color: #9ca3af; font-size: 10px; font-weight: bold; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; max-width: 95px; text-align: right; }
 
   .movie-title { color: #fff; text-decoration: none; font-weight: bold; font-size: 13px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; height: 34px; }
   .movie-title:hover { color: var(--accent-color); }
@@ -1145,6 +1152,11 @@ def main():
       <span>👁️ Gizli Olanları Göster</span>
     </label>
 
+    <label class="show-hidden-label" id="multiSelectLabel" title="Aktifken bir filme tür eklediğinizde veya kaldırdığınızda, filtrelere göre listelenen tüm filmlere uygular">
+      <input type="checkbox" id="multiSelectCheckbox" class="show-hidden-checkbox">
+      <span>☑️ Çoklu Seçim</span>
+    </label>
+
     <div class="last-id-container">
       <span>Son ID:</span>
       <input type="number" id="lastIdInput" min="1" placeholder="ID">
@@ -1325,6 +1337,7 @@ def main():
   let hiddenMoviesState = {};
   let recentMoviesState = [];
   let isSimpleViewMode = false;
+  let currentlyRenderedMovieIds = [];
 
   let seriesMoviesGroupsState = [];
   let seriesGroupsNamesState = {};
@@ -1357,6 +1370,21 @@ def main():
   let maxGlobalYear = 2030;
   let minGlobalDuration = 0;
   let maxGlobalDuration = 300;
+
+  function updateMultiSelectUI() {
+    const cb = document.getElementById("multiSelectCheckbox");
+    if (!cb) return;
+    document.body.classList.toggle("multi-select-page-bg", !!cb.checked);
+  }
+
+  function getTargetMovieIdsForGenreAction(seedMovieId) {
+    const multiCb = document.getElementById("multiSelectCheckbox");
+    if (multiCb && multiCb.checked) {
+      const ids = Array.from(new Set(currentlyRenderedMovieIds.map(String)));
+      if (ids.length > 0) return ids;
+    }
+    return [String(seedMovieId)];
+  }
 
   function applyViewModeUI() {
     const btn = document.getElementById("toggleViewModeBtn");
@@ -1806,6 +1834,7 @@ def main():
 
     if (type === 'genre') {
       const tgtGroups = getGenreGroupsForMovie(tgt);
+      const batchMovieIds = getTargetMovieIdsForGenreAction(src);
       if (tgtGroups.length === 0) {
         pendingGroupSource = src;
         pendingGroupTarget = tgt;
@@ -1821,10 +1850,12 @@ def main():
         setTimeout(() => document.getElementById("groupNameInput").focus(), 100);
       } else {
         const targetGroup = tgtGroups[0];
-        if (!targetGroup.slice(1).includes(src)) {
-          targetGroup.push(src);
-        }
-        propagateGenreToRelatedMovies(src, targetGroup[0], false);
+        batchMovieIds.forEach(mId => {
+          if (!targetGroup.slice(1).includes(mId)) {
+            targetGroup.push(mId);
+          }
+          propagateGenreToRelatedMovies(mId, targetGroup[0], false);
+        });
         propagateGenreToRelatedMovies(tgt, targetGroup[0], false);
         saveGenreGroups();
         renderMovies(false);
@@ -1863,13 +1894,14 @@ def main():
   function executeLinkingWithoutPrompt(src, tgt, type, customName = null) {
     if (type === 'genre') {
       const newKey = generateUniqueGroupKey('genre');
-      const newGroup = [newKey, src, tgt];
+      const batchMovieIds = getTargetMovieIdsForGenreAction(src);
+      const initialMembers = Array.from(new Set([tgt, ...batchMovieIds]));
+      const newGroup = [newKey, ...initialMembers];
       genreMoviesGroupsState.push(newGroup);
       if (customName) {
         genreGroupsNamesState[newKey] = customName;
       }
-      propagateGenreToRelatedMovies(src, newKey, false);
-      propagateGenreToRelatedMovies(tgt, newKey, false);
+      initialMembers.forEach(mId => propagateGenreToRelatedMovies(mId, newKey, false));
       saveGenreGroups();
       renderMovies(false);
       return;
@@ -2666,19 +2698,23 @@ def main():
     const type = activeGroupSelectType;
 
     if (type === 'genre') {
+      const batchMovieIds = getTargetMovieIdsForGenreAction(movieIdToAdd);
+      const isMultiMode = !!(document.getElementById("multiSelectCheckbox")?.checked);
       const currentAssignedKeys = new Set(getGenreGroupsForMovie(movieIdToAdd).map(g => g[0]));
 
       selectedGenreKeysInPopup.forEach(gKey => {
-        if (!currentAssignedKeys.has(gKey)) {
-          propagateGenreToRelatedMovies(movieIdToAdd, gKey, false);
+        if (isMultiMode || !currentAssignedKeys.has(gKey)) {
+          batchMovieIds.forEach(mId => propagateGenreToRelatedMovies(mId, gKey, false));
         }
       });
 
-      currentAssignedKeys.forEach(oldKey => {
-        if (!selectedGenreKeysInPopup.has(oldKey)) {
-          unlinkMovie(movieIdToAdd, 'genre', oldKey, false);
-        }
-      });
+      if (!isMultiMode) {
+        currentAssignedKeys.forEach(oldKey => {
+          if (!selectedGenreKeysInPopup.has(oldKey)) {
+            unlinkMovie(movieIdToAdd, 'genre', oldKey, false);
+          }
+        });
+      }
 
       closeGroupSelectPopup();
       saveGenreGroups();
@@ -2744,9 +2780,15 @@ def main():
     const group = groupsList[idx];
     const groupKey = group[0];
 
-    const idsToRemove = (type === 'genre')
-      ? new Set(getTransitiveRelatedMovieIds(fid))
-      : new Set([fid]);
+    const idsToRemove = new Set();
+    if (type === 'genre') {
+      const targetSeeds = getTargetMovieIdsForGenreAction(fid);
+      targetSeeds.forEach(seedId => {
+        getTransitiveRelatedMovieIds(seedId).forEach(relId => idsToRemove.add(String(relId)));
+      });
+    } else {
+      idsToRemove.add(fid);
+    }
 
     const filteredMembers = group.slice(1).filter(id => !idsToRemove.has(String(id)));
     groupsList[idx] = [groupKey, ...filteredMembers];
@@ -3486,6 +3528,7 @@ def main():
     const durationText = movie.duration_mins ? `${Math.round(parseFloat(movie.duration_mins))}dk` : "";
     const actorsStr = getActorsString(movie);
     const domainText = getDomain(movie.web_scraper_start_url);
+    const countryText = (movie.country || "").trim();
 
     const altUrls = alternativeUrlsState[fid] || [];
     let altLinksHtml = "";
@@ -3494,10 +3537,17 @@ def main():
       altLinksHtml += ` | <a class="alt-url-link" href="${escapeHtml(altUrl)}" target="_blank" title="${escapeHtml(altUrl)}" onclick="handleCardClick('${fid}')">${label}</a>`;
     });
 
-    const domainContainerHtml = domainText ? `
-      <div class="domain-container" title="URL'leri yönetmek için domain adına tıklayın">
-        <span class="domain-badge" onclick="openUrlPopup('${fid}')">${escapeHtml(domainText)}</span>
-        ${altLinksHtml}
+    const countryHtml = countryText
+      ? `<span class="country-badge" title="${escapeHtml(countryText)}">${escapeHtml(countryText)}</span>`
+      : `<span class="country-badge"></span>`;
+
+    const domainContainerHtml = (domainText || countryText) ? `
+      <div class="domain-container">
+        <div class="domain-left" title="URL'leri yönetmek için domain adına tıklayın">
+          ${domainText ? `<span class="domain-badge" onclick="openUrlPopup('${fid}')">${escapeHtml(domainText)}</span>` : ""}
+          ${altLinksHtml}
+        </div>
+        ${countryHtml}
       </div>
     ` : "";
 
@@ -3960,6 +4010,7 @@ def main():
           return 0;
         });
 
+        currentlyRenderedMovieIds = filtered.map(m => String(m.film_ID));
         document.getElementById("countDisplay").innerText = filtered.length;
 
         const fragment = document.createDocumentFragment();
@@ -4026,6 +4077,7 @@ def main():
         });
       }
 
+      currentlyRenderedMovieIds = filtered.map(m => String(m.film_ID));
       document.getElementById("countDisplay").innerText = filtered.length;
 
       const fragment = document.createDocumentFragment();
@@ -4073,6 +4125,7 @@ def main():
     }
   });
 
+  document.getElementById("multiSelectCheckbox").addEventListener("change", updateMultiSelectUI);
   document.getElementById("closeGroupSelectModalBtn").addEventListener("click", closeGroupSelectPopup);
   document.getElementById("confirmGroupSelectBtn").addEventListener("click", confirmGroupSelect);
   document.getElementById("createNewGroupInPopupBtn").addEventListener("click", createNewGroupFromPopup);
