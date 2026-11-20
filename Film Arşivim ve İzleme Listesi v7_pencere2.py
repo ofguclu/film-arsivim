@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "paging eklendi"
+SURUM_NOTU = "tür ekleyince ilk sayfaya gitme hatası düzeltildi"
 
 #kaydet ve 30 sn bekle
 import time

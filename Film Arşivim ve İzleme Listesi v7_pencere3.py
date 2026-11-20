@@ -425,7 +425,6 @@ def main():
 
   .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
   .movie-card:hover { transform: translateY(-4px); border-color: #555; }
-  /* Go ile bulunan film için kalıcı kırmızı çerçeve */
   .movie-card.highlight {
     outline: 4px solid #e50914;
     box-shadow: 0 0 18px rgba(229, 9, 20, 0.85);
@@ -1416,6 +1415,14 @@ def main():
   let minGlobalDuration = 0;
   let maxGlobalDuration = 300;
 
+  function renderMoviesPreservingScroll() {
+    const savedScrollY = window.scrollY;
+    renderMovies(false, true);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+    });
+  }
+
   function applyPersistentHighlight() {
     document.querySelectorAll(".movie-card.highlight").forEach(el => {
       el.classList.remove("highlight");
@@ -1673,7 +1680,7 @@ def main():
       } catch(e) {}
     }
     closeUrlPopup();
-    renderMovies(false);
+    renderMoviesPreservingScroll();
   }
 
   function saveSeriesGroups() {
@@ -1914,7 +1921,7 @@ def main():
         });
         propagateGenreToRelatedMovies(tgt, targetGroup[0], false);
         saveGenreGroups();
-        renderMovies(false);
+        renderMoviesPreservingScroll();
       }
       return;
     }
@@ -1959,7 +1966,7 @@ def main():
       }
       initialMembers.forEach(mId => propagateGenreToRelatedMovies(mId, newKey, false));
       saveGenreGroups();
-      renderMovies(false);
+      renderMoviesPreservingScroll();
       return;
     }
 
@@ -2023,7 +2030,7 @@ def main():
       updateRelationBanner();
     }
 
-    renderMovies(false);
+    renderMoviesPreservingScroll();
   }
 
   function closeGroupNamePopup(save) {
@@ -2265,7 +2272,7 @@ def main():
     }
 
     closeBulkAddMoviesToGenrePopup();
-    renderMovies(false);
+    renderMoviesPreservingScroll();
   }
 
   function rebuildCachedGroupListForPopup(selectTargetKey = null) {
@@ -2479,7 +2486,7 @@ def main():
 
     rebuildCachedGroupListForPopup(targetKey);
     updateRelationBanner();
-    renderMovies(false);
+    renderMoviesPreservingScroll();
   }
 
   function setFocusedGenreRow(groupKey) {
@@ -2774,7 +2781,7 @@ def main():
 
       closeGroupSelectPopup();
       saveGenreGroups();
-      renderMovies(false);
+      renderMoviesPreservingScroll();
       return;
     }
 
@@ -2808,7 +2815,7 @@ def main():
     else saveRemakeGroups();
 
     syncGenresAcrossRelatedCluster(movieIdToAdd, true);
-    renderMovies(false);
+    renderMoviesPreservingScroll();
   }
 
   function unlinkMovie(movieId, type, specificGroupKey = null, shouldRender = true) {
@@ -2870,7 +2877,7 @@ def main():
     }
 
     if (shouldRender) {
-      renderMovies(false);
+      renderMoviesPreservingScroll();
     }
   }
 
@@ -3515,7 +3522,7 @@ def main():
 
       const currentSelection = document.getElementById("watchlistDropdown").value;
       if (currentSelection !== "all") {
-        renderMovies(false);
+        renderMoviesPreservingScroll();
       }
     } catch (e) {}
   }
@@ -3528,7 +3535,7 @@ def main():
 
       const currentSelection = document.getElementById("watchlistDropdown").value;
       if (currentSelection === "watched") {
-        renderMovies(false);
+        renderMoviesPreservingScroll();
       }
     } catch (e) {}
   }
@@ -3541,7 +3548,7 @@ def main():
 
       const currentSelection = document.getElementById("watchlistDropdown").value;
       if (currentSelection === "glorious") {
-        renderMovies(false);
+        renderMoviesPreservingScroll();
       }
     } catch (e) {}
   }
@@ -3568,7 +3575,7 @@ def main():
       }
       localStorage.setItem("hidden_movie_ids", JSON.stringify(hiddenMoviesState));
       updateRelationBanner();
-      renderMovies(false);
+      renderMoviesPreservingScroll();
       renderRecentDropdown();
     } catch (e) {}
   }
