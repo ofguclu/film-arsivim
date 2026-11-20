@@ -1434,6 +1434,14 @@ def main():
     }
   }
 
+  function syncCardRadioSelection(movieId) {
+    const fid = String(movieId || "").trim();
+    document.querySelectorAll('input[name="selectedMovieRadio"]').forEach(radio => {
+      const card = radio.closest(".movie-card");
+      radio.checked = !!(fid && card && card.dataset.movieIdCard === fid);
+    });
+  }
+
   function updateMultiSelectUI() {
     const cb = document.getElementById("multiSelectCheckbox");
     if (!cb) return;
@@ -2963,6 +2971,7 @@ def main():
     try {
       localStorage.setItem("last_clicked_movie_id", fid);
       document.getElementById("lastIdInput").value = fid;
+      syncCardRadioSelection(fid);
       saveStateToStorage();
       addRecentMovie(fid);
     } catch (e) {}
@@ -3499,9 +3508,13 @@ def main():
   function handleCardClick(movieId) {
     try {
       if (movieId) {
-        localStorage.setItem("last_clicked_movie_id", String(movieId));
-        document.getElementById("lastIdInput").value = movieId;
-        addRecentMovie(movieId);
+        const fid = String(movieId).trim();
+        localStorage.setItem("last_clicked_movie_id", fid);
+        document.getElementById("lastIdInput").value = fid;
+        syncCardRadioSelection(fid);
+        persistentHighlightedMovieId = fid;
+        applyPersistentHighlight();
+        addRecentMovie(fid);
         saveStateToStorage();
       }
     } catch (e) {}

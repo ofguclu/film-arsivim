@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "sol alt köşedeki checkbox'a bastığım an kırmızı çerçevede o filme gelmeli"
+SURUM_NOTU = "bir filmin linkini tıklayınca da sol alt köşedeki checkbox seçili hale gelmiyor hatası düzeltildi"
 
 #kaydet ve 30 sn bekle
 import time
