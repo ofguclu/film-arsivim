@@ -14,8 +14,10 @@
     --accent-color: #e50914;
     --border-color: #333;
   }
-  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; transition: background-color 0.2s ease; }
+  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; transition: background-color 0.2s ease, padding-right 0.22s ease; }
   body.multi-select-page-bg { background-color: #199e46; }
+  body.sidebar-open-filter { padding-right: 310px; }
+  body.sidebar-open-genre-add { padding-right: 700px; }
 
   input[type="number"] {
     -moz-appearance: textfield;
@@ -55,6 +57,157 @@
   button, a.btn-link { cursor: pointer; font-weight: bold; transition: background 0.2s; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.active, a.btn-link.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+
+  .btn-film-search-sidebar { background: #1d4ed8; color: #dbeafe; border: 1px solid #3b82f6; font-size: 11px; padding: 5px 9px; }
+  .btn-film-search-sidebar:hover { background: #2563eb; color: #fff; }
+  .btn-film-search-sidebar.is-open { background: #10b981; color: #052e16; border-color: #6ee7b7; }
+
+  .btn-genre-add-sidebar { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; font-size: 11px; padding: 5px 9px; }
+  .btn-genre-add-sidebar:hover { background: #059669; color: #fff; }
+  .btn-genre-add-sidebar.is-open { background: #10b981; color: #052e16; border-color: #6ee7b7; }
+
+  .right-sidebar-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 290px;
+    height: 100vh;
+    background: #161616;
+    border-left: 1px solid #333;
+    box-shadow: -6px 0 24px rgba(0,0,0,0.75);
+    z-index: 2500;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    gap: 10px;
+  }
+  .right-sidebar-panel.open {
+    display: flex;
+  }
+  .right-sidebar-panel.genre-add-mode {
+    width: 680px;
+    max-width: 96vw;
+  }
+  .right-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2c2c2c;
+    padding-bottom: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #f5c518;
+    gap: 8px;
+  }
+  .right-sidebar-close-btn {
+    background: #262626;
+    color: #e5e7eb;
+    border: 1px solid #444;
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .right-sidebar-close-btn:hover {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+  }
+  .sidebar-genre-listbox {
+    flex: 1;
+    overflow-y: auto;
+    background: #121212;
+    border: 1px solid #3a3a3a;
+    border-radius: 5px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    box-sizing: border-box;
+  }
+  .sidebar-genre-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 7px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11.5px;
+    line-height: 1.2;
+    user-select: none;
+    border: 1px solid #1f1f1f;
+    background: #181818;
+    color: #e0e0e0;
+    box-sizing: border-box;
+  }
+  .sidebar-genre-item:hover {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .sidebar-genre-item.checked-row {
+    background: #10b981;
+    border-color: #34d399;
+    color: #052e16;
+    font-weight: bold;
+  }
+  .sidebar-genre-item input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+    accent-color: #10b981;
+    cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .sidebar-genre-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-genre-add-body {
+    flex: 1;
+    min-height: 0;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .right-sidebar-panel.genre-add-mode .sidebar-genre-add-body {
+    display: flex;
+  }
+  .right-sidebar-panel.genre-add-mode #sidebarGenreListbox {
+    display: none;
+  }
+  .sidebar-4col-checkbox-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: #121212;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 5px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    align-content: start;
+  }
+  .sidebar-genre-preview-box {
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 7px 9px;
+    max-height: 125px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    color: #bbb;
+    flex-shrink: 0;
+  }
 
   a.btn-editor { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
   a.btn-editor:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
@@ -965,6 +1118,9 @@
       <button type="button" id="searchBtn" class="btn-search" title="Ara (veya Enter'a basın)">🔍</button>
     </div>
 
+    <button type="button" id="toggleFilmSearchSidebarBtn" class="btn-film-search-sidebar" title="Sağ yan panelde türlere göre film ara">🔍 Film Ara</button>
+    <button type="button" id="toggleGenreAddSidebarBtn" class="btn-genre-add-sidebar" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
+
     <select id="domainFilter"><option value="">Tüm Domainler</option></select>
 
     <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi">
@@ -1104,6 +1260,54 @@
     <button class="btn-clear-relation" id="clearRelationBtn">✕ Filtreyi Kaldır</button>
   </div>
 </div>
+
+<!-- Sağ Yan Panel (Film Ara veya 4 Kolon Tür Ekle) -->
+<aside id="filmSearchSidebarPanel" class="right-sidebar-panel" aria-label="Sağ Yan Panel">
+  <div class="right-sidebar-header">
+    <span id="sidebarPanelTitle">🏷️ Türlere Göre Filtrele</span>
+    <button type="button" id="closeFilmSearchSidebarBtn" class="right-sidebar-close-btn" title="Paneli Kapat">✕</button>
+  </div>
+  <div id="sidebarGenreListbox" class="sidebar-genre-listbox"></div>
+
+  <div id="sidebarGenreAddBody" class="sidebar-genre-add-body">
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input type="text" id="sidebarGenreSearchInput" placeholder="Tür ara..." style="flex:1; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:12px;">
+      <select id="sidebarGenreSortSelect" style="background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px; border-radius:4px; font-size:11px;">
+        <option value="alpha_asc">Alfabetik (A-Z)</option>
+        <option value="alpha_desc">Alfabetik (Z-A)</option>
+        <option value="default">Varsayılan</option>
+        <option value="count_asc">Film Sayısı (Artan)</option>
+        <option value="count_desc">Film Sayısı (Azalan)</option>
+      </select>
+    </div>
+
+    <div id="sidebarGenre4ColList" class="sidebar-4col-checkbox-list"></div>
+
+    <div class="sidebar-genre-preview-box">
+      <div style="font-weight:bold; color:#f5c518; border-bottom:1px solid #2b2b2b; padding-bottom:3px; margin-bottom:2px;">
+        🎬 Grubun Filmleri (<span id="sidebarPreviewGroupCount">0</span>)
+      </div>
+      <div id="sidebarGroupPreviewList" style="display:flex; flex-direction:column; gap:3px;">
+        <span style="color:#666; font-style:italic;">Bir tür seçin...</span>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input type="text" id="sidebarNewGenreInput" placeholder="Yeni tür adı..." style="flex:1; min-width:110px; background:#121212; color:#e0e0e0; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:11.5px;">
+      <button type="button" id="sidebarCreateGenreBtn" style="background:#059669; color:#fff; border:none; padding:5px 9px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:11px; white-space:nowrap;">Yeni Tür Ekle</button>
+    </div>
+
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input type="text" id="sidebarRenameGenreInput" placeholder="Seçili tür adı..." style="flex:1; min-width:110px; background:#121212; color:#f5c518; border:1px solid #444; padding:5px 8px; border-radius:4px; font-size:11.5px;">
+      <button type="button" id="sidebarRenameGenreBtn" style="background:#d97706; color:#fff; border:none; padding:5px 9px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:11px; white-space:nowrap;">Adı Değiştir</button>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #2c2c2c; padding-top:7px;">
+      <button type="button" id="sidebarCancelGenreAddBtn" style="background:#333; color:#fff; border:1px solid #555; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:11.5px;">Kapat</button>
+      <button type="button" id="sidebarConfirmGenreAddBtn" style="background:#10b981; color:#fff; border:none; padding:5px 14px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:11.5px;">Ekle</button>
+    </div>
+  </div>
+</aside>
 
 <div class="pagination-bar" id="paginationTopBar"></div>
 <div class="movie-grid" id="movieGridContainer"></div>
@@ -1263,6 +1467,13 @@
   let genreMoviesGroupsState = [];
   let genreGroupsNamesState = {};
 
+  let sidebarSelectedGenreKeys = new Set();
+  let sidebarMode = null; // null | "filter" | "genre_add"
+  let sidebarTargetMovieId = null;
+  let sidebarGenreTempCreatedKeys = [];
+  let sidebarGenreSelectedKeys = new Set();
+  let sidebarGenreFocusedKey = null;
+
   let alternativeUrlsState = {};
   let activeRelationFilterSet = null;
   let currentPopupMovieId = null;
@@ -1313,6 +1524,14 @@
     });
   }
 
+  function getCheckedRadioMovieId() {
+    const checkedRadio = document.querySelector('input[name="selectedMovieRadio"]:checked');
+    if (!checkedRadio) return null;
+    const card = checkedRadio.closest(".movie-card");
+    const fid = card && card.dataset.movieIdCard ? String(card.dataset.movieIdCard).trim() : "";
+    return fid && validMovieIds.has(fid) ? fid : null;
+  }
+
   function updateMultiSelectUI() {
     const cb = document.getElementById("multiSelectCheckbox");
     if (!cb) return;
@@ -1359,6 +1578,498 @@
     isSimpleViewMode = false;
   }
   applyViewModeUI();
+
+  function cleanupSidebarTempGenres() {
+    if (!sidebarGenreTempCreatedKeys || sidebarGenreTempCreatedKeys.length === 0) return;
+    sidebarGenreTempCreatedKeys.forEach(tKey => {
+      const idx = genreMoviesGroupsState.findIndex(g => g[0] === tKey);
+      if (idx !== -1 && genreMoviesGroupsState[idx].slice(1).length < 1) {
+        genreMoviesGroupsState.splice(idx, 1);
+        delete genreGroupsNamesState[tKey];
+      }
+    });
+    sidebarGenreTempCreatedKeys = [];
+  }
+
+  function applySidebarGenreSelectionImmediately(genreKey, isChecked) {
+    if (!genreKey) return;
+
+    if (isChecked) {
+      sidebarGenreSelectedKeys.add(genreKey);
+    } else {
+      sidebarGenreSelectedKeys.delete(genreKey);
+    }
+
+    const targetId = getCheckedRadioMovieId();
+    if (!targetId) {
+      alert("Seçili film yok");
+      loadMovieGenresIntoSidebar();
+      return;
+    }
+
+    const batchMovieIds = getTargetMovieIdsForGenreAction(targetId);
+    const isMultiMode = !!(document.getElementById("multiSelectCheckbox")?.checked);
+
+    if (isChecked) {
+      batchMovieIds.forEach(mId => propagateGenreToRelatedMovies(mId, genreKey, false));
+      const tempIdx = sidebarGenreTempCreatedKeys.indexOf(genreKey);
+      if (tempIdx !== -1) {
+        sidebarGenreTempCreatedKeys.splice(tempIdx, 1);
+      }
+      saveGenreGroups();
+    } else {
+      if (isMultiMode) {
+        batchMovieIds.forEach(mId => unlinkMovie(mId, "genre", genreKey, false));
+      } else {
+        unlinkMovie(targetId, "genre", genreKey, false);
+      }
+      saveGenreGroups();
+    }
+
+    const grpObj = genreMoviesGroupsState.find(g => g[0] === genreKey);
+    if (sidebarGenreFocusedKey === genreKey) {
+      updateSidebarGenrePreview(grpObj ? grpObj.slice(1) : null);
+    }
+
+    renderMoviesPreservingScroll();
+  }
+
+  function loadMovieGenresIntoSidebar() {
+    const checkedId = getCheckedRadioMovieId();
+    sidebarTargetMovieId = checkedId;
+    sidebarGenreSelectedKeys = new Set();
+    sidebarGenreFocusedKey = null;
+
+    const titleEl = document.getElementById("sidebarPanelTitle");
+    if (!checkedId) {
+      if (titleEl && sidebarMode === "genre_add") {
+        titleEl.innerText = "🏷️ Tür Ekle — Seçili film yok";
+      }
+      const listEl = document.getElementById("sidebarGenre4ColList");
+      if (listEl) {
+        listEl.innerHTML = `<div style="grid-column:1/-1; color:#fca5a5; padding:12px; font-size:11.5px;">Seçili film yok</div>`;
+      }
+      updateSidebarGenrePreview(null);
+      const renameEl = document.getElementById("sidebarRenameGenreInput");
+      if (renameEl) renameEl.value = "";
+      return;
+    }
+
+    const existingGenres = getGenreGroupsForMovie(checkedId);
+    existingGenres.forEach(g => sidebarGenreSelectedKeys.add(g[0]));
+    if (existingGenres.length > 0) {
+      sidebarGenreFocusedKey = existingGenres[0][0];
+    }
+
+    const movieObj = allMovies.find(m => String(m.film_ID) === String(checkedId));
+    if (titleEl && sidebarMode === "genre_add") {
+      titleEl.innerText = movieObj
+        ? `🏷️ Tür Ekle — ${movieObj.film_name} (ID: ${checkedId})`
+        : `🏷️ Tür Ekle (ID: ${checkedId})`;
+    }
+
+    renderSidebar4ColGenreList(sidebarGenreFocusedKey);
+  }
+
+  function setSidebarMode(mode) {
+    if (sidebarMode === "genre_add" && mode !== "genre_add") {
+      cleanupSidebarTempGenres();
+      saveGenreGroups();
+    }
+
+    sidebarMode = mode;
+    const panel = document.getElementById("filmSearchSidebarPanel");
+    const filterBtn = document.getElementById("toggleFilmSearchSidebarBtn");
+    const genreAddBtn = document.getElementById("toggleGenreAddSidebarBtn");
+    const titleEl = document.getElementById("sidebarPanelTitle");
+
+    document.body.classList.remove("sidebar-open-filter", "sidebar-open-genre-add");
+    if (panel) {
+      panel.classList.remove("open", "genre-add-mode");
+    }
+    if (filterBtn) filterBtn.classList.remove("is-open");
+    if (genreAddBtn) genreAddBtn.classList.remove("is-open");
+
+    if (mode === "filter") {
+      if (panel) panel.classList.add("open");
+      document.body.classList.add("sidebar-open-filter");
+      if (filterBtn) filterBtn.classList.add("is-open");
+      if (titleEl) titleEl.innerText = "🏷️ Türlere Göre Filtrele";
+      renderMovies(false);
+    } else if (mode === "genre_add") {
+      if (panel) panel.classList.add("open", "genre-add-mode");
+      document.body.classList.add("sidebar-open-genre-add");
+      if (genreAddBtn) genreAddBtn.classList.add("is-open");
+      const searchEl = document.getElementById("sidebarGenreSearchInput");
+      if (searchEl) searchEl.value = "";
+      const newEl = document.getElementById("sidebarNewGenreInput");
+      if (newEl) newEl.value = "";
+      const renameEl = document.getElementById("sidebarRenameGenreInput");
+      if (renameEl) renameEl.value = "";
+      const sortEl = document.getElementById("sidebarGenreSortSelect");
+      if (sortEl) sortEl.value = "alpha_asc";
+
+      if (!getCheckedRadioMovieId()) {
+        alert("Seçili film yok");
+      }
+      loadMovieGenresIntoSidebar();
+    }
+  }
+
+  function updateSidebarGenrePreview(memberIds) {
+    const previewListEl = document.getElementById("sidebarGroupPreviewList");
+    const countEl = document.getElementById("sidebarPreviewGroupCount");
+    if (!previewListEl || !countEl) return;
+
+    const showHidden = document.getElementById("showHiddenCheckbox").checked;
+    const visibleMemberIds = memberIds ? (showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id])) : [];
+
+    countEl.innerText = visibleMemberIds.length;
+    if (visibleMemberIds.length === 0) {
+      previewListEl.innerHTML = `<span style="color:#666; font-style:italic;">Bu türde henüz film yok</span>`;
+      return;
+    }
+
+    let htmlContent = "";
+    visibleMemberIds.forEach(mId => {
+      const movieObj = allMovies.find(m => String(m.film_ID) === String(mId));
+      const mName = movieObj ? movieObj.film_name : `Film #${mId}`;
+      const mYear = movieObj && movieObj.year ? `(${movieObj.year})` : "";
+      const mImdb = movieObj && movieObj.imdb_score ? `⭐ ${movieObj.imdb_score}` : "";
+
+      htmlContent += `
+        <div style="background:#1e1e1e; border:1px solid #333; padding:3px 7px; border-radius:3px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
+          <span style="color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(mName)}">${escapeHtml(mName)} ${mYear}</span>
+          <span style="color:#f5c518; font-size:10px; flex-shrink:0;">${mImdb}</span>
+        </div>
+      `;
+    });
+    previewListEl.innerHTML = htmlContent;
+  }
+
+  function getSidebarGenreItems() {
+    const showHidden = document.getElementById("showHiddenCheckbox").checked;
+    const items = [];
+    genreMoviesGroupsState.forEach((g, idx) => {
+      if (!Array.isArray(g) || g.length === 0) return;
+      const gKey = g[0];
+      const memberIds = g.slice(1);
+      const visibleMembers = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
+      const isTemp = sidebarGenreTempCreatedKeys.includes(gKey);
+      if (!isTemp && visibleMembers.length < 1) return;
+
+      const gName = getGenreGroupName(g);
+      items.push({
+        originalIndex: idx,
+        groupKey: gKey,
+        name: gName,
+        rawName: gName,
+        count: visibleMembers.length,
+        members: memberIds
+      });
+    });
+    return items;
+  }
+
+  function setFocusedSidebarGenreRow(groupKey) {
+    sidebarGenreFocusedKey = groupKey;
+    const items = getSidebarGenreItems();
+    const matched = items.find(i => i.groupKey === groupKey);
+    updateSidebarGenrePreview(matched ? matched.members : null);
+
+    const renameEl = document.getElementById("sidebarRenameGenreInput");
+    if (renameEl) {
+      renameEl.value = matched ? matched.rawName : "";
+    }
+
+    const listEl = document.getElementById("sidebarGenre4ColList");
+    if (listEl) {
+      listEl.querySelectorAll(".multi-checkbox-item").forEach(row => {
+        row.classList.toggle("active-row", row.dataset.groupKey === groupKey);
+      });
+    }
+  }
+
+  function renderSidebar4ColGenreList(selectTargetKey = null) {
+    const listEl = document.getElementById("sidebarGenre4ColList");
+    if (!listEl) return;
+
+    const query = (document.getElementById("sidebarGenreSearchInput")?.value || "").toLowerCase().trim();
+    const sortVal = document.getElementById("sidebarGenreSortSelect")?.value || "alpha_asc";
+
+    let items = getSidebarGenreItems();
+    if (query) {
+      items = items.filter(i => i.name.toLowerCase().includes(query));
+    }
+
+    items.sort((a, b) => {
+      if (sortVal === "alpha_asc") return a.rawName.localeCompare(b.rawName, "tr");
+      if (sortVal === "alpha_desc") return b.rawName.localeCompare(a.rawName, "tr");
+      if (sortVal === "default") return a.originalIndex - b.originalIndex;
+      if (sortVal === "count_asc") return (a.count - b.count) || a.rawName.localeCompare(b.rawName, "tr");
+      if (sortVal === "count_desc") return (b.count - a.count) || b.rawName.localeCompare(a.rawName, "tr");
+      return 0;
+    });
+
+    listEl.innerHTML = "";
+    if (items.length === 0) {
+      listEl.innerHTML = `<div style="grid-column:1/-1; color:#888; padding:12px; font-style:italic; font-size:11px;">Eşleşen tür bulunamadı</div>`;
+      updateSidebarGenrePreview(null);
+      const renameEl = document.getElementById("sidebarRenameGenreInput");
+      if (renameEl) renameEl.value = "";
+      return;
+    }
+
+    if (selectTargetKey && items.some(i => i.groupKey === selectTargetKey)) {
+      sidebarGenreFocusedKey = selectTargetKey;
+    } else if (!sidebarGenreFocusedKey || !items.some(i => i.groupKey === sidebarGenreFocusedKey)) {
+      sidebarGenreFocusedKey = items[0].groupKey;
+    }
+
+    const frag = document.createDocumentFragment();
+    items.forEach(item => {
+      const isChecked = sidebarGenreSelectedKeys.has(item.groupKey);
+      const row = document.createElement("div");
+      row.className = "multi-checkbox-item"
+        + (isChecked ? " checked-row" : "")
+        + (item.groupKey === sidebarGenreFocusedKey ? " active-row" : "");
+      row.style.height = "auto";
+      row.style.padding = "4px 6px";
+      row.dataset.groupKey = item.groupKey;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isChecked;
+
+      cb.addEventListener("change", (e) => {
+        e.stopPropagation();
+        row.classList.toggle("checked-row", cb.checked);
+        setFocusedSidebarGenreRow(item.groupKey);
+        applySidebarGenreSelectionImmediately(item.groupKey, cb.checked);
+      });
+
+      const lbl = document.createElement("span");
+      lbl.className = "multi-checkbox-label";
+      lbl.textContent = item.name;
+      lbl.title = item.name;
+
+      row.appendChild(cb);
+      row.appendChild(lbl);
+
+      row.addEventListener("click", (e) => {
+        if (e.target !== cb) {
+          cb.checked = !cb.checked;
+          row.classList.toggle("checked-row", cb.checked);
+          setFocusedSidebarGenreRow(item.groupKey);
+          applySidebarGenreSelectionImmediately(item.groupKey, cb.checked);
+        } else {
+          setFocusedSidebarGenreRow(item.groupKey);
+        }
+      });
+
+      frag.appendChild(row);
+    });
+
+    listEl.appendChild(frag);
+    setFocusedSidebarGenreRow(sidebarGenreFocusedKey);
+  }
+
+  function createNewGenreInSidebar() {
+    const inputEl = document.getElementById("sidebarNewGenreInput");
+    const newName = inputEl ? inputEl.value.trim() : "";
+    if (!newName) {
+      alert("Lütfen yeni tür için bir ad yazın.");
+      if (inputEl) inputEl.focus();
+      return;
+    }
+
+    const existing = genreMoviesGroupsState.find(g =>
+      (genreGroupsNamesState[g[0]] || "").trim().toLowerCase() === newName.toLowerCase()
+    );
+
+    if (existing) {
+      const exKey = existing[0];
+      if (inputEl) inputEl.value = "";
+      const searchEl = document.getElementById("sidebarGenreSearchInput");
+      if (searchEl) searchEl.value = "";
+      sidebarGenreFocusedKey = exKey;
+      applySidebarGenreSelectionImmediately(exKey, true);
+      renderSidebar4ColGenreList(exKey);
+      return;
+    }
+
+    const newKey = generateUniqueGroupKey("genre");
+    genreMoviesGroupsState.push([newKey]);
+    genreGroupsNamesState[newKey] = newName;
+    sidebarGenreTempCreatedKeys.push(newKey);
+    sidebarGenreFocusedKey = newKey;
+
+    if (inputEl) inputEl.value = "";
+    const searchEl = document.getElementById("sidebarGenreSearchInput");
+    if (searchEl) searchEl.value = "";
+
+    const targetId = getCheckedRadioMovieId();
+    if (targetId) {
+      applySidebarGenreSelectionImmediately(newKey, true);
+    } else {
+      sidebarGenreSelectedKeys.add(newKey);
+      saveGenreGroups();
+    }
+    renderSidebar4ColGenreList(newKey);
+  }
+
+  function renameFocusedGenreInSidebar() {
+    const renameEl = document.getElementById("sidebarRenameGenreInput");
+    const newName = renameEl ? renameEl.value.trim() : "";
+    if (!newName) {
+      alert("Tür adı boş olamaz.");
+      if (renameEl) renameEl.focus();
+      return;
+    }
+    if (!sidebarGenreFocusedKey) {
+      alert("Lütfen önce listeden adı değiştirilecek bir tür seçin.");
+      return;
+    }
+
+    genreGroupsNamesState[sidebarGenreFocusedKey] = newName;
+    saveGenreGroups();
+    renderSidebar4ColGenreList(sidebarGenreFocusedKey);
+    updateRelationBanner();
+    renderMoviesPreservingScroll();
+  }
+
+  function confirmSidebarGenreAdd() {
+    const targetId = getCheckedRadioMovieId();
+    if (!targetId) {
+      alert("Seçili film yok");
+      loadMovieGenresIntoSidebar();
+      return;
+    }
+
+    const batchMovieIds = getTargetMovieIdsForGenreAction(targetId);
+    const isMultiMode = !!(document.getElementById("multiSelectCheckbox")?.checked);
+    const currentAssignedKeys = new Set(getGenreGroupsForMovie(targetId).map(g => g[0]));
+
+    sidebarGenreSelectedKeys.forEach(gKey => {
+      if (isMultiMode || !currentAssignedKeys.has(gKey)) {
+        batchMovieIds.forEach(mId => propagateGenreToRelatedMovies(mId, gKey, false));
+      }
+    });
+
+    if (!isMultiMode) {
+      currentAssignedKeys.forEach(oldKey => {
+        if (!sidebarGenreSelectedKeys.has(oldKey)) {
+          unlinkMovie(targetId, "genre", oldKey, false);
+        }
+      });
+    }
+
+    cleanupSidebarTempGenres();
+    saveGenreGroups();
+    renderMoviesPreservingScroll();
+    loadMovieGenresIntoSidebar();
+  }
+
+  function getMovieGenreKeySet(movieId) {
+    const gs = getGenreGroupsForMovie(movieId);
+    const keySet = new Set();
+    gs.forEach(g => {
+      if (Array.isArray(g) && g.length >= 2) {
+        keySet.add(g[0]);
+      }
+    });
+    return keySet;
+  }
+
+  function renderSidebarGenreListbox(candidateMovies, showHidden) {
+    const listbox = document.getElementById("sidebarGenreListbox");
+    if (!listbox) return;
+
+    const existingKeys = new Set(genreMoviesGroupsState.map(g => g[0]));
+    sidebarSelectedGenreKeys = new Set(Array.from(sidebarSelectedGenreKeys).filter(k => existingKeys.has(k)));
+
+    const coOccurringGenreKeys = new Set();
+    (candidateMovies || []).forEach(movie => {
+      const mGenres = getGenreGroupsForMovie(movie.film_ID);
+      mGenres.forEach(g => {
+        if (Array.isArray(g) && g.length >= 2) {
+          const visibleMembers = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
+          if (visibleMembers.length >= 1) {
+            coOccurringGenreKeys.add(g[0]);
+          }
+        }
+      });
+    });
+
+    const visibleGenreKeySet = new Set(coOccurringGenreKeys);
+    sidebarSelectedGenreKeys.forEach(k => visibleGenreKeySet.add(k));
+
+    const items = [];
+    genreMoviesGroupsState.forEach(g => {
+      if (!Array.isArray(g) || g.length < 2) return;
+      const gKey = g[0];
+      if (!visibleGenreKeySet.has(gKey)) return;
+      const visibleMembers = showHidden ? g.slice(1) : g.slice(1).filter(id => !hiddenMoviesState[id]);
+      if (visibleMembers.length < 1 && !sidebarSelectedGenreKeys.has(gKey)) return;
+
+      items.push({
+        groupKey: gKey,
+        name: getGenreGroupName(g)
+      });
+    });
+
+    items.sort((a, b) => a.name.localeCompare(b.name, "tr"));
+
+    listbox.innerHTML = "";
+    if (items.length === 0) {
+      listbox.innerHTML = `<div style="color:#888; padding:10px; font-size:11px; font-style:italic;">Gösterilecek tür bulunamadı</div>`;
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    items.forEach(item => {
+      const isChecked = sidebarSelectedGenreKeys.has(item.groupKey);
+      const row = document.createElement("div");
+      row.className = "sidebar-genre-item" + (isChecked ? " checked-row" : "");
+      row.dataset.groupKey = item.groupKey;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isChecked;
+
+      const toggleSelection = () => {
+        if (cb.checked) {
+          sidebarSelectedGenreKeys.add(item.groupKey);
+        } else {
+          sidebarSelectedGenreKeys.delete(item.groupKey);
+        }
+        renderMovies(false);
+      };
+
+      cb.addEventListener("change", (e) => {
+        e.stopPropagation();
+        toggleSelection();
+      });
+
+      row.addEventListener("click", (e) => {
+        if (e.target !== cb) {
+          cb.checked = !cb.checked;
+          toggleSelection();
+        }
+      });
+
+      const lbl = document.createElement("span");
+      lbl.className = "sidebar-genre-label";
+      lbl.textContent = item.name;
+      lbl.title = item.name;
+
+      row.appendChild(cb);
+      row.appendChild(lbl);
+      frag.appendChild(row);
+    });
+
+    listbox.appendChild(frag);
+  }
 
   function generateUniqueGroupKey(type) {
     let prefix = "g_";
@@ -2846,6 +3557,9 @@
       saveStateToStorage();
       addRecentMovie(fid);
     } catch (e) {}
+    if (sidebarMode === "genre_add") {
+      loadMovieGenresIntoSidebar();
+    }
     scrollToMovie(fid, true);
   }
 
@@ -2967,10 +3681,14 @@
           localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
         }
 
+        sidebarSelectedGenreKeys.clear();
         currentPage = 1;
         activeRelationFilterSet = null;
         updateRelationBanner();
         renderMovies(false);
+        if (sidebarMode === "genre_add") {
+          loadMovieGenresIntoSidebar();
+        }
         alert("Yedek verileri başarıyla içe aktarıldı!");
       } catch (err) {
         alert("Yedek dosyası okunamadı: " + err.message);
@@ -3387,6 +4105,9 @@
         applyPersistentHighlight();
         addRecentMovie(fid);
         saveStateToStorage();
+        if (sidebarMode === "genre_add") {
+          loadMovieGenresIntoSidebar();
+        }
       }
     } catch (e) {}
   }
@@ -3484,6 +4205,7 @@
       document.getElementById("maxMyScoreRange").value = 10;
       updateMyScoreSliderLabel();
 
+      sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
       document.getElementById("includeLinkedInSearchCheckbox").checked = false;
       document.getElementById("showHiddenCheckbox").checked = false;
@@ -3505,6 +4227,10 @@
           currentPage = targetPage;
           renderMovies(false, true);
         }
+      }
+
+      if (sidebarMode === "genre_add") {
+        loadMovieGenresIntoSidebar();
       }
 
       requestAnimationFrame(() => {
@@ -3547,6 +4273,10 @@
     }
     card.id = contextPrefix ? `movie-card-${contextPrefix}-${fid}` : `movie-card-${fid}`;
     card.dataset.movieIdCard = fid;
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("a, button, input, select, textarea, label")) return;
+      handleCardClick(fid);
+    });
 
     const posterUrl = movie.poster || "";
     const imdbText = movie.imdb_score ? "⭐ " + movie.imdb_score : "⭐ -";
@@ -3934,6 +4664,17 @@
         );
       }
 
+      function matchesSidebarGenres(movie) {
+        if (!sidebarSelectedGenreKeys || sidebarSelectedGenreKeys.size === 0) return true;
+        const movieGenreKeys = getMovieGenreKeySet(movie.film_ID);
+        for (const reqKey of sidebarSelectedGenreKeys) {
+          if (!movieGenreKeys.has(reqKey)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
       let expandedLinkedIds = null;
       if (!activeRelationFilterSet) {
         const baseMatchedIds = new Set();
@@ -3967,26 +4708,19 @@
         }
       }
 
-      let filtered = allMovies.filter(movie => {
+      const preSidebarMovies = allMovies.filter(movie => {
         const fid = String(movie.film_ID);
-
-        if (hiddenMoviesState[fid] && !showHidden) {
-          return false;
-        }
-
-        if (activeRelationFilterSet) {
-          return activeRelationFilterSet.set.has(fid);
-        }
-
-        if (expandedLinkedIds !== null) {
-          return expandedLinkedIds.has(fid);
-        }
-
+        if (hiddenMoviesState[fid] && !showHidden) return false;
+        if (activeRelationFilterSet) return activeRelationFilterSet.set.has(fid);
+        if (expandedLinkedIds !== null) return expandedLinkedIds.has(fid);
         if (!matchesBaseFilters(movie)) return false;
         if (!matchesSearchTerms(movie)) return false;
-
         return true;
       });
+
+      let filtered = preSidebarMovies.filter(movie => matchesSidebarGenres(movie));
+
+      renderSidebarGenreListbox(filtered, showHidden);
 
       const currentGeneralLastId = String(localStorage.getItem("last_clicked_movie_id") || "").trim();
       const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
@@ -4171,6 +4905,36 @@
     }
   }
 
+  document.getElementById("toggleFilmSearchSidebarBtn").addEventListener("click", () => {
+    setSidebarMode(sidebarMode === "filter" ? null : "filter");
+  });
+  document.getElementById("toggleGenreAddSidebarBtn").addEventListener("click", () => {
+    setSidebarMode(sidebarMode === "genre_add" ? null : "genre_add");
+  });
+  document.getElementById("closeFilmSearchSidebarBtn").addEventListener("click", () => {
+    setSidebarMode(null);
+  });
+  document.getElementById("sidebarCancelGenreAddBtn").addEventListener("click", () => {
+    setSidebarMode(null);
+  });
+  document.getElementById("sidebarConfirmGenreAddBtn").addEventListener("click", confirmSidebarGenreAdd);
+  document.getElementById("sidebarCreateGenreBtn").addEventListener("click", createNewGenreInSidebar);
+  document.getElementById("sidebarNewGenreInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      createNewGenreInSidebar();
+    }
+  });
+  document.getElementById("sidebarRenameGenreBtn").addEventListener("click", renameFocusedGenreInSidebar);
+  document.getElementById("sidebarRenameGenreInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      renameFocusedGenreInSidebar();
+    }
+  });
+  document.getElementById("sidebarGenreSearchInput").addEventListener("input", () => renderSidebar4ColGenreList(null));
+  document.getElementById("sidebarGenreSortSelect").addEventListener("change", () => renderSidebar4ColGenreList(null));
+
   document.getElementById("movieGridContainer").addEventListener("click", (e) => {
     const triggerBtn = e.target.closest(".group-popup-trigger");
     if (triggerBtn) {
@@ -4331,6 +5095,7 @@
       document.getElementById("maxMyScoreRange").value = 10;
       updateMyScoreSliderLabel();
 
+      sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
       document.getElementById("includeLinkedInSearchCheckbox").checked = false;
       document.getElementById("showHiddenCheckbox").checked = false;
@@ -4353,6 +5118,10 @@
           currentPage = targetPage;
           renderMovies(false, true);
         }
+      }
+
+      if (sidebarMode === "genre_add") {
+        loadMovieGenresIntoSidebar();
       }
 
       requestAnimationFrame(() => {
@@ -4379,6 +5148,7 @@
     document.getElementById("maxMyScoreRange").value = 10;
     updateMyScoreSliderLabel();
 
+    sidebarSelectedGenreKeys.clear();
     document.getElementById("watchlistDropdown").value = "all";
     document.getElementById("includeLinkedInSearchCheckbox").checked = false;
     document.getElementById("showHiddenCheckbox").checked = false;

@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "üst ortaya gösterilen film / toplam film sayacı eklendi"
+SURUM_NOTU = "Film Ara (sidebar) ve Tür Ekle (sidebar) eklendi"
 
 #kaydet ve 30 sn bekle
 import time
