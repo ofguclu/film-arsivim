@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Sade Görünüm biraz daha sadeleştirildi"
+SURUM_NOTU = " Yıl, IMDB Puanı, Benim Puanım ve Süre değer yoksa sıfır kabul edildi, filtreleri sıfırdan başlatıldı"
 
 #kaydet ve 30 sn bekle
 import time

@@ -1156,49 +1156,49 @@
 
     <select id="domainFilter"><option value="">Tüm Domainler</option></select>
 
-    <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi">
+    <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi (Sadece mevcut değerler; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
         <span>Yıl Aralığı:</span>
         <span id="yearRangeLabel">Tümü</span>
       </div>
       <div class="filter-sliders-wrapper">
-        <input type="range" id="minYearRange" min="1900" max="2030" value="1900">
-        <input type="range" id="maxYearRange" min="1900" max="2030" value="2030">
+        <input type="range" id="minYearRange" min="0" max="1" step="1" value="0">
+        <input type="range" id="maxYearRange" min="0" max="1" step="1" value="1">
       </div>
     </div>
 
     <select id="countryFilter"><option value="">Tüm Ülkeler</option></select>
 
-    <div class="filter-slider-container" title="Film Süre Aralığı Filtresi (Dakika)">
+    <div class="filter-slider-container" title="Film Süre Aralığı Filtresi (Sadece mevcut süreler; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
         <span>Süre (dk):</span>
         <span id="durationRangeLabel">Tümü</span>
       </div>
       <div class="filter-sliders-wrapper">
-        <input type="range" id="minDurationRange" min="0" max="300" value="0">
-        <input type="range" id="maxDurationRange" min="0" max="300" value="300">
+        <input type="range" id="minDurationRange" min="0" max="1" step="1" value="0">
+        <input type="range" id="maxDurationRange" min="0" max="1" step="1" value="1">
       </div>
     </div>
 
-    <div class="filter-slider-container" title="IMDb Puan Aralığı Filtresi">
+    <div class="filter-slider-container" title="IMDb Puan Aralığı Filtresi (Sadece mevcut puanlar; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
         <span>IMDb Puanı:</span>
         <span id="imdbRangeLabel">Tümü</span>
       </div>
       <div class="filter-sliders-wrapper">
-        <input type="range" id="minImdbRange" min="0" max="10" step="0.1" value="0">
-        <input type="range" id="maxImdbRange" min="0" max="10" step="0.1" value="10">
+        <input type="range" id="minImdbRange" min="0" max="1" step="1" value="0">
+        <input type="range" id="maxImdbRange" min="0" max="1" step="1" value="1">
       </div>
     </div>
 
-    <div class="filter-slider-container" title="Kendi Puanım Aralığı Filtresi">
+    <div class="filter-slider-container" title="Kendi Puanım Aralığı Filtresi (Sadece verilen puanlar; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
         <span>Puanlarım:</span>
         <span id="myScoreRangeLabel">Tümü</span>
       </div>
       <div class="filter-sliders-wrapper">
-        <input type="range" id="minMyScoreRange" min="0" max="10" step="0.1" value="0">
-        <input type="range" id="maxMyScoreRange" min="0" max="10" step="0.1" value="10">
+        <input type="range" id="minMyScoreRange" min="0" max="1" step="1" value="0">
+        <input type="range" id="maxMyScoreRange" min="0" max="1" step="1" value="1">
       </div>
     </div>
 
@@ -1521,10 +1521,115 @@
   let targetGenreKeyForBulkAdd = null;
   let bulkSelectedMovieIds = new Set();
 
-  let minGlobalYear = 1900;
-  let maxGlobalYear = 2030;
-  let minGlobalDuration = 0;
-  let maxGlobalDuration = 300;
+  let yearStepValues = [0];
+  let durationStepValues = [0];
+  let imdbStepValues = [0];
+  let myScoreStepValues = [0];
+
+  function toNumericOrZero(val) {
+    if (val === undefined || val === null || val === "") return 0;
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function getMovieYearValue(movie) {
+    return toNumericOrZero(movie && movie.year);
+  }
+
+  function getMovieDurationValue(movie) {
+    return toNumericOrZero(movie && movie.duration_mins);
+  }
+
+  function getMovieImdbValue(movie) {
+    return toNumericOrZero(movie && movie.imdb_score);
+  }
+
+  function getMovieMyScoreValue(movieId) {
+    return toNumericOrZero(myScoreState[String(movieId)]);
+  }
+
+  function findClosestStepIndex(stepValues, targetVal) {
+    if (!Array.isArray(stepValues) || stepValues.length === 0) return 0;
+    const num = toNumericOrZero(targetVal);
+    let bestIdx = 0;
+    let bestDiff = Math.abs(stepValues[0] - num);
+    for (let i = 1; i < stepValues.length; i++) {
+      const diff = Math.abs(stepValues[i] - num);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
+
+  function configureDiscreteRangeSlider(minEl, maxEl, stepValues, desiredMinVal = null, desiredMaxVal = null) {
+    if (!minEl || !maxEl) return;
+    const maxIdx = Math.max(0, stepValues.length - 1);
+    minEl.min = 0;
+    minEl.max = maxIdx;
+    minEl.step = 1;
+
+    maxEl.min = 0;
+    maxEl.max = maxIdx;
+    maxEl.step = 1;
+
+    const minIdx = (desiredMinVal === null || desiredMinVal === undefined)
+      ? 0
+      : findClosestStepIndex(stepValues, desiredMinVal);
+    const maxValIdx = (desiredMaxVal === null || desiredMaxVal === undefined)
+      ? maxIdx
+      : findClosestStepIndex(stepValues, desiredMaxVal);
+
+    minEl.value = minIdx;
+    maxEl.value = maxValIdx;
+  }
+
+  function getRangeBoundsFromDiscreteSlider(minEl, maxEl, stepValues) {
+    const maxIdx = Math.max(0, stepValues.length - 1);
+    let idxA = parseInt(minEl.value, 10);
+    let idxB = parseInt(maxEl.value, 10);
+    if (isNaN(idxA)) idxA = 0;
+    if (isNaN(idxB)) idxB = maxIdx;
+    idxA = Math.min(Math.max(0, idxA), maxIdx);
+    idxB = Math.min(Math.max(0, idxB), maxIdx);
+
+    const lowIdx = Math.min(idxA, idxB);
+    const highIdx = Math.max(idxA, idxB);
+
+    return {
+      lowIdx,
+      highIdx,
+      lowVal: stepValues[lowIdx] ?? 0,
+      highVal: stepValues[highIdx] ?? 0,
+      isFullRange: (lowIdx === 0 && highIdx === maxIdx)
+    };
+  }
+
+  function rebuildMyScoreSteps(preserveCurrentValues = true) {
+    const minEl = document.getElementById("minMyScoreRange");
+    const maxEl = document.getElementById("maxMyScoreRange");
+    if (!minEl || !maxEl) return;
+
+    const prevBounds = preserveCurrentValues
+      ? getRangeBoundsFromDiscreteSlider(minEl, maxEl, myScoreStepValues)
+      : null;
+
+    const scoreSet = new Set([0]);
+    Object.values(myScoreState || {}).forEach(sc => {
+      const num = toNumericOrZero(sc);
+      if (num > 0) scoreSet.add(num);
+    });
+
+    myScoreStepValues = Array.from(scoreSet).sort((a, b) => a - b);
+
+    if (prevBounds && !prevBounds.isFullRange) {
+      configureDiscreteRangeSlider(minEl, maxEl, myScoreStepValues, prevBounds.lowVal, prevBounds.highVal);
+    } else {
+      configureDiscreteRangeSlider(minEl, maxEl, myScoreStepValues, null, null);
+    }
+    updateMyScoreSliderLabel();
+  }
 
   function renderMoviesPreservingScroll() {
     const savedScrollY = window.scrollY;
@@ -2830,23 +2935,13 @@
 
       if (domainVal && getDomain(movie.web_scraper_start_url) !== domainVal) return false;
 
-      if (minYear !== null && !isNaN(minYear)) {
-        const y = parseInt(movie.year, 10);
-        if (isNaN(y) || y < minYear) return false;
-      }
-      if (maxYear !== null && !isNaN(maxYear)) {
-        const y = parseInt(movie.year, 10);
-        if (isNaN(y) || y > maxYear) return false;
-      }
+      const y = getMovieYearValue(movie);
+      if (minYear !== null && !isNaN(minYear) && y < minYear) return false;
+      if (maxYear !== null && !isNaN(maxYear) && y > maxYear) return false;
 
-      if (minImdb !== null && !isNaN(minImdb)) {
-        const sc = parseFloat(movie.imdb_score);
-        if (isNaN(sc) || sc < minImdb) return false;
-      }
-      if (maxImdb !== null && !isNaN(maxImdb)) {
-        const sc = parseFloat(movie.imdb_score);
-        if (isNaN(sc) || sc > maxImdb) return false;
-      }
+      const sc = getMovieImdbValue(movie);
+      if (minImdb !== null && !isNaN(minImdb) && sc < minImdb) return false;
+      if (maxImdb !== null && !isNaN(maxImdb) && sc > maxImdb) return false;
 
       if (searchTerms.length > 0) {
         const name = (movie.film_name || "").toLowerCase();
@@ -3766,6 +3861,7 @@
           localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
         }
 
+        rebuildMyScoreSteps(false);
         sidebarSelectedGenreKeys.clear();
         currentPage = 1;
         activeRelationFilterSet = null;
@@ -3806,24 +3902,33 @@
   function initFilters() {
     try {
       const domains = new Set();
-      const years = new Set();
+      const years = new Set([0]);
       const countries = new Set();
-      const durations = new Set();
+      const durations = new Set([0]);
+      const imdbScores = new Set([0]);
+      const myScores = new Set([0]);
 
       allMovies.forEach(m => {
         const d = getDomain(m.web_scraper_start_url);
         if (d) domains.add(d);
-        if (m.year) {
-          const yNum = parseInt(m.year, 10);
-          if (!isNaN(yNum)) years.add(yNum);
-        }
-        if (m.duration_mins) {
-          const dNum = parseInt(m.duration_mins, 10);
-          if (!isNaN(dNum)) durations.add(dNum);
-        }
+
+        const yNum = getMovieYearValue(m);
+        if (yNum > 0) years.add(yNum);
+
+        const dNum = getMovieDurationValue(m);
+        if (dNum > 0) durations.add(dNum);
+
+        const scNum = getMovieImdbValue(m);
+        if (scNum > 0) imdbScores.add(scNum);
+
         if (m.country) {
           m.country.split(',').forEach(c => countries.add(c.trim()));
         }
+      });
+
+      Object.values(myScoreState || {}).forEach(sc => {
+        const uNum = toNumericOrZero(sc);
+        if (uNum > 0) myScores.add(uNum);
       });
 
       const domainSel = document.getElementById("domainFilter");
@@ -3831,42 +3936,31 @@
         domainSel.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
       });
 
-      if (years.size > 0) {
-        minGlobalYear = Math.min(...Array.from(years));
-        maxGlobalYear = Math.max(...Array.from(years));
-      } else {
-        minGlobalYear = 1950;
-        maxGlobalYear = 2026;
-      }
+      yearStepValues = Array.from(years).sort((a, b) => a - b);
+      durationStepValues = Array.from(durations).sort((a, b) => a - b);
+      imdbStepValues = Array.from(imdbScores).sort((a, b) => a - b);
+      myScoreStepValues = Array.from(myScores).sort((a, b) => a - b);
 
-      const minYearRange = document.getElementById("minYearRange");
-      const maxYearRange = document.getElementById("maxYearRange");
-      minYearRange.min = minGlobalYear;
-      minYearRange.max = maxGlobalYear;
-      minYearRange.value = minGlobalYear;
-
-      maxYearRange.min = minGlobalYear;
-      maxYearRange.max = maxGlobalYear;
-      maxYearRange.value = maxGlobalYear;
-
-      if (durations.size > 0) {
-        minGlobalDuration = 0;
-        maxGlobalDuration = Math.max(...Array.from(durations));
-        if (maxGlobalDuration < 180) maxGlobalDuration = 240;
-      } else {
-        minGlobalDuration = 0;
-        maxGlobalDuration = 240;
-      }
-
-      const minDurRange = document.getElementById("minDurationRange");
-      const maxDurRange = document.getElementById("maxDurationRange");
-      minDurRange.min = minGlobalDuration;
-      minDurRange.max = maxGlobalDuration;
-      minDurRange.value = minGlobalDuration;
-
-      maxDurRange.min = minGlobalDuration;
-      maxDurRange.max = maxGlobalDuration;
-      maxDurRange.value = maxGlobalDuration;
+      configureDiscreteRangeSlider(
+        document.getElementById("minYearRange"),
+        document.getElementById("maxYearRange"),
+        yearStepValues
+      );
+      configureDiscreteRangeSlider(
+        document.getElementById("minDurationRange"),
+        document.getElementById("maxDurationRange"),
+        durationStepValues
+      );
+      configureDiscreteRangeSlider(
+        document.getElementById("minImdbRange"),
+        document.getElementById("maxImdbRange"),
+        imdbStepValues
+      );
+      configureDiscreteRangeSlider(
+        document.getElementById("minMyScoreRange"),
+        document.getElementById("maxMyScoreRange"),
+        myScoreStepValues
+      );
 
       const countrySel = document.getElementById("countryFilter");
       Array.from(countries).sort().forEach(c => {
@@ -3891,19 +3985,11 @@
     const label = document.getElementById("yearRangeLabel");
     if (!minRange || !maxRange || !label) return;
 
-    let minVal = parseInt(minRange.value, 10);
-    let maxVal = parseInt(maxRange.value, 10);
-
-    if (minVal > maxVal) {
-      let temp = minVal;
-      minVal = maxVal;
-      maxVal = temp;
-    }
-
-    if (minVal === parseInt(minRange.min, 10) && maxVal === parseInt(maxRange.max, 10)) {
+    const b = getRangeBoundsFromDiscreteSlider(minRange, maxRange, yearStepValues);
+    if (b.isFullRange) {
       label.innerText = "Tümü";
     } else {
-      label.innerText = `${minVal} - ${maxVal}`;
+      label.innerText = `${b.lowVal} - ${b.highVal}`;
     }
   }
 
@@ -3913,19 +3999,11 @@
     const label = document.getElementById("durationRangeLabel");
     if (!minRange || !maxRange || !label) return;
 
-    let minVal = parseInt(minRange.value, 10);
-    let maxVal = parseInt(maxRange.value, 10);
-
-    if (minVal > maxVal) {
-      let temp = minVal;
-      minVal = maxVal;
-      maxVal = temp;
-    }
-
-    if (minVal === parseInt(minRange.min, 10) && maxVal === parseInt(maxRange.max, 10)) {
+    const b = getRangeBoundsFromDiscreteSlider(minRange, maxRange, durationStepValues);
+    if (b.isFullRange) {
       label.innerText = "Tümü";
     } else {
-      label.innerText = `${minVal}dk - ${maxVal}dk`;
+      label.innerText = `${b.lowVal}dk - ${b.highVal}dk`;
     }
   }
 
@@ -3935,19 +4013,11 @@
     const label = document.getElementById("imdbRangeLabel");
     if (!minRange || !maxRange || !label) return;
 
-    let minVal = parseFloat(minRange.value);
-    let maxVal = parseFloat(maxRange.value);
-
-    if (minVal > maxVal) {
-      let temp = minVal;
-      minVal = maxVal;
-      maxVal = temp;
-    }
-
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
+    const b = getRangeBoundsFromDiscreteSlider(minRange, maxRange, imdbStepValues);
+    if (b.isFullRange) {
       label.innerText = "Tümü";
     } else {
-      label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
+      label.innerText = `${b.lowVal.toFixed(1)} - ${b.highVal.toFixed(1)}`;
     }
   }
 
@@ -3957,19 +4027,11 @@
     const label = document.getElementById("myScoreRangeLabel");
     if (!minRange || !maxRange || !label) return;
 
-    let minVal = parseFloat(minRange.value);
-    let maxVal = parseFloat(maxRange.value);
-
-    if (minVal > maxVal) {
-      let temp = minVal;
-      minVal = maxVal;
-      maxVal = temp;
-    }
-
-    if (minVal === parseFloat(minRange.min) && maxVal === parseFloat(maxRange.max)) {
+    const b = getRangeBoundsFromDiscreteSlider(minRange, maxRange, myScoreStepValues);
+    if (b.isFullRange) {
       label.innerText = "Tümü";
     } else {
-      label.innerText = `${minVal.toFixed(1)} - ${maxVal.toFixed(1)}`;
+      label.innerText = `${b.lowVal.toFixed(1)} - ${b.highVal.toFixed(1)}`;
     }
   }
 
@@ -4053,18 +4115,23 @@
 
   function saveStateToStorage() {
     try {
+      const yrB = getRangeBoundsFromDiscreteSlider(document.getElementById("minYearRange"), document.getElementById("maxYearRange"), yearStepValues);
+      const durB = getRangeBoundsFromDiscreteSlider(document.getElementById("minDurationRange"), document.getElementById("maxDurationRange"), durationStepValues);
+      const imdbB = getRangeBoundsFromDiscreteSlider(document.getElementById("minImdbRange"), document.getElementById("maxImdbRange"), imdbStepValues);
+      const myScB = getRangeBoundsFromDiscreteSlider(document.getElementById("minMyScoreRange"), document.getElementById("maxMyScoreRange"), myScoreStepValues);
+
       const state = {
         search: document.getElementById("searchInput").value,
         domain: document.getElementById("domainFilter").value,
-        minYear: document.getElementById("minYearRange").value,
-        maxYear: document.getElementById("maxYearRange").value,
+        minYearVal: yrB.lowVal,
+        maxYearVal: yrB.highVal,
         country: document.getElementById("countryFilter").value,
-        minDuration: document.getElementById("minDurationRange").value,
-        maxDuration: document.getElementById("maxDurationRange").value,
-        minImdb: document.getElementById("minImdbRange").value,
-        maxImdb: document.getElementById("maxImdbRange").value,
-        minMyScore: document.getElementById("minMyScoreRange").value,
-        maxMyScore: document.getElementById("maxMyScoreRange").value,
+        minDurationVal: durB.lowVal,
+        maxDurationVal: durB.highVal,
+        minImdbVal: imdbB.lowVal,
+        maxImdbVal: imdbB.highVal,
+        minMyScoreVal: myScB.lowVal,
+        maxMyScoreVal: myScB.highVal,
         sort1: document.getElementById("sortSelect1").value,
         sort2: document.getElementById("sortSelect2").value,
         watchlistSelection: document.getElementById("watchlistDropdown").value,
@@ -4086,15 +4153,49 @@
           const state = JSON.parse(saved);
           if (state.search !== undefined) document.getElementById("searchInput").value = state.search;
           if (state.domain !== undefined) document.getElementById("domainFilter").value = state.domain;
-          if (state.minYear !== undefined) document.getElementById("minYearRange").value = state.minYear;
-          if (state.maxYear !== undefined) document.getElementById("maxYearRange").value = state.maxYear;
+
+          const minYrDesired = state.minYearVal !== undefined ? state.minYearVal : state.minYear;
+          const maxYrDesired = state.maxYearVal !== undefined ? state.maxYearVal : state.maxYear;
+          configureDiscreteRangeSlider(
+            document.getElementById("minYearRange"),
+            document.getElementById("maxYearRange"),
+            yearStepValues,
+            minYrDesired,
+            maxYrDesired
+          );
+
           if (state.country !== undefined) document.getElementById("countryFilter").value = state.country;
-          if (state.minDuration !== undefined) document.getElementById("minDurationRange").value = state.minDuration;
-          if (state.maxDuration !== undefined) document.getElementById("maxDurationRange").value = state.maxDuration;
-          if (state.minImdb !== undefined) document.getElementById("minImdbRange").value = state.minImdb;
-          if (state.maxImdb !== undefined) document.getElementById("maxImdbRange").value = state.maxImdb;
-          if (state.minMyScore !== undefined) document.getElementById("minMyScoreRange").value = state.minMyScore;
-          if (state.maxMyScore !== undefined) document.getElementById("maxMyScoreRange").value = state.maxMyScore;
+
+          const minDurDesired = state.minDurationVal !== undefined ? state.minDurationVal : state.minDuration;
+          const maxDurDesired = state.maxDurationVal !== undefined ? state.maxDurationVal : state.maxDuration;
+          configureDiscreteRangeSlider(
+            document.getElementById("minDurationRange"),
+            document.getElementById("maxDurationRange"),
+            durationStepValues,
+            minDurDesired,
+            maxDurDesired
+          );
+
+          const minImdbDesired = state.minImdbVal !== undefined ? state.minImdbVal : state.minImdb;
+          const maxImdbDesired = state.maxImdbVal !== undefined ? state.maxImdbVal : state.maxImdb;
+          configureDiscreteRangeSlider(
+            document.getElementById("minImdbRange"),
+            document.getElementById("maxImdbRange"),
+            imdbStepValues,
+            minImdbDesired,
+            maxImdbDesired
+          );
+
+          const minMyScDesired = state.minMyScoreVal !== undefined ? state.minMyScoreVal : state.minMyScore;
+          const maxMyScDesired = state.maxMyScoreVal !== undefined ? state.maxMyScoreVal : state.maxMyScore;
+          configureDiscreteRangeSlider(
+            document.getElementById("minMyScoreRange"),
+            document.getElementById("maxMyScoreRange"),
+            myScoreStepValues,
+            minMyScDesired,
+            maxMyScDesired
+          );
+
           if (state.sort1 !== undefined) document.getElementById("sortSelect1").value = state.sort1;
           if (state.sort2 !== undefined) document.getElementById("sortSelect2").value = state.sort2;
           if (state.watchlistSelection) {
@@ -4248,7 +4349,9 @@
         myScoreState[movieId] = parseFloat(scoreVal);
       }
       localStorage.setItem("myscore_ids", JSON.stringify(myScoreState));
+      rebuildMyScoreSteps(true);
       saveStateToStorage();
+      renderMoviesPreservingScroll();
     } catch (e) {}
   }
 
@@ -4267,24 +4370,24 @@
     } catch (e) {}
   }
 
+  function resetSliderRangesToFull() {
+    configureDiscreteRangeSlider(document.getElementById("minYearRange"), document.getElementById("maxYearRange"), yearStepValues);
+    updateYearSliderLabel();
+    configureDiscreteRangeSlider(document.getElementById("minDurationRange"), document.getElementById("maxDurationRange"), durationStepValues);
+    updateDurationSliderLabel();
+    configureDiscreteRangeSlider(document.getElementById("minImdbRange"), document.getElementById("maxImdbRange"), imdbStepValues);
+    updateImdbSliderLabel();
+    configureDiscreteRangeSlider(document.getElementById("minMyScoreRange"), document.getElementById("maxMyScoreRange"), myScoreStepValues);
+    updateMyScoreSliderLabel();
+  }
+
   function executeGoToId() {
     const manualId = document.getElementById("lastIdInput").value.trim();
     if (manualId && !isNaN(manualId)) {
       document.getElementById("searchInput").value = "";
       document.getElementById("domainFilter").value = "";
-      document.getElementById("minYearRange").value = minGlobalYear;
-      document.getElementById("maxYearRange").value = maxGlobalYear;
-      updateYearSliderLabel();
       document.getElementById("countryFilter").value = "";
-      document.getElementById("minDurationRange").value = minGlobalDuration;
-      document.getElementById("maxDurationRange").value = maxGlobalDuration;
-      updateDurationSliderLabel();
-      document.getElementById("minImdbRange").value = 0;
-      document.getElementById("maxImdbRange").value = 10;
-      updateImdbSliderLabel();
-      document.getElementById("minMyScoreRange").value = 0;
-      document.getElementById("maxMyScoreRange").value = 10;
-      updateMyScoreSliderLabel();
+      resetSliderRangesToFull();
 
       sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
@@ -4320,10 +4423,10 @@
   }
 
   function compareByCriteria(a, b, sortVal) {
-    if (sortVal === "imdb_desc") return (b.imdb_score || 0) - (a.imdb_score || 0);
-    if (sortVal === "imdb_asc") return (a.imdb_score || 0) - (b.imdb_score || 0);
-    if (sortVal === "year_desc") return (b.year || 0) - (a.year || 0);
-    if (sortVal === "year_asc") return (a.year || 0) - (b.year || 0);
+    if (sortVal === "imdb_desc") return getMovieImdbValue(b) - getMovieImdbValue(a);
+    if (sortVal === "imdb_asc") return getMovieImdbValue(a) - getMovieImdbValue(b);
+    if (sortVal === "year_desc") return getMovieYearValue(b) - getMovieYearValue(a);
+    if (sortVal === "year_asc") return getMovieYearValue(a) - getMovieYearValue(b);
     if (sortVal === "title_asc") return (a.film_name || "").localeCompare(b.film_name || "");
     if (sortVal === "title_desc") return (b.film_name || "").localeCompare(a.film_name || "");
     return 0;
@@ -4689,15 +4792,12 @@
 
       const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
       const selectedDomain = document.getElementById("domainFilter").value;
-      const minYearVal = parseInt(document.getElementById("minYearRange").value, 10);
-      const maxYearVal = parseInt(document.getElementById("maxYearRange").value, 10);
+
+      const yrBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minYearRange"), document.getElementById("maxYearRange"), yearStepValues);
       const selectedCountry = document.getElementById("countryFilter").value;
-      const minDurVal = parseInt(document.getElementById("minDurationRange").value, 10);
-      const maxDurVal = parseInt(document.getElementById("maxDurationRange").value, 10);
-      const minImdbVal = parseFloat(document.getElementById("minImdbRange").value);
-      const maxImdbVal = parseFloat(document.getElementById("maxImdbRange").value);
-      const minMyScoreVal = parseFloat(document.getElementById("minMyScoreRange").value);
-      const maxMyScoreVal = parseFloat(document.getElementById("maxMyScoreRange").value);
+      const durBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minDurationRange"), document.getElementById("maxDurationRange"), durationStepValues);
+      const imdbBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minImdbRange"), document.getElementById("maxImdbRange"), imdbStepValues);
+      const myScoreBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minMyScoreRange"), document.getElementById("maxMyScoreRange"), myScoreStepValues);
 
       const sort1 = document.getElementById("sortSelect1").value;
       const sort2 = document.getElementById("sortSelect2").value;
@@ -4761,50 +4861,19 @@
 
         if (selectedDomain && getDomain(movie.web_scraper_start_url) !== selectedDomain) return false;
 
-        if (movie.year) {
-          const mYr = parseInt(movie.year, 10);
-          if (!isNaN(mYr)) {
-            let actualMin = Math.min(minYearVal, maxYearVal);
-            let actualMax = Math.max(minYearVal, maxYearVal);
-            if (mYr < actualMin || mYr > actualMax) return false;
-          }
-        }
+        const mYr = getMovieYearValue(movie);
+        if (mYr < yrBounds.lowVal || mYr > yrBounds.highVal) return false;
 
         if (selectedCountry && !(movie.country || "").includes(selectedCountry)) return false;
 
-        if (movie.duration_mins) {
-          const mDur = parseFloat(movie.duration_mins);
-          if (!isNaN(mDur)) {
-            let actualMin = Math.min(minDurVal, maxDurVal);
-            let actualMax = Math.max(minDurVal, maxDurVal);
-            if (mDur < actualMin || mDur > actualMax) return false;
-          }
-        } else {
-          let actualMin = Math.min(minDurVal, maxDurVal);
-          if (actualMin > 0) return false;
-        }
+        const mDur = getMovieDurationValue(movie);
+        if (mDur < durBounds.lowVal || mDur > durBounds.highVal) return false;
 
-        if (movie.imdb_score !== undefined && movie.imdb_score !== null) {
-          const mImdb = parseFloat(movie.imdb_score);
-          if (!isNaN(mImdb)) {
-            let actualMin = Math.min(minImdbVal, maxImdbVal);
-            let actualMax = Math.max(minImdbVal, maxImdbVal);
-            if (mImdb < actualMin || mImdb > actualMax) return false;
-          }
-        } else {
-          let actualMin = Math.min(minImdbVal, maxImdbVal);
-          if (actualMin > 0) return false;
-        }
+        const mImdb = getMovieImdbValue(movie);
+        if (mImdb < imdbBounds.lowVal || mImdb > imdbBounds.highVal) return false;
 
-        const userScore = myScoreState[fid];
-        let actualMyMin = Math.min(minMyScoreVal, maxMyScoreVal);
-        let actualMyMax = Math.max(minMyScoreVal, maxMyScoreVal);
-
-        if (actualMyMin > 0 || actualMyMax < 10) {
-          if (userScore === undefined || userScore === null) return false;
-          const uSc = parseFloat(userScore);
-          if (isNaN(uSc) || uSc < actualMyMin || uSc > actualMyMax) return false;
-        }
+        const uSc = getMovieMyScoreValue(fid);
+        if (uSc < myScoreBounds.lowVal || uSc > myScoreBounds.highVal) return false;
 
         return true;
       }
@@ -4917,9 +4986,9 @@
           let maxImdb = 0;
           let maxYear = 0;
           matchedMembers.forEach(m => {
-            const sc = parseFloat(m.imdb_score || 0);
+            const sc = getMovieImdbValue(m);
             if (sc > maxImdb) maxImdb = sc;
-            const yr = parseInt(m.year || 0, 10);
+            const yr = getMovieYearValue(m);
             if (yr > maxYear) maxYear = yr;
           });
 
@@ -5011,8 +5080,8 @@
 
       if (activeRelationFilterSet) {
         filtered.sort((a, b) => {
-          const yearA = a.year ? parseInt(a.year, 10) : Infinity;
-          const yearB = b.year ? parseInt(b.year, 10) : Infinity;
+          const yearA = getMovieYearValue(a);
+          const yearB = getMovieYearValue(b);
           if (yearA !== yearB) {
             return yearA - yearB;
           }
@@ -5236,19 +5305,8 @@
     if (selectedId) {
       document.getElementById("searchInput").value = "";
       document.getElementById("domainFilter").value = "";
-      document.getElementById("minYearRange").value = minGlobalYear;
-      document.getElementById("maxYearRange").value = maxGlobalYear;
-      updateYearSliderLabel();
       document.getElementById("countryFilter").value = "";
-      document.getElementById("minDurationRange").value = minGlobalDuration;
-      document.getElementById("maxDurationRange").value = maxGlobalDuration;
-      updateDurationSliderLabel();
-      document.getElementById("minImdbRange").value = 0;
-      document.getElementById("maxImdbRange").value = 10;
-      updateImdbSliderLabel();
-      document.getElementById("minMyScoreRange").value = 0;
-      document.getElementById("maxMyScoreRange").value = 10;
-      updateMyScoreSliderLabel();
+      resetSliderRangesToFull();
 
       sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
@@ -5288,19 +5346,8 @@
   function resetAllFilters() {
     document.getElementById("searchInput").value = "";
     document.getElementById("domainFilter").value = "";
-    document.getElementById("minYearRange").value = minGlobalYear;
-    document.getElementById("maxYearRange").value = maxGlobalYear;
-    updateYearSliderLabel();
     document.getElementById("countryFilter").value = "";
-    document.getElementById("minDurationRange").value = minGlobalDuration;
-    document.getElementById("maxDurationRange").value = maxGlobalDuration;
-    updateDurationSliderLabel();
-    document.getElementById("minImdbRange").value = 0;
-    document.getElementById("maxImdbRange").value = 10;
-    updateImdbSliderLabel();
-    document.getElementById("minMyScoreRange").value = 0;
-    document.getElementById("maxMyScoreRange").value = 10;
-    updateMyScoreSliderLabel();
+    resetSliderRangesToFull();
 
     sidebarSelectedGenreKeys.clear();
     document.getElementById("watchlistDropdown").value = "all";
@@ -5376,21 +5423,15 @@
 
   document.getElementById("sortSelect1").addEventListener("change", () => renderMovies(false));
   document.getElementById("sortSelect2").addEventListener("change", () => renderMovies(false));
-  document.getElementById("watchlistDropdown").addEventListener("change", () => {
-    activeRelationFilterSet = null;
-    updateRelationBanner();
-    renderMovies(false);
-  });
+  document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
   document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
   document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
-    updateRelationBanner();
-    renderMovies(false);
     renderRecentDropdown();
+    renderMovies(false);
   });
   document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
 
   initFilters();
-  renderMovies(false);
 </script>
 </body>
 </html>
