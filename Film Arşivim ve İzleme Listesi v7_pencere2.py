@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Aramada/Listede Bağlı Olanları da Getir seçeneği kaldırıldı (İlişkililer Yanyana varken anlamsız kaldı)"
+SURUM_NOTU = "Sade Görünüm biraz daha sadeleştirildi"
 
 #kaydet ve 30 sn bekle
 import time

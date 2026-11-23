@@ -14,7 +14,7 @@
     --accent-color: #e50914;
     --border-color: #333;
   }
-  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; transition: background-color 0.2s ease, padding-right 0.22s ease; }
+  body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; overflow-x: clip; transition: background-color 0.2s ease, padding-right 0.22s ease; }
   body.multi-select-page-bg { background-color: #199e46; }
   body.sidebar-open-filter { padding-right: 310px; }
   body.sidebar-open-genre-add { padding-right: 700px; }
@@ -421,8 +421,8 @@
     display: none !important;
   }
 
-  .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
-  .movie-card:hover { transform: translateY(-4px); border-color: #555; }
+  .movie-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: visible; display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
+  .movie-card:hover { transform: translateY(-4px); border-color: #555; z-index: 30; }
   .movie-card.highlight {
     outline: 4px solid #e50914;
     box-shadow: 0 0 18px rgba(229, 9, 20, 0.85);
@@ -432,14 +432,40 @@
   body.simple-view .card-user-actions,
   body.simple-view .card-relation-bar,
   body.simple-view .domain-container,
+  body.simple-view .summary-text,
   body.simple-view #toggleGenreAddSidebarBtn,
   body.simple-view #showHiddenLabel,
   body.simple-view #multiSelectLabel,
   body.simple-view #recentMoviesDropdown,
   body.simple-view #editorLinkBtn,
   body.simple-view #exportDataBtn,
-  body.simple-view #importDataBtn {
+  body.simple-view #importDataBtn,
+  body.simple-view #domainFilter,
+  body.simple-view #countryFilter,
+  body.simple-view #sortSelect1,
+  body.simple-view #sortSelect2,
+  body.simple-view .filter-slider-container {
     display: none !important;
+  }
+  body.simple-view .controls {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  body.simple-view .controls > *,
+  body.simple-view .controls-bottom-row > * {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  body.simple-view .controls-bottom-row {
+    flex-basis: auto;
+    order: 0;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding-top: 0;
+    margin-top: 0;
+    border-top: none;
   }
   body.simple-view .controls-bottom-row .last-id-container,
   body.simple-view .controls-bottom-row .film-count-badge {
@@ -922,6 +948,8 @@
     position: relative;
     width: 100%;
     height: 290px;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
   }
   .poster-wrapper img {
     width: 100%;
@@ -992,7 +1020,7 @@
   #multiSelectCheckbox {
     accent-color: #10b981;
   }
-  .card-details { padding: 10px; display: flex; flex-direction: column; flex-grow: 1; font-size: 12px; gap: 4px; }
+  .card-details { padding: 10px; display: flex; flex-direction: column; flex-grow: 1; font-size: 12px; gap: 4px; overflow: hidden; }
   .domain-container { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: -1px; white-space: nowrap; overflow: hidden; }
   .domain-left { display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .domain-badge { color: #60a5fa; font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: underline; }
@@ -1005,7 +1033,7 @@
   .movie-title:hover { color: var(--accent-color); }
   .meta-info { color: #f5c518; font-weight: bold; margin-top: 2px; display: flex; justify-content: space-between; align-items: center; }
   .film-id-badge { background: #333; color: #aaa; padding: 1px 6px; border-radius: 4px; font-size: 11px; }
-  .summary-text { color: #aaa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.3; height: 48px; margin-top: 2px; }
+  .summary-text { color: #aaa; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 12px; line-height: 16px; height: 32px; max-height: 32px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
   .single-grid-list {
@@ -4420,6 +4448,8 @@
     const actorsStr = getActorsString(movie);
     const domainText = getDomain(movie.web_scraper_start_url);
     const countryText = (movie.country || "").trim();
+    const summaryRaw = (movie.movie_summary || "").trim();
+    const summaryDisplay = summaryRaw || "Özet bulunamadı.";
 
     const altUrls = alternativeUrlsState[fid] || [];
     let altLinksHtml = "";
@@ -4534,6 +4564,8 @@
       genrePillsHtml += `</div>`;
     }
 
+    const titleTooltip = isSimpleViewMode ? summaryDisplay : movie.film_name;
+
     card.innerHTML = `
       <div class="watchlist-group" title="İzleme Listeleri (1, 2, 3)">
         <input type="checkbox" class="watchlist-checkbox" ${c1} title="İzleme Listesi 1" onchange="updateWatchlist(1, '${fid}', this.checked)">
@@ -4597,13 +4629,13 @@
       </div>
       <div class="card-details">
         ${domainContainerHtml}
-        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" title="${escapeHtml(movie.film_name)}" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
+        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" title="${escapeHtml(titleTooltip)}" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
         <div class="meta-info">
           <span>${imdbText}</span>
           <span>${durationText}</span>
           <span>${yearText}</span>
         </div>
-        <div class="summary-text" title="${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}">${escapeHtml(movie.movie_summary || 'Özet bulunamadı.')}</div>
+        <div class="summary-text" title="${escapeHtml(summaryDisplay)}">${escapeHtml(summaryDisplay)}</div>
         <div class="actors-text" title="Oyuncular: ${escapeHtml(actorsStr || 'Bilgi yok')}">🎭 ${escapeHtml(actorsStr || 'Oyuncu bilgisi yok')}</div>
       </div>
     `;
@@ -5186,7 +5218,10 @@
     }
   });
 
-  document.getElementById("toggleViewModeBtn").addEventListener("click", toggleViewMode);
+  document.getElementById("toggleViewModeBtn").addEventListener("click", () => {
+    toggleViewMode();
+    renderMoviesPreservingScroll();
+  });
   document.getElementById("goBtn").addEventListener("click", executeGoToId);
   document.getElementById("lastIdInput").addEventListener("keypress", (e) => {
     if (e.key === 'Enter') {
@@ -5271,14 +5306,14 @@
     document.getElementById("watchlistDropdown").value = "all";
     document.getElementById("showHiddenCheckbox").checked = false;
 
-    currentPage = 1;
     activeRelationFilterSet = null;
     updateRelationBanner();
     renderMovies(false);
+    renderRecentDropdown();
   }
 
   document.getElementById("resetFiltersBtn").addEventListener("click", resetAllFilters);
-  document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
+
   document.getElementById("exportDataBtn").addEventListener("click", exportUserData);
   document.getElementById("importDataBtn").addEventListener("click", () => {
     document.getElementById("importFileInput").click();
@@ -5290,135 +5325,72 @@
     }
   });
 
-  const searchInput = document.getElementById("searchInput");
-  document.getElementById("searchIdBtn")?.addEventListener("click", () => renderMovies(true));
-
-  document.getElementById("searchBtn").addEventListener("click", () => {
-    renderMovies(true);
-  });
-
-  searchInput.addEventListener("keypress", (e) => {
+  document.getElementById("searchInput").addEventListener("keypress", (e) => {
     if (e.key === 'Enter') {
       renderMovies(true);
     }
   });
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    renderMovies(true);
+  });
 
   document.getElementById("domainFilter").addEventListener("change", () => renderMovies(false));
-  document.getElementById("minYearRange").addEventListener("input", () => { updateYearSliderLabel(); renderMovies(false); });
-  document.getElementById("maxYearRange").addEventListener("input", () => { updateYearSliderLabel(); renderMovies(false); });
+
+  document.getElementById("minYearRange").addEventListener("input", () => {
+    updateYearSliderLabel();
+    renderMovies(false);
+  });
+  document.getElementById("maxYearRange").addEventListener("input", () => {
+    updateYearSliderLabel();
+    renderMovies(false);
+  });
+
   document.getElementById("countryFilter").addEventListener("change", () => renderMovies(false));
-  document.getElementById("minDurationRange").addEventListener("input", () => { updateDurationSliderLabel(); renderMovies(false); });
-  document.getElementById("maxDurationRange").addEventListener("input", () => { updateDurationSliderLabel(); renderMovies(false); });
-  document.getElementById("minImdbRange").addEventListener("input", () => { updateImdbSliderLabel(); renderMovies(false); });
-  document.getElementById("maxImdbRange").addEventListener("input", () => { updateImdbSliderLabel(); renderMovies(false); });
-  document.getElementById("minMyScoreRange").addEventListener("input", () => { updateMyScoreSliderLabel(); renderMovies(false); });
-  document.getElementById("maxMyScoreRange").addEventListener("input", () => { updateMyScoreSliderLabel(); renderMovies(false); });
+
+  document.getElementById("minDurationRange").addEventListener("input", () => {
+    updateDurationSliderLabel();
+    renderMovies(false);
+  });
+  document.getElementById("maxDurationRange").addEventListener("input", () => {
+    updateDurationSliderLabel();
+    renderMovies(false);
+  });
+
+  document.getElementById("minImdbRange").addEventListener("input", () => {
+    updateImdbSliderLabel();
+    renderMovies(false);
+  });
+  document.getElementById("maxImdbRange").addEventListener("input", () => {
+    updateImdbSliderLabel();
+    renderMovies(false);
+  });
+
+  document.getElementById("minMyScoreRange").addEventListener("input", () => {
+    updateMyScoreSliderLabel();
+    renderMovies(false);
+  });
+  document.getElementById("maxMyScoreRange").addEventListener("input", () => {
+    updateMyScoreSliderLabel();
+    renderMovies(false);
+  });
 
   document.getElementById("sortSelect1").addEventListener("change", () => renderMovies(false));
   document.getElementById("sortSelect2").addEventListener("change", () => renderMovies(false));
-  document.getElementById("watchlistDropdown").value = "all";
-  document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
+  document.getElementById("watchlistDropdown").addEventListener("change", () => {
+    activeRelationFilterSet = null;
+    updateRelationBanner();
+    renderMovies(false);
+  });
   document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
-
   document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
     updateRelationBanner();
     renderMovies(false);
     renderRecentDropdown();
-    if (sidebarMode === "genre_add") {
-      renderSidebar4ColGenreList(null);
-    }
   });
-
-  window.addEventListener("storage", (e) => {
-    if (e.key === "last_clicked_movie_id") {
-      if (e.newValue && !isNaN(e.newValue)) {
-        document.getElementById("lastIdInput").value = e.newValue;
-        syncCardRadioSelection(e.newValue);
-        persistentHighlightedMovieId = String(e.newValue);
-        applyPersistentHighlight();
-        if (sidebarMode === "genre_add") {
-          loadMovieGenresIntoSidebar();
-        }
-      }
-    } else if (e.key === "recent_clicked_movies") {
-      try {
-        recentMoviesState = e.newValue ? JSON.parse(e.newValue).slice(0, 30) : [];
-        renderRecentDropdown();
-      } catch (err) {}
-    } else if (e.key === "watchlist_ids") {
-      watchlist1State = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "watchlist_ids2") {
-      watchlist2State = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "watchlist_ids3") {
-      watchlist3State = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "watched_ids") {
-      watchedState = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "glorious_movie_ids") {
-      gloriousState = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "myscore_ids") {
-      myScoreState = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
-    } else if (e.key === "hidden_movie_ids") {
-      hiddenMoviesState = e.newValue ? JSON.parse(e.newValue) : {};
-      updateRelationBanner();
-      renderMoviesPreservingScroll();
-      renderRecentDropdown();
-      if (sidebarMode === "genre_add") {
-        renderSidebar4ColGenreList(null);
-      }
-    } else if (e.key === "series_movies_groups" || e.key === "series_groups_names") {
-      try {
-        const gRaw = localStorage.getItem("series_movies_groups");
-        const nRaw = localStorage.getItem("series_groups_names");
-        const gParsed = gRaw ? JSON.parse(gRaw) : [];
-        const nParsed = nRaw ? JSON.parse(nRaw) : {};
-        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "series");
-        seriesMoviesGroupsState = res.groups;
-        seriesGroupsNamesState = res.names;
-        updateRelationBanner();
-        renderMoviesPreservingScroll();
-      } catch (err) {}
-    } else if (e.key === "remake_movies_groups" || e.key === "remake_groups_names") {
-      try {
-        const gRaw = localStorage.getItem("remake_movies_groups");
-        const nRaw = localStorage.getItem("remake_groups_names");
-        const gParsed = gRaw ? JSON.parse(gRaw) : [];
-        const nParsed = nRaw ? JSON.parse(nRaw) : {};
-        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "remake");
-        remakeMoviesGroupsState = res.groups;
-        remakeGroupsNamesState = res.names;
-        updateRelationBanner();
-        renderMoviesPreservingScroll();
-      } catch (err) {}
-    } else if (e.key === "genre_movies_groups" || e.key === "genre_groups_names") {
-      try {
-        const gRaw = localStorage.getItem("genre_movies_groups");
-        const nRaw = localStorage.getItem("genre_groups_names");
-        const gParsed = gRaw ? JSON.parse(gRaw) : [];
-        const nParsed = nRaw ? JSON.parse(nRaw) : {};
-        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "genre");
-        genreMoviesGroupsState = res.groups;
-        genreGroupsNamesState = res.names;
-        updateRelationBanner();
-        renderMoviesPreservingScroll();
-        if (sidebarMode === "genre_add") {
-          renderSidebar4ColGenreList(null);
-        }
-      } catch (err) {}
-    } else if (e.key === "alternative_urls_map") {
-      try {
-        alternativeUrlsState = e.newValue ? JSON.parse(e.newValue) : {};
-        renderMoviesPreservingScroll();
-      } catch (err) {}
-    }
-  });
+  document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
 
   initFilters();
+  renderMovies(false);
 </script>
 </body>
 </html>
