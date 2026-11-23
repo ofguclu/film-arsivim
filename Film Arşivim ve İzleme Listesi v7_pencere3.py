@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v47")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v48")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -222,7 +222,7 @@ def main():
 
   .btn-go { padding: 3px 8px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; line-height: 1.3; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
   .btn-go:hover { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
-  .btn-go.is-open, .btn-go.is-simple { background: #10b981; color: #052e16; border-color: #6ee7b7; }
+  .btn-go.is-open, .btn-go.is-simple, .btn-go.is-side-by-side { background: #10b981; color: #052e16; border-color: #6ee7b7; }
 
   .right-sidebar-panel {
     display: none;
@@ -1400,6 +1400,7 @@ def main():
     <div class="controls-bottom-row">
       <button type="button" id="toggleFilmSearchSidebarBtn" class="btn-go" title="Sağ yan panelde türlere göre film ara">🔍 Film Ara</button>
       <button type="button" id="toggleGenreAddSidebarBtn" class="btn-go" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
+      <button type="button" id="toggleRelatedSideBySideBtn" class="btn-go" title="Seri veya remake ilişkili filmleri filtre/aramaya dahil edip ilk filmin yanına sırala">🔗 İlişkililer Yanyana</button>
       <a href="film_editor.html" target="_blank" class="btn-go" id="editorLinkBtn" title="details.js Veri Düzenleyicisini Aç">🎬 Film Editörü</a>
       <button type="button" class="btn-go" id="toggleViewModeBtn" title="Sade Görünüm ve Kompleks Görünüm arasında geçiş yap">Sade Görünüm</button>
       <button type="button" class="btn-go" id="resetFiltersBtn" title="Sıralamalar hariç tüm filtreleri, aramayı ve aktif grup seçimini sıfırla">🧹 Filtreleri Temizle</button>
@@ -1610,6 +1611,7 @@ def main():
   let hiddenMoviesState = {};
   let recentMoviesState = [];
   let isSimpleViewMode = false;
+  let isRelatedSideBySideMode = false;
   let currentlyRenderedMovieIds = [];
 
   let seriesMoviesGroupsState = [];
@@ -1690,6 +1692,18 @@ def main():
     const cb = document.getElementById("multiSelectCheckbox");
     if (!cb) return;
     document.body.classList.toggle("multi-select-page-bg", !!cb.checked);
+  }
+
+  function applyRelatedSideBySideUI() {
+    const btn = document.getElementById("toggleRelatedSideBySideBtn");
+    if (!btn) return;
+    btn.classList.toggle("is-side-by-side", !!isRelatedSideBySideMode);
+  }
+
+  function toggleRelatedSideBySide() {
+    isRelatedSideBySideMode = !isRelatedSideBySideMode;
+    applyRelatedSideBySideUI();
+    renderMovies(false);
   }
 
   function getTargetMovieIdsForGenreAction(seedMovieId) {
@@ -1869,6 +1883,10 @@ def main():
       saveGenreGroups();
     }
 
+    if (sidebarMode === "filter" && mode !== "filter") {
+      sidebarSelectedGenreKeys.clear();
+    }
+
     sidebarMode = mode;
     const panel = document.getElementById("filmSearchSidebarPanel");
     const filterBtn = document.getElementById("toggleFilmSearchSidebarBtn");
@@ -1905,6 +1923,8 @@ def main():
         alert("Seçili film yok");
       }
       loadMovieGenresIntoSidebar();
+    } else {
+      renderMovies(false);
     }
   }
 
@@ -4441,6 +4461,89 @@ def main():
     return 0;
   }
 
+  function compareMoviesByCurrentSort(a, b, sort1, sort2) {
+    if (sort1 !== "default") {
+      const res1 = compareByCriteria(a, b, sort1);
+      if (res1 !== 0) return res1;
+    }
+    if (sort2 !== "default") {
+      const res2 = compareByCriteria(a, b, sort2);
+      if (res2 !== 0) return res2;
+    }
+    return 0;
+  }
+
+  function arrangeMoviesWithRelationsSideBySide(movieList, showHidden, sort1, sort2) {
+    if (!Array.isArray(movieList) || movieList.length <= 1) {
+      return movieList;
+    }
+
+    const movieMap = new Map();
+    movieList.forEach(m => movieMap.set(String(m.film_ID), m));
+
+    const parent = new Map();
+    movieList.forEach(m => {
+      const fid = String(m.film_ID);
+      parent.set(fid, fid);
+    });
+
+    function findRoot(x) {
+      let r = parent.get(x);
+      if (r !== x) {
+        r = findRoot(r);
+        parent.set(x, r);
+      }
+      return r;
+    }
+
+    function unionIds(a, b) {
+      const ra = findRoot(a);
+      const rb = findRoot(b);
+      if (ra !== rb) {
+        parent.set(rb, ra);
+      }
+    }
+
+    const relGroups = [...seriesMoviesGroupsState, ...remakeMoviesGroupsState];
+    relGroups.forEach(group => {
+      if (!Array.isArray(group) || group.length < 2) return;
+      const visibleMembers = group.slice(1)
+        .map(String)
+        .filter(id => movieMap.has(id) && (showHidden || !hiddenMoviesState[id]));
+      for (let i = 1; i < visibleMembers.length; i++) {
+        unionIds(visibleMembers[0], visibleMembers[i]);
+      }
+    });
+
+    const clusterBuckets = new Map();
+    movieList.forEach(m => {
+      const fid = String(m.film_ID);
+      const root = findRoot(fid);
+      if (!clusterBuckets.has(root)) {
+        clusterBuckets.set(root, []);
+      }
+      clusterBuckets.get(root).push(m);
+    });
+
+    const result = [];
+    const emittedRoots = new Set();
+
+    movieList.forEach(m => {
+      const fid = String(m.film_ID);
+      const root = findRoot(fid);
+      if (emittedRoots.has(root)) return;
+      emittedRoots.add(root);
+
+      const clusterMovies = clusterBuckets.get(root) || [m];
+      if (clusterMovies.length > 1) {
+        clusterMovies.sort((x, y) => compareMoviesByCurrentSort(x, y, sort1, sort2));
+      }
+      clusterMovies.forEach(cm => result.push(cm));
+    });
+
+    return result;
+  }
+
   function buildAddMovieToGenreCard(genreKey) {
     const card = document.createElement("div");
     card.className = "add-movie-to-genre-card";
@@ -4880,7 +4983,7 @@ def main():
 
         expandedLinkedIds = new Set(baseMatchedIds);
 
-        if (includeLinkedInSearch) {
+        if (includeLinkedInSearch || isRelatedSideBySideMode) {
           baseMatchedIds.forEach(fid => {
             const sgrp = getSeriesGroupForMovie(fid);
             if (sgrp) sgrp.slice(1).forEach(linkedId => {
@@ -4890,12 +4993,14 @@ def main():
             if (rgrp) rgrp.slice(1).forEach(linkedId => {
               if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
             });
-            const ggrps = getGenreGroupsForMovie(fid);
-            ggrps.forEach(ggrp => {
-              ggrp.slice(1).forEach(linkedId => {
-                if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
+            if (includeLinkedInSearch) {
+              const ggrps = getGenreGroupsForMovie(fid);
+              ggrps.forEach(ggrp => {
+                ggrp.slice(1).forEach(linkedId => {
+                  if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
+                });
               });
-            });
+            }
           });
         }
       }
@@ -5053,17 +5158,10 @@ def main():
           return parseInt(String(a.film_ID), 10) - parseInt(String(b.film_ID), 10);
         });
       } else {
-        filtered.sort((a, b) => {
-          if (sort1 !== "default") {
-            let res1 = compareByCriteria(a, b, sort1);
-            if (res1 !== 0) return res1;
-          }
-          if (sort2 !== "default") {
-            let res2 = compareByCriteria(a, b, sort2);
-            if (res2 !== 0) return res2;
-          }
-          return 0;
-        });
+        filtered.sort((a, b) => compareMoviesByCurrentSort(a, b, sort1, sort2));
+        if (isRelatedSideBySideMode) {
+          filtered = arrangeMoviesWithRelationsSideBySide(filtered, showHidden, sort1, sort2);
+        }
       }
 
       activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
@@ -5103,6 +5201,7 @@ def main():
   document.getElementById("toggleGenreAddSidebarBtn").addEventListener("click", () => {
     setSidebarMode(sidebarMode === "genre_add" ? null : "genre_add");
   });
+  document.getElementById("toggleRelatedSideBySideBtn").addEventListener("click", toggleRelatedSideBySide);
   document.getElementById("closeFilmSearchSidebarBtn").addEventListener("click", () => {
     setSidebarMode(null);
   });
@@ -5394,16 +5493,101 @@ def main():
   document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
   document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
 
-  document.getElementById("includeLinkedInSearchCheckbox").addEventListener("change", () => {
-    renderMovies(false);
-  });
-
+  document.getElementById("includeLinkedInSearchCheckbox").addEventListener("change", () => renderMovies(false));
   document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
     updateRelationBanner();
-    renderRecentDropdown();
     renderMovies(false);
+    renderRecentDropdown();
+    if (sidebarMode === "genre_add") {
+      renderSidebar4ColGenreList(null);
+    }
   });
 
+  window.addEventListener("storage", (e) => {
+    if (e.key === "last_clicked_movie_id") {
+      if (e.newValue && !isNaN(e.newValue)) {
+        document.getElementById("lastIdInput").value = e.newValue;
+        syncCardRadioSelection(e.newValue);
+        persistentHighlightedMovieId = String(e.newValue);
+        applyPersistentHighlight();
+        if (sidebarMode === "genre_add") {
+          loadMovieGenresIntoSidebar();
+        }
+      }
+    } else if (e.key === "recent_clicked_movies") {
+      try {
+        recentMoviesState = e.newValue ? JSON.parse(e.newValue).slice(0, 30) : [];
+        renderRecentDropdown();
+      } catch (err) {}
+    } else if (e.key === "watchlist_ids") {
+      watchlist1State = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "watchlist_ids2") {
+      watchlist2State = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "watchlist_ids3") {
+      watchlist3State = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "watched_ids") {
+      watchedState = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "glorious_movie_ids") {
+      gloriousState = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "myscore_ids") {
+      myScoreState = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    } else if (e.key === "hidden_movie_ids") {
+      hiddenMoviesState = e.newValue ? JSON.parse(e.newValue) : {};
+      updateRelationBanner();
+      renderMoviesPreservingScroll();
+      renderRecentDropdown();
+    } else if (e.key === "series_movies_groups" || e.key === "series_groups_names") {
+      try {
+        const g = localStorage.getItem("series_movies_groups");
+        const n = localStorage.getItem("series_groups_names");
+        const parsedG = g ? JSON.parse(g) : [];
+        const parsedN = n ? JSON.parse(n) : {};
+        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "series");
+        seriesMoviesGroupsState = res.groups;
+        seriesGroupsNamesState = res.names;
+      } catch (err) {}
+      updateRelationBanner();
+      renderMoviesPreservingScroll();
+    } else if (e.key === "remake_movies_groups" || e.key === "remake_groups_names") {
+      try {
+        const g = localStorage.getItem("remake_movies_groups");
+        const n = localStorage.getItem("remake_groups_names");
+        const parsedG = g ? JSON.parse(g) : [];
+        const parsedN = n ? JSON.parse(n) : {};
+        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "remake");
+        remakeMoviesGroupsState = res.groups;
+        remakeGroupsNamesState = res.names;
+      } catch (err) {}
+      updateRelationBanner();
+      renderMoviesPreservingScroll();
+    } else if (e.key === "genre_movies_groups" || e.key === "genre_groups_names") {
+      try {
+        const g = localStorage.getItem("genre_movies_groups");
+        const n = localStorage.getItem("genre_groups_names");
+        const parsedG = g ? JSON.parse(g) : [];
+        const parsedN = n ? JSON.parse(n) : {};
+        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "genre");
+        genreMoviesGroupsState = res.groups;
+        genreGroupsNamesState = res.names;
+      } catch (err) {}
+      updateRelationBanner();
+      renderMoviesPreservingScroll();
+      if (sidebarMode === "genre_add") {
+        renderSidebar4ColGenreList(null);
+      }
+    } else if (e.key === "alternative_urls_map") {
+      alternativeUrlsState = e.newValue ? JSON.parse(e.newValue) : {};
+      renderMoviesPreservingScroll();
+    }
+  });
+
+  document.getElementById("countDisplay").innerText = allMovies.length;
   initFilters();
 </script>
 </body>
@@ -5411,16 +5595,16 @@ def main():
 """
 
     import urllib.parse
-    json_str = json.dumps(details_js_list, ensure_ascii=False)
-    encoded_json = urllib.parse.quote(json_str)
+    movies_json_str = json.dumps(details_js_list, ensure_ascii=False)
+    encoded_movies_json = urllib.parse.quote(movies_json_str)
 
-    html_content = html_template.replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
-    html_content = html_content.replace("__MOVIES_JSON_PLACEHOLDER__", encoded_json)
+    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", encoded_movies_json)
+    final_html = final_html.replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
 
     with open(input_prev_html, "w", encoding="utf-8") as f:
-        f.write(html_content)
+        f.write(final_html)
 
-    print(f" -> '{input_prev_html}' başarıyla güncellendi.")
+    print(f" -> '{input_prev_html}' başarıyla oluşturuldu.")
     print("=" * 65)
 
     try:

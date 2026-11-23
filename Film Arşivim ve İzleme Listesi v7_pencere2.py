@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Sade Görünüm daha da sadeleştirildi, buton görünümleri ve yerleri değiştirildi"
+SURUM_NOTU = "İlişkililer yanyana butonu eklendi"
 
 #kaydet ve 30 sn bekle
 import time
