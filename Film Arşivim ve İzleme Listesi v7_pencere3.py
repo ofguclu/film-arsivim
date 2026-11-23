@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v46")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v47")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -201,19 +201,28 @@ def main():
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
   }
 
+  .controls-bottom-row {
+    flex-basis: 100%;
+    order: 50;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    padding-top: 6px;
+    margin-top: 2px;
+    border-top: 1px solid #282828;
+  }
+
   input, select, button, a.btn-link { padding: 6px 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
   input:focus, select:focus { border-color: var(--accent-color); outline: none; }
-  button, a.btn-link { cursor: pointer; font-weight: bold; transition: background 0.2s; }
+  button, a.btn-link { cursor: pointer; font-weight: bold; transition: background 0.2s, border-color 0.2s, color 0.2s; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.active, a.btn-link.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
-  .btn-film-search-sidebar { background: #1d4ed8; color: #dbeafe; border: 1px solid #3b82f6; font-size: 11px; padding: 5px 9px; }
-  .btn-film-search-sidebar:hover { background: #2563eb; color: #fff; }
-  .btn-film-search-sidebar.is-open { background: #10b981; color: #052e16; border-color: #6ee7b7; }
-
-  .btn-genre-add-sidebar { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; font-size: 11px; padding: 5px 9px; }
-  .btn-genre-add-sidebar:hover { background: #059669; color: #fff; }
-  .btn-genre-add-sidebar.is-open { background: #10b981; color: #052e16; border-color: #6ee7b7; }
+  .btn-go { padding: 3px 8px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; line-height: 1.3; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-go:hover { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+  .btn-go.is-open, .btn-go.is-simple { background: #10b981; color: #052e16; border-color: #6ee7b7; }
 
   .right-sidebar-panel {
     display: none;
@@ -358,17 +367,8 @@ def main():
     flex-shrink: 0;
   }
 
-  a.btn-editor { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
-  a.btn-editor:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
-
-  .btn-view-mode { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; font-size: 11px; padding: 5px 9px; }
-  .btn-view-mode:hover { background: #059669; color: #fff; border-color: #34d399; }
-  .btn-view-mode.is-simple { background: #10b981; color: #052e16; border-color: #6ee7b7; }
-
   .last-id-container { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #bbb; background: #111; padding: 3px 7px; border-radius: 4px; border: 1px solid #333; }
   .last-id-container input { width: 52px; padding: 3px 5px; text-align: center; font-weight: bold; color: #f5c518; }
-  .btn-go { padding: 3px 8px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; font-size: 11px; cursor: pointer; }
-  .btn-go:hover { background: var(--accent-color); border-color: var(--accent-color); }
 
   .search-box-wrap { display: inline-flex; align-items: center; gap: 3px; }
   .btn-search { padding: 5px 8px; background: #262626; color: #e0e0e0; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer; line-height: 1.2; }
@@ -442,12 +442,6 @@ def main():
     border: 2px solid #ffffff;
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
-
-  .backup-controls { display: flex; align-items: center; gap: 6px; }
-  .btn-backup { background: #1f2937; color: #93c5fd; border: 1px solid #374151; font-size: 11px; padding: 5px 9px; }
-  .btn-backup:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
-  .btn-reset-filters { background: #2d1b1b; color: #fca5a5; border: 1px solid #7f1d1d; font-size: 11px; padding: 5px 9px; }
-  .btn-reset-filters:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
 
   .btn-group-toggle { background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6; font-size: 11px; padding: 5px 9px; display: none; }
   .btn-group-toggle:hover { background: #2563eb; color: #fff; }
@@ -586,8 +580,23 @@ def main():
 
   body.simple-view .card-user-actions,
   body.simple-view .card-relation-bar,
-  body.simple-view .domain-container {
+  body.simple-view .domain-container,
+  body.simple-view #toggleGenreAddSidebarBtn,
+  body.simple-view #includeLinkedInSearchLabel,
+  body.simple-view #showHiddenLabel,
+  body.simple-view #multiSelectLabel,
+  body.simple-view #recentMoviesDropdown,
+  body.simple-view #editorLinkBtn,
+  body.simple-view #exportDataBtn,
+  body.simple-view #importDataBtn {
     display: none !important;
+  }
+  body.simple-view .controls-bottom-row .last-id-container,
+  body.simple-view .controls-bottom-row .film-count-badge {
+    order: -1;
+  }
+  body.simple-view.sidebar-open-genre-add {
+    padding-right: 20px;
   }
   body.simple-view .movie-title {
     display: block;
@@ -1267,9 +1276,6 @@ def main():
       <button type="button" id="searchBtn" class="btn-search" title="Ara (veya Enter'a basın)">🔍</button>
     </div>
 
-    <button type="button" id="toggleFilmSearchSidebarBtn" class="btn-film-search-sidebar" title="Sağ yan panelde türlere göre film ara">🔍 Film Ara</button>
-    <button type="button" id="toggleGenreAddSidebarBtn" class="btn-genre-add-sidebar" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
-
     <select id="domainFilter"><option value="">Tüm Domainler</option></select>
 
     <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi">
@@ -1362,12 +1368,12 @@ def main():
       </select>
     </div>
 
-    <label class="show-hidden-label" title="Listelenen veya aratılan filmlere bağlı olan diğer tüm filmleri de sonuçlara dahil et">
+    <label class="show-hidden-label" id="includeLinkedInSearchLabel" title="Listelenen veya aratılan filmlere bağlı olan diğer tüm filmleri de sonuçlara dahil et">
       <input type="checkbox" id="includeLinkedInSearchCheckbox" class="show-hidden-checkbox">
       <span>🔗 Aramada/Listede Bağlı Olanları da Getir</span>
     </label>
 
-    <label class="show-hidden-label" title="Gizlenen filmleri göster/aramalara dahil et">
+    <label class="show-hidden-label" id="showHiddenLabel" title="Gizlenen filmleri göster/aramalara dahil et">
       <input type="checkbox" id="showHiddenCheckbox" class="show-hidden-checkbox">
       <span>👁️ Gizli Olanları Göster</span>
     </label>
@@ -1387,21 +1393,20 @@ def main():
       <option value="">🕒 Geçmiş (Son 30)</option>
     </select>
 
-    <a href="film_editor.html" target="_blank" class="btn-link btn-editor" id="editorLinkBtn" title="details.js Veri Düzenleyicisini Aç">🎬 Film Editörü</a>
-
-    <button type="button" class="btn-view-mode" id="toggleViewModeBtn" title="Sade Görünüm ve Kompleks Görünüm arasında geçiş yap">Sade Görünüm</button>
-
-    <button class="btn-reset-filters" id="resetFiltersBtn" title="Sıralamalar hariç tüm filtreleri, aramayı ve aktif grup seçimini sıfırla">🧹 Filtreleri Temizle</button>
-
     <button type="button" id="toggleAllGroupsBtn" class="btn-group-toggle" title="Tüm grupları aç/kapat">📂 Tümünü Aç</button>
 
-    <div class="backup-controls">
-      <button class="btn-backup" id="exportDataBtn" title="Tüm izleme listeleri, puanlar ve grup bağlantılarını JSON olarak indir">💾 Yedekle</button>
-      <button class="btn-backup" id="importDataBtn" title="Daha önce alınan JSON yedeğini geri yükle">📂 Yükle</button>
+    <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">__COUNT_PLACEHOLDER__</span> Film</span>
+
+    <div class="controls-bottom-row">
+      <button type="button" id="toggleFilmSearchSidebarBtn" class="btn-go" title="Sağ yan panelde türlere göre film ara">🔍 Film Ara</button>
+      <button type="button" id="toggleGenreAddSidebarBtn" class="btn-go" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
+      <a href="film_editor.html" target="_blank" class="btn-go" id="editorLinkBtn" title="details.js Veri Düzenleyicisini Aç">🎬 Film Editörü</a>
+      <button type="button" class="btn-go" id="toggleViewModeBtn" title="Sade Görünüm ve Kompleks Görünüm arasında geçiş yap">Sade Görünüm</button>
+      <button type="button" class="btn-go" id="resetFiltersBtn" title="Sıralamalar hariç tüm filtreleri, aramayı ve aktif grup seçimini sıfırla">🧹 Filtreleri Temizle</button>
+      <button type="button" class="btn-go" id="exportDataBtn" title="Tüm izleme listeleri, puanlar ve grup bağlantılarını JSON olarak indir">💾 Yedekle</button>
+      <button type="button" class="btn-go" id="importDataBtn" title="Daha önce alınan JSON yedeğini geri yükle">📂 Geri Yükle</button>
       <input type="file" id="importFileInput" accept=".json" style="display: none;">
     </div>
-
-    <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">__COUNT_PLACEHOLDER__</span> Film</span>
   </div>
 
   <div class="relation-banner" id="relationBanner">
@@ -1696,9 +1701,46 @@ def main():
     return [String(seedMovieId)];
   }
 
+  function syncSimpleViewControlsPlacement() {
+    const bottomRow = document.querySelector(".controls-bottom-row");
+    const controls = document.querySelector(".controls");
+    const lastIdBox = document.querySelector(".last-id-container");
+    const countBadge = document.querySelector(".film-count-badge");
+    const recentDrop = document.getElementById("recentMoviesDropdown");
+    const toggleGroupsBtn = document.getElementById("toggleAllGroupsBtn");
+    if (!bottomRow || !controls || !lastIdBox || !countBadge) return;
+
+    if (isSimpleViewMode) {
+      if (lastIdBox.parentElement !== bottomRow) {
+        bottomRow.prepend(lastIdBox);
+      }
+      if (countBadge.parentElement !== bottomRow) {
+        lastIdBox.insertAdjacentElement("afterend", countBadge);
+      }
+    } else {
+      if (lastIdBox.parentElement !== controls) {
+        if (recentDrop && recentDrop.parentElement === controls) {
+          controls.insertBefore(lastIdBox, recentDrop);
+        } else {
+          controls.insertBefore(lastIdBox, bottomRow);
+        }
+      }
+      if (countBadge.parentElement !== controls) {
+        if (toggleGroupsBtn && toggleGroupsBtn.parentElement === controls) {
+          toggleGroupsBtn.insertAdjacentElement("afterend", countBadge);
+        } else {
+          controls.insertBefore(countBadge, bottomRow);
+        }
+      }
+    }
+  }
+
   function applyViewModeUI() {
     const btn = document.getElementById("toggleViewModeBtn");
     if (isSimpleViewMode) {
+      if (sidebarMode === "genre_add") {
+        setSidebarMode(null);
+      }
       document.body.classList.add("simple-view");
       if (btn) {
         btn.innerText = "Kompleks Görünüm";
@@ -1711,6 +1753,7 @@ def main():
         btn.classList.remove("is-simple");
       }
     }
+    syncSimpleViewControlsPlacement();
   }
 
   function toggleViewMode() {
