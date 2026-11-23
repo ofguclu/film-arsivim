@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v48")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v49")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -582,7 +582,6 @@ def main():
   body.simple-view .card-relation-bar,
   body.simple-view .domain-container,
   body.simple-view #toggleGenreAddSidebarBtn,
-  body.simple-view #includeLinkedInSearchLabel,
   body.simple-view #showHiddenLabel,
   body.simple-view #multiSelectLabel,
   body.simple-view #recentMoviesDropdown,
@@ -1367,11 +1366,6 @@ def main():
         <option value="count_desc">Film Sayısı (Azalan)</option>
       </select>
     </div>
-
-    <label class="show-hidden-label" id="includeLinkedInSearchLabel" title="Listelenen veya aratılan filmlere bağlı olan diğer tüm filmleri de sonuçlara dahil et">
-      <input type="checkbox" id="includeLinkedInSearchCheckbox" class="show-hidden-checkbox">
-      <span>🔗 Aramada/Listede Bağlı Olanları da Getir</span>
-    </label>
 
     <label class="show-hidden-label" id="showHiddenLabel" title="Gizlenen filmleri göster/aramalara dahil et">
       <input type="checkbox" id="showHiddenCheckbox" class="show-hidden-checkbox">
@@ -4196,7 +4190,6 @@ def main():
         sort2: document.getElementById("sortSelect2").value,
         watchlistSelection: document.getElementById("watchlistDropdown").value,
         linkedGroupsSort: document.getElementById("linkedGroupsSortSelect").value,
-        includeLinkedInSearch: document.getElementById("includeLinkedInSearchCheckbox").checked,
         showHidden: document.getElementById("showHiddenCheckbox").checked,
         lastId: document.getElementById("lastIdInput").value
       };
@@ -4230,9 +4223,6 @@ def main():
           }
           if (state.linkedGroupsSort) {
             document.getElementById("linkedGroupsSortSelect").value = state.linkedGroupsSort;
-          }
-          if (state.includeLinkedInSearch) {
-            document.getElementById("includeLinkedInSearchCheckbox").checked = true;
           }
           if (state.showHidden) {
             document.getElementById("showHiddenCheckbox").checked = true;
@@ -4419,7 +4409,6 @@ def main():
 
       sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
-      document.getElementById("includeLinkedInSearchCheckbox").checked = false;
       document.getElementById("showHiddenCheckbox").checked = false;
 
       activeRelationFilterSet = null;
@@ -4832,7 +4821,6 @@ def main():
 
       const watchlistSelection = document.getElementById("watchlistDropdown").value;
       const showHidden = document.getElementById("showHiddenCheckbox").checked;
-      const includeLinkedInSearch = document.getElementById("includeLinkedInSearchCheckbox").checked;
 
       const linkedSortContainer = document.getElementById("linkedSortContainer");
       const toggleAllBtn = document.getElementById("toggleAllGroupsBtn");
@@ -4971,7 +4959,7 @@ def main():
       }
 
       let expandedLinkedIds = null;
-      if (!activeRelationFilterSet) {
+      if (!activeRelationFilterSet && isRelatedSideBySideMode) {
         const baseMatchedIds = new Set();
         allMovies.forEach(movie => {
           const fid = String(movie.film_ID);
@@ -4983,26 +4971,16 @@ def main():
 
         expandedLinkedIds = new Set(baseMatchedIds);
 
-        if (includeLinkedInSearch || isRelatedSideBySideMode) {
-          baseMatchedIds.forEach(fid => {
-            const sgrp = getSeriesGroupForMovie(fid);
-            if (sgrp) sgrp.slice(1).forEach(linkedId => {
-              if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
-            });
-            const rgrp = getRemakeGroupForMovie(fid);
-            if (rgrp) rgrp.slice(1).forEach(linkedId => {
-              if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
-            });
-            if (includeLinkedInSearch) {
-              const ggrps = getGenreGroupsForMovie(fid);
-              ggrps.forEach(ggrp => {
-                ggrp.slice(1).forEach(linkedId => {
-                  if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
-                });
-              });
-            }
+        baseMatchedIds.forEach(fid => {
+          const sgrp = getSeriesGroupForMovie(fid);
+          if (sgrp) sgrp.slice(1).forEach(linkedId => {
+            if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
           });
-        }
+          const rgrp = getRemakeGroupForMovie(fid);
+          if (rgrp) rgrp.slice(1).forEach(linkedId => {
+            if (showHidden || !hiddenMoviesState[linkedId]) expandedLinkedIds.add(String(linkedId));
+          });
+        });
       }
 
       const preSidebarMovies = allMovies.filter(movie => {
@@ -5388,7 +5366,6 @@ def main():
 
       sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
-      document.getElementById("includeLinkedInSearchCheckbox").checked = false;
       document.getElementById("showHiddenCheckbox").checked = false;
 
       activeRelationFilterSet = null;
@@ -5441,7 +5418,6 @@ def main():
 
     sidebarSelectedGenreKeys.clear();
     document.getElementById("watchlistDropdown").value = "all";
-    document.getElementById("includeLinkedInSearchCheckbox").checked = false;
     document.getElementById("showHiddenCheckbox").checked = false;
 
     currentPage = 1;
@@ -5493,7 +5469,6 @@ def main():
   document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
   document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
 
-  document.getElementById("includeLinkedInSearchCheckbox").addEventListener("change", () => renderMovies(false));
   document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
     updateRelationBanner();
     renderMovies(false);
@@ -5542,52 +5517,56 @@ def main():
       updateRelationBanner();
       renderMoviesPreservingScroll();
       renderRecentDropdown();
-    } else if (e.key === "series_movies_groups" || e.key === "series_groups_names") {
-      try {
-        const g = localStorage.getItem("series_movies_groups");
-        const n = localStorage.getItem("series_groups_names");
-        const parsedG = g ? JSON.parse(g) : [];
-        const parsedN = n ? JSON.parse(n) : {};
-        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "series");
-        seriesMoviesGroupsState = res.groups;
-        seriesGroupsNamesState = res.names;
-      } catch (err) {}
-      updateRelationBanner();
-      renderMoviesPreservingScroll();
-    } else if (e.key === "remake_movies_groups" || e.key === "remake_groups_names") {
-      try {
-        const g = localStorage.getItem("remake_movies_groups");
-        const n = localStorage.getItem("remake_groups_names");
-        const parsedG = g ? JSON.parse(g) : [];
-        const parsedN = n ? JSON.parse(n) : {};
-        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "remake");
-        remakeMoviesGroupsState = res.groups;
-        remakeGroupsNamesState = res.names;
-      } catch (err) {}
-      updateRelationBanner();
-      renderMoviesPreservingScroll();
-    } else if (e.key === "genre_movies_groups" || e.key === "genre_groups_names") {
-      try {
-        const g = localStorage.getItem("genre_movies_groups");
-        const n = localStorage.getItem("genre_groups_names");
-        const parsedG = g ? JSON.parse(g) : [];
-        const parsedN = n ? JSON.parse(n) : {};
-        const res = cleanAndSanitizeGroups(parsedG, parsedN, 1, "genre");
-        genreMoviesGroupsState = res.groups;
-        genreGroupsNamesState = res.names;
-      } catch (err) {}
-      updateRelationBanner();
-      renderMoviesPreservingScroll();
       if (sidebarMode === "genre_add") {
         renderSidebar4ColGenreList(null);
       }
+    } else if (e.key === "series_movies_groups" || e.key === "series_groups_names") {
+      try {
+        const gRaw = localStorage.getItem("series_movies_groups");
+        const nRaw = localStorage.getItem("series_groups_names");
+        const gParsed = gRaw ? JSON.parse(gRaw) : [];
+        const nParsed = nRaw ? JSON.parse(nRaw) : {};
+        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "series");
+        seriesMoviesGroupsState = res.groups;
+        seriesGroupsNamesState = res.names;
+        updateRelationBanner();
+        renderMoviesPreservingScroll();
+      } catch (err) {}
+    } else if (e.key === "remake_movies_groups" || e.key === "remake_groups_names") {
+      try {
+        const gRaw = localStorage.getItem("remake_movies_groups");
+        const nRaw = localStorage.getItem("remake_groups_names");
+        const gParsed = gRaw ? JSON.parse(gRaw) : [];
+        const nParsed = nRaw ? JSON.parse(nRaw) : {};
+        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "remake");
+        remakeMoviesGroupsState = res.groups;
+        remakeGroupsNamesState = res.names;
+        updateRelationBanner();
+        renderMoviesPreservingScroll();
+      } catch (err) {}
+    } else if (e.key === "genre_movies_groups" || e.key === "genre_groups_names") {
+      try {
+        const gRaw = localStorage.getItem("genre_movies_groups");
+        const nRaw = localStorage.getItem("genre_groups_names");
+        const gParsed = gRaw ? JSON.parse(gRaw) : [];
+        const nParsed = nRaw ? JSON.parse(nRaw) : {};
+        const res = cleanAndSanitizeGroups(gParsed, nParsed, 1, "genre");
+        genreMoviesGroupsState = res.groups;
+        genreGroupsNamesState = res.names;
+        updateRelationBanner();
+        renderMoviesPreservingScroll();
+        if (sidebarMode === "genre_add") {
+          renderSidebar4ColGenreList(null);
+        }
+      } catch (err) {}
     } else if (e.key === "alternative_urls_map") {
-      alternativeUrlsState = e.newValue ? JSON.parse(e.newValue) : {};
-      renderMoviesPreservingScroll();
+      try {
+        alternativeUrlsState = e.newValue ? JSON.parse(e.newValue) : {};
+        renderMoviesPreservingScroll();
+      } catch (err) {}
     }
   });
 
-  document.getElementById("countDisplay").innerText = allMovies.length;
   initFilters();
 </script>
 </body>
@@ -5596,15 +5575,15 @@ def main():
 
     import urllib.parse
     movies_json_str = json.dumps(details_js_list, ensure_ascii=False)
-    encoded_movies_json = urllib.parse.quote(movies_json_str)
+    movies_json_encoded = urllib.parse.quote(movies_json_str)
 
-    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", encoded_movies_json)
+    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", movies_json_encoded)
     final_html = final_html.replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
 
     with open(input_prev_html, "w", encoding="utf-8") as f:
         f.write(final_html)
 
-    print(f" -> '{input_prev_html}' başarıyla oluşturuldu.")
+    print(f" -> '{input_prev_html}' başarıyla oluşturuldu! Toplam {len(details_js_list)} film eklendi.")
     print("=" * 65)
 
     try:
