@@ -517,6 +517,199 @@
     background: rgba(20, 20, 20, 0.95);
   }
 
+
+  .summary-hover-tooltip {
+    position: fixed;
+    z-index: 99999;
+    display: none;
+    pointer-events: none;
+    background: #151515;
+    color: #e5e7eb;
+    border: 1px solid #f5c518;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.9);
+    max-width: 360px;
+    font-size: 12px;
+    line-height: 1.4;
+    box-sizing: border-box;
+    white-space: normal;
+  }
+
+  body.table-view .movie-grid {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  body.table-view .group-movies-container {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    padding-left: 0;
+    border-left: none;
+  }
+  body.table-view .group-movies-container.collapsed {
+    display: none !important;
+  }
+  body.table-view .group-section-wrapper {
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+  .archive-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #141414;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+  }
+  table.archive-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: var(--text-color);
+    background: #161616;
+  }
+  table.archive-data-table thead th {
+    position: sticky;
+    top: 0;
+    background: #202020;
+    color: #f5c518;
+    font-weight: bold;
+    text-align: left;
+    padding: 7px 8px;
+    border-bottom: 2px solid #3f3f46;
+    border-right: 1px solid #2b2b2b;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  table.archive-data-table thead th.col-center,
+  table.archive-data-table tbody td.col-center {
+    text-align: center;
+  }
+  table.archive-data-table tbody tr {
+    border-bottom: 1px solid #262626;
+    transition: background 0.12s ease;
+  }
+  table.archive-data-table tbody tr:nth-child(even) {
+    background: #1a1a1a;
+  }
+  table.archive-data-table tbody tr:hover {
+    background: #252b36;
+  }
+  table.archive-data-table tbody tr.hidden-row {
+    opacity: 0.65;
+    background: #241414;
+  }
+  table.archive-data-table tbody tr.highlight {
+    outline: 2px solid #e50914;
+    background: #33191c !important;
+  }
+  table.archive-data-table tbody td {
+    padding: 5px 8px;
+    border-right: 1px solid #262626;
+    vertical-align: middle;
+  }
+  .tbl-sira-no {
+    font-weight: bold;
+    color: #f5c518;
+    cursor: zoom-in;
+    white-space: nowrap;
+  }
+  .tbl-sira-no:hover {
+    text-decoration: underline;
+    color: #fde047;
+  }
+  .tbl-title-link {
+    color: #93c5fd;
+    text-decoration: underline;
+    font-weight: bold;
+    cursor: help;
+  }
+  .tbl-title-link:hover {
+    color: #ffffff;
+  }
+  .tbl-score-input {
+    width: 48px;
+    padding: 2px 4px;
+    text-align: center;
+    background: #222;
+    color: #f5c518;
+    border: 1px solid #444;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+  }
+  .tbl-cb {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 0;
+  }
+  .tbl-cb-wl { accent-color: var(--accent-color); }
+  .tbl-cb-watched { accent-color: #28a745; }
+  .tbl-cb-glorious { accent-color: #f5c518; }
+  .tbl-eye-btn {
+    background: #262626;
+    color: #e5e7eb;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 1.1;
+    cursor: pointer;
+  }
+  .tbl-eye-btn:hover {
+    background: #dc2626;
+    color: #fff;
+    border-color: #fca5a5;
+  }
+  .tbl-eye-btn.is-hidden {
+    background: #dc2626;
+    color: #fff;
+    border-color: #fff;
+  }
+  .tbl-radio {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #f5c518;
+    margin: 0;
+  }
+  .tbl-genres-cell {
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #a7f3d0;
+  }
+  .tbl-actors-cell {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #cbd5e1;
+    font-style: italic;
+  }
+  .tbl-add-genre-row td {
+    padding: 8px;
+    background: #121b18;
+  }
+  .tbl-add-genre-btn {
+    background: rgba(16, 185, 129, 0.14);
+    color: #34d399;
+    border: 1px dashed #10b981;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+  }
+  .tbl-add-genre-btn:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #fff;
+  }
+
   .poster-hover-tooltip {
     position: fixed;
     z-index: 99999;
@@ -1455,7 +1648,14 @@
       <button type="button" id="toggleGenreAddSidebarBtn" class="btn-go" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
       <button type="button" id="toggleRelatedSideBySideBtn" class="btn-go" title="Seri veya remake ilişkili filmleri filtre/aramaya dahil edip ilk filmin yanına sırala">🔗 İlişkililer Yanyana</button>
       <a href="film_editor.html" target="_blank" class="btn-go" id="editorLinkBtn" title="details.js Veri Düzenleyicisini Aç">🎬 Film Editörü</a>
-      <button type="button" class="btn-go" id="toggleViewModeBtn" title="Sade Görünüm, Kompleks Görünüm ve Resimsiz Görünüm arasında geçiş yap">Sade Görünüm</button>
+      <label class="last-id-container" id="viewModeLabel" title="Görünüm modunu seçin" style="background: #1a1a1a; border-color: #444; color: #f5c518; font-weight: bold;">
+        <span>Görünüm</span>
+        <select id="viewModeSelect" style="background: #141414; color: #e0e0e0; border: 1px solid #4a4a4a; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+          <option value="complex">Kompleks Görünüm</option>
+          <option value="simple">Sade Görünüm</option>
+          <option value="table">Tablo Görünümü</option>
+        </select>
+      </label>
       <button type="button" class="btn-go" id="resetFiltersBtn" title="Sıralamalar hariç tüm filtreleri, aramayı ve aktif grup seçimini sıfırla">🧹 Filtreleri Temizle</button>
       <button type="button" class="btn-go" id="exportDataBtn" title="Tüm izleme listeleri, puanlar ve grup bağlantılarını JSON olarak indir">💾 Yedekle</button>
       <button type="button" class="btn-go" id="importDataBtn" title="Daha önce alınan JSON yedeğini geri yükle">📂 Geri Yükle</button>
@@ -2115,8 +2315,44 @@
     tip.style.top = top + "px";
   }
 
+  function hideSummaryHoverTooltip() {
+    const tip = document.getElementById("summaryHoverTooltip");
+    if (tip) {
+      tip.style.display = "none";
+    }
+  }
+
+  function positionSummaryHoverTooltip(clientX, clientY) {
+    const tip = document.getElementById("summaryHoverTooltip");
+    if (!tip || tip.style.display === "none") return;
+    const rect = tip.getBoundingClientRect();
+    const tipW = rect.width || 320;
+    const tipH = rect.height || 90;
+    const offset = 14;
+    let left = clientX + offset;
+    let top = clientY + offset;
+
+    if (left + tipW > window.innerWidth - 10) {
+      left = Math.max(10, clientX - tipW - offset);
+    }
+    if (top + tipH > window.innerHeight - 10) {
+      top = Math.max(10, window.innerHeight - tipH - 10);
+    }
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+
+  function showSummaryHoverTooltip(summaryText, clientX, clientY) {
+    if (viewMode !== "table" || !summaryText) return;
+    const tip = document.getElementById("summaryHoverTooltip");
+    if (!tip) return;
+    tip.textContent = summaryText;
+    tip.style.display = "block";
+    positionSummaryHoverTooltip(clientX, clientY);
+  }
+
   function showPosterHoverTooltip(posterUrl, clientX, clientY) {
-    if (viewMode !== "no_image" || !posterUrl) return;
+    if ((viewMode !== "no_image" && viewMode !== "table") || !posterUrl) return;
     const tip = document.getElementById("posterHoverTooltip");
     const img = document.getElementById("posterHoverTooltipImg");
     if (!tip || !img) return;
@@ -2130,57 +2366,50 @@
   }
 
   function applyViewModeUI() {
-    const btn = document.getElementById("toggleViewModeBtn");
+    const sel = document.getElementById("viewModeSelect");
     hidePosterHoverTooltip();
-    isSimpleViewMode = (viewMode === "simple" || viewMode === "no_image");
+    hideSummaryHoverTooltip();
 
-    document.body.classList.remove("simple-view", "no-image-view");
+    if (viewMode === "no_image") {
+      viewMode = "table";
+    }
+
+    isSimpleViewMode = (viewMode === "simple" || viewMode === "table");
+
+    document.body.classList.remove("simple-view", "no-image-view", "table-view");
 
     if (viewMode === "simple") {
-      if (sidebarMode === "genre_add") {
-        setSidebarMode(null);
-      }
       document.body.classList.add("simple-view");
-      if (btn) {
-        btn.innerText = "Resimsiz Görünüm";
-        btn.classList.add("is-simple");
-      }
-    } else if (viewMode === "no_image") {
-      if (sidebarMode === "genre_add") {
-        setSidebarMode(null);
-      }
-      document.body.classList.add("simple-view", "no-image-view");
-      if (btn) {
-        btn.innerText = "Kompleks Görünüm";
-        btn.classList.add("is-simple");
-      }
-    } else {
-      if (btn) {
-        btn.innerText = "Sade Görünüm";
-        btn.classList.remove("is-simple");
-      }
+    } else if (viewMode === "table") {
+      document.body.classList.add("table-view");
+    }
+
+    if (sel && sel.value !== viewMode) {
+      sel.value = viewMode;
     }
     syncSimpleViewControlsPlacement();
   }
 
-  function toggleViewMode() {
-    if (viewMode === "complex") {
-      viewMode = "simple";
-    } else if (viewMode === "simple") {
-      viewMode = "no_image";
-    } else {
-      viewMode = "complex";
+  function setViewMode(nextMode) {
+    if (nextMode !== "complex" && nextMode !== "simple" && nextMode !== "table") {
+      nextMode = "complex";
     }
+    viewMode = nextMode;
     try {
       localStorage.setItem("archive_view_mode", viewMode);
-      localStorage.setItem("archive_simple_view_mode", (viewMode === "simple" || viewMode === "no_image") ? "1" : "0");
+      localStorage.setItem("archive_simple_view_mode", (viewMode === "simple" || viewMode === "table") ? "1" : "0");
     } catch (e) {}
     applyViewModeUI();
+    if (document.getElementById("movieGridContainer")) {
+      renderMoviesPreservingScroll();
+    }
   }
 
   try {
     const savedMode = localStorage.getItem("archive_view_mode");
-    if (savedMode === "simple" || savedMode === "no_image" || savedMode === "complex") {
+    if (savedMode === "table" || savedMode === "no_image") {
+      viewMode = "table";
+    } else if (savedMode === "simple" || savedMode === "complex") {
       viewMode = savedMode;
     } else {
       viewMode = (localStorage.getItem("archive_simple_view_mode") === "1") ? "simple" : "complex";
@@ -5268,6 +5497,143 @@
     return card;
   }
 
+  function buildTableRowElement(movie, currentGeneralLastId, contextPrefix = "", positionIndex = null) {
+    const fid = String(movie.film_ID);
+    const tr = document.createElement("tr");
+    if (persistentHighlightedMovieId && String(persistentHighlightedMovieId) === fid) {
+      tr.classList.add("highlight");
+    }
+    const isHidden = !!hiddenMoviesState[fid];
+    if (isHidden) {
+      tr.classList.add("hidden-row");
+    }
+    tr.id = contextPrefix ? `movie-card-${contextPrefix}-${fid}` : `movie-card-${fid}`;
+    tr.dataset.movieIdCard = fid;
+
+    tr.addEventListener("click", (e) => {
+      if (e.target.closest("a, button, input, select, textarea, label")) return;
+      handleCardClick(fid);
+    });
+
+    const posterUrl = movie.poster || "";
+    const siraDisplay = positionIndex !== null ? String(positionIndex) : fid;
+    const imdbDisplay = movie.imdb_score ? String(movie.imdb_score) : "-";
+    const myScoreVal = myScoreState[fid] !== undefined ? myScoreState[fid] : "";
+    const myScoreDisplay = (myScoreVal !== "" && !isNaN(parseFloat(myScoreVal))) ? String(myScoreVal) : "-";
+    const yearDisplay = movie.year ? String(movie.year) : "-";
+    const durationDisplay = movie.duration_mins ? String(Math.round(parseFloat(movie.duration_mins))) : "-";
+    const summaryRaw = (movie.movie_summary || "").trim() || "Özet bulunamadı.";
+    const actorsStr = getActorsString(movie) || "-";
+
+    const genreGroups = getGenreGroupsForMovie(fid);
+    const genreNamesArr = genreGroups.map(g => getGenreGroupName(g)).filter(Boolean);
+    const genresDisplay = genreNamesArr.length > 0 ? genreNamesArr.join(", ") : "-";
+
+    const c1 = watchlist1State[fid] ? "checked" : "";
+    const c2 = watchlist2State[fid] ? "checked" : "";
+    const c3 = watchlist3State[fid] ? "checked" : "";
+    const cWatched = watchedState[fid] ? "checked" : "";
+    const cGlorious = gloriousState[fid] ? "checked" : "";
+    const isRadioChecked = (currentGeneralLastId === fid) ? "checked" : "";
+    const eyeBtnTitle = isHidden ? "Gizli (Tekrar görünür yapmak için tıkla)" : "Bu filmi gizle";
+    const eyeBtnIcon = isHidden ? "🙈" : "👁️";
+
+    tr.innerHTML = `
+      <td class="col-center">
+        <span class="tbl-sira-no" data-poster-url="${escapeHtml(posterUrl)}" title="Afiş önizlemesi için üzerine gelin (Film ID: ${fid})" onmouseenter="showPosterHoverTooltip(this.dataset.posterUrl, event.clientX, event.clientY)" onmousemove="positionPosterHoverTooltip(event.clientX, event.clientY)" onmouseleave="hidePosterHoverTooltip()">${escapeHtml(siraDisplay)}</span>
+      </td>
+      <td>
+        <a class="tbl-title-link" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" data-summary="${escapeHtml(summaryRaw)}" onclick="handleMovieTitleClick(event, '${fid}')" onmouseenter="showSummaryHoverTooltip(this.dataset.summary, event.clientX, event.clientY)" onmousemove="positionSummaryHoverTooltip(event.clientX, event.clientY)" onmouseleave="hideSummaryHoverTooltip()">${escapeHtml(movie.film_name)}</a>
+      </td>
+      <td class="col-center">${escapeHtml(imdbDisplay)}</td>
+      <td class="col-center" title="Benim Puanım (Şu an: ${escapeHtml(myScoreDisplay)})">
+        <input type="number" class="tbl-score-input" min="0" max="10" step="0.1" placeholder="-" value="${escapeHtml(String(myScoreVal))}" onchange="updateMyScore('${fid}', this.value)">
+      </td>
+      <td class="col-center">${escapeHtml(yearDisplay)}</td>
+      <td class="col-center">${escapeHtml(durationDisplay)}</td>
+      <td class="col-center">
+        <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c1} title="İzleme Listem 1" onchange="updateWatchlist(1, '${fid}', this.checked)">
+      </td>
+      <td class="col-center">
+        <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c2} title="İzleme Listem 2" onchange="updateWatchlist(2, '${fid}', this.checked)">
+      </td>
+      <td class="col-center">
+        <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c3} title="İzleme Listem 3" onchange="updateWatchlist(3, '${fid}', this.checked)">
+      </td>
+      <td class="col-center">
+        <input type="checkbox" class="tbl-cb tbl-cb-watched" ${cWatched} title="İzlediklerim" onchange="updateWatched('${fid}', this.checked)">
+      </td>
+      <td class="col-center">
+        <input type="checkbox" class="tbl-cb tbl-cb-glorious" ${cGlorious} title="Muhteşem Filmler" onchange="updateGlorious('${fid}', this.checked)">
+      </td>
+      <td class="col-center">
+        <button type="button" class="tbl-eye-btn ${isHidden ? 'is-hidden' : ''}" title="${eyeBtnTitle}" onclick="toggleHiddenMovie('${fid}')">${eyeBtnIcon}</button>
+      </td>
+      <td class="col-center">
+        <input type="radio" name="selectedMovieRadio" class="tbl-radio" ${isRadioChecked} title="Filmi Seç (Son ID'ye ata)" onchange="selectMovieIdFromCardRadio('${fid}')">
+      </td>
+      <td class="tbl-genres-cell" title="${escapeHtml(genresDisplay)}">${escapeHtml(genresDisplay)}</td>
+      <td class="tbl-actors-cell" title="${escapeHtml(actorsStr)}">${escapeHtml(actorsStr)}</td>
+    `;
+    return tr;
+  }
+
+  function buildTableViewElement(movies, currentGeneralLastId, contextPrefix = "", startIndexOffset = 0, addGenreKey = null) {
+    const wrap = document.createElement("div");
+    wrap.className = "archive-table-wrap";
+
+    const table = document.createElement("table");
+    table.className = "archive-data-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th class="col-center">Sıra No</th>
+          <th>Ad</th>
+          <th class="col-center">IMDB Puanı</th>
+          <th class="col-center">Benim Puanım</th>
+          <th class="col-center">Yıl</th>
+          <th class="col-center">Süre (dk)</th>
+          <th class="col-center">İzleme Listem 1</th>
+          <th class="col-center">İzleme Listem 2</th>
+          <th class="col-center">İzleme Listem 3</th>
+          <th class="col-center">İzlediklerim</th>
+          <th class="col-center">Muhteşem Filmler</th>
+          <th class="col-center">Gizle</th>
+          <th class="col-center">Filmi Seç</th>
+          <th>Türler</th>
+          <th>Oyuncular</th>
+        </tr>
+      </thead>
+    `;
+
+    const tbody = document.createElement("tbody");
+    movies.forEach((movie, idx) => {
+      tbody.appendChild(buildTableRowElement(movie, currentGeneralLastId, contextPrefix, startIndexOffset + idx + 1));
+    });
+
+    if (addGenreKey) {
+      const addTr = document.createElement("tr");
+      addTr.className = "tbl-add-genre-row";
+      const addTd = document.createElement("td");
+      addTd.colSpan = 15;
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "tbl-add-genre-btn";
+      addBtn.textContent = "+ Bu Türe Film Ekle";
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openBulkAddMoviesToGenrePopup(addGenreKey);
+      });
+      addTd.appendChild(addBtn);
+      addTr.appendChild(addTd);
+      tbody.appendChild(addTr);
+    }
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
   function populateGroupMoviesContainer(moviesContainer, groupKey, expand) {
     if (!moviesContainer) return;
     if (!expand) {
@@ -5278,6 +5644,19 @@
 
     const cached = activeGroupedDataCache.get(groupKey);
     if (!cached) return;
+
+    if (viewMode === "table") {
+      moviesContainer.appendChild(
+        buildTableViewElement(
+          cached.grpInfo.movies,
+          cached.currentGeneralLastId,
+          cached.grpInfo.key,
+          0,
+          cached.isGenreView ? cached.grpInfo.key : null
+        )
+      );
+      return;
+    }
 
     const frag = document.createDocumentFragment();
     const totalInGroup = cached.grpInfo.movies.length;
@@ -5677,12 +6056,16 @@
 
       currentlyRenderedMovieIds = pageMovies.map(m => String(m.film_ID));
 
-      const fragment = document.createDocumentFragment();
-      pageMovies.forEach((movie, idx) => {
-        fragment.appendChild(buildMovieCardElement(movie, showHidden, currentGeneralLastId, "", startIdx + idx + 1, filtered.length));
-      });
+      if (viewMode === "table") {
+        container.appendChild(buildTableViewElement(pageMovies, currentGeneralLastId, "", startIdx, null));
+      } else {
+        const fragment = document.createDocumentFragment();
+        pageMovies.forEach((movie, idx) => {
+          fragment.appendChild(buildMovieCardElement(movie, showHidden, currentGeneralLastId, "", startIdx + idx + 1, filtered.length));
+        });
 
-      container.appendChild(fragment);
+        container.appendChild(fragment);
+      }
       applyPersistentHighlight();
     } catch (err) {
       console.error("renderMovies error:", err);
@@ -5739,6 +6122,11 @@
     tooltipEl.innerHTML = `<img id="posterHoverTooltipImg" src="" alt="Afiş Önizleme">`;
     document.body.appendChild(tooltipEl);
 
+    const summaryTipEl = document.createElement("div");
+    summaryTipEl.id = "summaryHoverTooltip";
+    summaryTipEl.className = "summary-hover-tooltip";
+    document.body.appendChild(summaryTipEl);
+
     initFilters();
     syncSimpleViewControlsPlacement();
     updateMultiSelectUI();
@@ -5787,7 +6175,11 @@
     document.getElementById("sidebarConfirmGenreAddBtn").addEventListener("click", confirmSidebarGenreAdd);
 
     document.getElementById("toggleRelatedSideBySideBtn").addEventListener("click", toggleRelatedSideBySide);
-    document.getElementById("toggleViewModeBtn").addEventListener("click", toggleViewMode);
+    const viewModeSel = document.getElementById("viewModeSelect");
+    if (viewModeSel) {
+      viewModeSel.value = viewMode;
+      viewModeSel.addEventListener("change", (e) => setViewMode(e.target.value));
+    }
     document.getElementById("resetFiltersBtn").addEventListener("click", resetAllFiltersExceptSorting);
 
     document.getElementById("pageSizeSelect").addEventListener("change", (e) => {

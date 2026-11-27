@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "film seçilince  panoya filminID sini filmID.webp olarak koyuldu"
+SURUM_NOTU = "Resimsiz Görünüm, Tablo Görünümü'ne çevrildi"
 
 #kaydet ve 30 sn bekle
 import time
