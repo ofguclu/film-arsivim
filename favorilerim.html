@@ -445,7 +445,7 @@
   body.simple-view #countryFilterDropdown,
   body.simple-view #sortSelect1,
   body.simple-view #sortSelect2,
-  body.simple-view #pageSizeSelect,
+  body.simple-view #pageSizeContainer,
   body.simple-view .filter-slider-container {
     display: none !important;
   }
@@ -1630,16 +1630,10 @@
 
     <button type="button" id="toggleAllGroupsBtn" class="btn-group-toggle" title="Tüm grupları aç/kapat">📂 Tümünü Aç</button>
 
-    <select id="pageSizeSelect" title="Sayfa başına gösterilecek film sayısı" style="background: #1a1a1a; color: #f5c518; border-color: #444; font-weight: bold;">
-      <option value="14" selected>14 / Sayfa</option>
-      <option value="28">28 / Sayfa</option>
-      <option value="42">42 / Sayfa</option>
-      <option value="56">56 / Sayfa</option>
-      <option value="70">70 / Sayfa</option>
-      <option value="84">84 / Sayfa</option>
-      <option value="98">98 / Sayfa</option>
-      <option value="112">112 / Sayfa</option>
-    </select>
+    <label class="last-id-container" id="pageSizeContainer" title="Sayfa başına gösterilecek film sayısını yazıp Enter'a basın" style="background: #1a1a1a; border-color: #444; color: #f5c518; font-weight: bold;">
+      <span>Film/Sayfa:</span>
+      <input type="number" id="pageSizeInput" min="1" step="1" value="14" style="width: 48px;">
+    </label>
 
     <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">3111</span> Film</span>
 
@@ -4908,10 +4902,11 @@
           if (state.showHidden) {
             document.getElementById("showHiddenCheckbox").checked = true;
           }
-          if (state.pageSize && [14, 28, 42, 56, 70, 84, 98, 112].includes(Number(state.pageSize))) {
-            pageSize = Number(state.pageSize);
-            const psSel = document.getElementById("pageSizeSelect");
-            if (psSel) psSel.value = String(pageSize);
+          const parsedPs = parseInt(state.pageSize, 10);
+          if (!isNaN(parsedPs) && parsedPs >= 1) {
+            pageSize = parsedPs;
+            const psInp = document.getElementById("pageSizeInput");
+            if (psInp) psInp.value = String(pageSize);
           }
           if (state.lastId) {
             document.getElementById("lastIdInput").value = state.lastId;
@@ -6182,13 +6177,30 @@
     }
     document.getElementById("resetFiltersBtn").addEventListener("click", resetAllFiltersExceptSorting);
 
-    document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
-      const nextSize = parseInt(e.target.value, 10);
-      if ([14, 28, 42, 56, 70, 84, 98, 112].includes(nextSize)) {
-        pageSize = nextSize;
-        currentPage = 1;
-        renderMovies(false);
+    const pageSizeInp = document.getElementById("pageSizeInput");
+    function applyPageSizeFromInput() {
+      const nextSize = parseInt(pageSizeInp.value, 10);
+      if (!isNaN(nextSize) && nextSize >= 1) {
+        pageSizeInp.value = String(nextSize);
+        if (nextSize !== pageSize) {
+          pageSize = nextSize;
+          currentPage = 1;
+          renderMovies(false);
+        } else {
+          saveStateToStorage();
+        }
+      } else {
+        pageSizeInp.value = String(pageSize);
       }
+    }
+    pageSizeInp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        applyPageSizeFromInput();
+      }
+    });
+    pageSizeInp.addEventListener("blur", () => {
+      pageSizeInp.value = String(pageSize);
     });
 
     document.getElementById("searchInput").addEventListener("input", () => renderMovies(false));
