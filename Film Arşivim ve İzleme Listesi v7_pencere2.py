@@ -30,7 +30,7 @@ import glob
 silinecek_klasor_yolu = "/content"
 
 # Klasördeki tüm .py uzantılı dosyaları bul
-py_dosyalari = glob.glob(os.path.join(silinecek_klasor_yolu, "*.py"))
+py_dosyalari = glob.glob(os.path.join(silinecek_klasor_yolu, "Film*.py"))
 
 if not py_dosyalari:
     print("Bu klasörde silinecek .py dosyası bulunamadı.")

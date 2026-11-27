@@ -842,8 +842,20 @@
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
-    cursor: default;
+    cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    border: 1px solid transparent;
+    transition: transform 0.15s, border-color 0.15s, filter 0.15s;
+  }
+  .poster-group-name-badge:hover {
+    transform: scale(1.03);
+    filter: brightness(1.15);
+    border-color: rgba(255, 255, 255, 0.65);
+  }
+  .poster-group-name-badge.active-group {
+    background: #f5c518 !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
   }
 
   .card-user-actions {
@@ -3887,9 +3899,20 @@
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
+      const ua = (navigator.userAgent || "").toLowerCase();
+      let browserName = "unknown";
+      if (ua.includes("edg/")) browserName = "edge";
+      else if (ua.includes("opr/") || ua.includes("opera")) browserName = "opera";
+      else if (ua.includes("brave")) browserName = "brave";
+      else if (ua.includes("vivaldi")) browserName = "vivaldi";
+      else if (ua.includes("firefox/") || ua.includes("fxios/")) browserName = "firefox";
+      else if (ua.includes("chrome/") || ua.includes("crios/")) browserName = "chrome";
+      else if (ua.includes("safari/")) browserName = "safari";
+
+      const protocolName = (window.location.protocol || "unknown").replace(":", "").toLowerCase() || "unknown";
       const dateStamp = new Date().toISOString().slice(0, 10);
       a.href = url;
-      a.download = `film_arsivim_yedek_${dateStamp}.json`;
+      a.download = `film_arsivim_yedek_${dateStamp}-${browserName}-${protocolName}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -4730,27 +4753,18 @@
     let groupNameBadgesHtml = "";
     if (hasValidSeriesGroup) {
       const gNameStr = getSeriesGroupName(rawSeriesGroup);
-      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(gNameStr)}" style="background: rgba(29, 78, 216, 0.85);">🎬 ${escapeHtml(gNameStr)}</div>`;
+      groupNameBadgesHtml += `<div class="poster-group-name-badge ${isSeriesActiveGroup ? 'active-group' : ''}" title="Seri Filmler: ${escapeHtml(gNameStr)} — ${seriesOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'series')" style="background: rgba(29, 78, 216, 0.85);">🎬 (${seriesMembers.length}) ${escapeHtml(gNameStr)}</div>`;
     }
     if (hasValidRemakeGroup) {
       const rNameStr = getRemakeGroupName(rawRemakeGroup);
-      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(rNameStr)}" style="background: rgba(91, 33, 182, 0.85);">🎥 ${escapeHtml(rNameStr)}</div>`;
-    }
-    validGenreGroups.forEach(gItem => {
-      groupNameBadgesHtml += `<div class="poster-group-name-badge" title="${escapeHtml(gItem.name)}" style="background: rgba(5, 150, 105, 0.85);">🏷️ ${escapeHtml(gItem.name)}</div>`;
-    });
-
-    let badgesRightHtml = "";
-    if (hasValidSeriesGroup) {
-      badgesRightHtml += `<button class="relation-badge-btn ${isSeriesActiveGroup ? 'active-group' : ''}" title="Seri Filmler: ${seriesOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'series')">🎬 ${seriesMembers.length}</button>`;
-    }
-    if (hasValidRemakeGroup) {
-      badgesRightHtml += `<button class="remake-badge-btn ${isRemakeActiveGroup ? 'active-group' : ''}" title="Remake Filmler: ${remakeOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'remake')">🎥 ${remakeMembers.length}</button>`;
+      groupNameBadgesHtml += `<div class="poster-group-name-badge ${isRemakeActiveGroup ? 'active-group' : ''}" title="Remake Filmler: ${escapeHtml(rNameStr)} — ${remakeOtherIds} (Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'remake')" style="background: rgba(91, 33, 182, 0.85);">🎥 (${remakeMembers.length}) ${escapeHtml(rNameStr)}</div>`;
     }
     validGenreGroups.forEach(gItem => {
       const isThisGenreActive = activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey === gItem.key;
-      badgesRightHtml += `<button class="genre-badge-btn ${isThisGenreActive ? 'active-group' : ''}" title="Tür: ${escapeHtml(gItem.name)} (${gItem.visibleMembers.length} film)" onclick="filterByRelationGroup('${fid}', 'genre', '${gItem.key}')">🏷️ ${gItem.visibleMembers.length}</button>`;
+      groupNameBadgesHtml += `<div class="poster-group-name-badge ${isThisGenreActive ? 'active-group' : ''}" title="Tür: ${escapeHtml(gItem.name)} (${gItem.visibleMembers.length} film — Filtrelemek için tıkla)" onclick="filterByRelationGroup('${fid}', 'genre', '${gItem.key}')" style="background: rgba(5, 150, 105, 0.85);">🏷️ (${gItem.visibleMembers.length}) ${escapeHtml(gItem.name)}</div>`;
     });
+
+    let badgesRightHtml = "";
 
     const unlinkSeriesHtml = rawSeriesGroup
       ? `<button class="btn-unlink" title="Seriden ayır" onclick="unlinkMovie('${fid}', 'series')" style="font-size:9px; background:#7f1d1d; color:#fff; border:none; padding:1px 3px; border-radius:2px; cursor:pointer;">Seri Ayır</button>`
