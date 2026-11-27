@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Sayfa başına gösterilecek film sayısı metin kutusu ile belirlendi"
+SURUM_NOTU = "Tablo görünümü iyileştirildi"
 
 #kaydet ve 30 sn bekle
 import time

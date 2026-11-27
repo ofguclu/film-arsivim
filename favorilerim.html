@@ -446,21 +446,38 @@
   body.simple-view #sortSelect1,
   body.simple-view #sortSelect2,
   body.simple-view #pageSizeContainer,
-  body.simple-view .filter-slider-container {
+  body.simple-view .filter-slider-container,
+  body.table-view #toggleGenreAddSidebarBtn,
+  body.table-view #showHiddenLabel,
+  body.table-view #multiSelectLabel,
+  body.table-view #recentMoviesDropdown,
+  body.table-view #editorLinkBtn,
+  body.table-view #exportDataBtn,
+  body.table-view #importDataBtn,
+  body.table-view #domainFilterDropdown,
+  body.table-view #countryFilterDropdown,
+  body.table-view #sortSelect1,
+  body.table-view #sortSelect2,
+  body.table-view #pageSizeContainer,
+  body.table-view .filter-slider-container {
     display: none !important;
   }
-  body.simple-view .controls {
+  body.simple-view .controls,
+  body.table-view .controls {
     flex-wrap: nowrap;
     justify-content: center;
     gap: 6px;
     padding: 8px 10px;
   }
   body.simple-view .controls > *,
-  body.simple-view .controls-bottom-row > * {
+  body.simple-view .controls-bottom-row > *,
+  body.table-view .controls > *,
+  body.table-view .controls-bottom-row > * {
     flex-shrink: 0;
     white-space: nowrap;
   }
-  body.simple-view .controls-bottom-row {
+  body.simple-view .controls-bottom-row,
+  body.table-view .controls-bottom-row {
     flex-basis: auto;
     order: 0;
     flex-wrap: nowrap;
@@ -470,10 +487,13 @@
     border-top: none;
   }
   body.simple-view .controls-bottom-row .last-id-container,
-  body.simple-view .controls-bottom-row .film-count-badge {
+  body.simple-view .controls-bottom-row .film-count-badge,
+  body.table-view .controls-bottom-row .last-id-container,
+  body.table-view .controls-bottom-row .film-count-badge {
     order: -1;
   }
-  body.simple-view.sidebar-open-genre-add {
+  body.simple-view.sidebar-open-genre-add,
+  body.table-view.sidebar-open-genre-add {
     padding-right: 20px;
   }
   body.simple-view .movie-title {
@@ -585,6 +605,26 @@
   table.archive-data-table thead th.col-center,
   table.archive-data-table tbody td.col-center {
     text-align: center;
+    white-space: nowrap;
+    width: 1%;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  table.archive-data-table thead th.col-narrow,
+  table.archive-data-table tbody td.col-narrow {
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+    width: 1%;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  table.archive-data-table thead th.col-title,
+  table.archive-data-table tbody td.col-title {
+    white-space: nowrap;
+    max-width: clamp(110px, 16vw, 240px);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   table.archive-data-table tbody tr {
     border-bottom: 1px solid #262626;
@@ -592,6 +632,18 @@
   }
   table.archive-data-table tbody tr:nth-child(even) {
     background: #1a1a1a;
+  }
+  table.archive-data-table tbody tr.related-secondary-row {
+    background: #192b32 !important;
+  }
+  table.archive-data-table tbody tr.related-secondary-row td:first-child {
+    border-left: 3px solid #2dd4bf;
+  }
+  table.archive-data-table tbody tr.related-secondary-row .tbl-title-link {
+    color: #5eead4;
+  }
+  table.archive-data-table tbody tr.related-secondary-row:hover {
+    background: #213942 !important;
   }
   table.archive-data-table tbody tr:hover {
     background: #252b36;
@@ -608,6 +660,7 @@
     padding: 5px 8px;
     border-right: 1px solid #262626;
     vertical-align: middle;
+    white-space: nowrap;
   }
   .tbl-sira-no {
     font-weight: bold;
@@ -624,6 +677,12 @@
     text-decoration: underline;
     font-weight: bold;
     cursor: help;
+    white-space: nowrap;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
   }
   .tbl-title-link:hover {
     color: #ffffff;
@@ -676,14 +735,15 @@
     margin: 0;
   }
   .tbl-genres-cell {
-    max-width: 220px;
+    max-width: clamp(36px, 13vw, 220px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     color: #a7f3d0;
   }
   .tbl-actors-cell {
-    max-width: 280px;
+    width: 100%;
+    max-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2387,6 +2447,9 @@
   function setViewMode(nextMode) {
     if (nextMode !== "complex" && nextMode !== "simple" && nextMode !== "table") {
       nextMode = "complex";
+    }
+    if ((nextMode === "simple" || nextMode === "table") && sidebarMode === "genre_add") {
+      setSidebarMode(null);
     }
     viewMode = nextMode;
     try {
@@ -5193,7 +5256,10 @@
     return 0;
   }
 
+  let relatedSecondaryMovieIdsSet = new Set();
+
   function arrangeMoviesWithRelationsSideBySide(movieList, showHidden, sort1, sort2) {
+    relatedSecondaryMovieIdsSet = new Set();
     if (!Array.isArray(movieList) || movieList.length <= 1) {
       return movieList;
     }
@@ -5257,6 +5323,9 @@
       const clusterMovies = clusterBuckets.get(root) || [m];
       if (clusterMovies.length > 1) {
         clusterMovies.sort((x, y) => compareMoviesByCurrentSort(x, y, sort1, sort2));
+        for (let i = 1; i < clusterMovies.length; i++) {
+          relatedSecondaryMovieIdsSet.add(String(clusterMovies[i].film_ID));
+        }
       }
       clusterMovies.forEach(cm => result.push(cm));
     });
@@ -5492,11 +5561,24 @@
     return card;
   }
 
+  function handleTableCellOverflowTooltip(td, clientX, clientY) {
+    if (!td) return;
+    if (td.scrollWidth > td.clientWidth + 1) {
+      const fullText = td.dataset.fullText || td.textContent || "";
+      if (fullText && fullText !== "-") {
+        showSummaryHoverTooltip(fullText, clientX, clientY);
+      }
+    }
+  }
+
   function buildTableRowElement(movie, currentGeneralLastId, contextPrefix = "", positionIndex = null) {
     const fid = String(movie.film_ID);
     const tr = document.createElement("tr");
     if (persistentHighlightedMovieId && String(persistentHighlightedMovieId) === fid) {
       tr.classList.add("highlight");
+    }
+    if (isRelatedSideBySideMode && relatedSecondaryMovieIdsSet.has(fid)) {
+      tr.classList.add("related-secondary-row");
     }
     const isHidden = !!hiddenMoviesState[fid];
     if (isHidden) {
@@ -5537,28 +5619,28 @@
       <td class="col-center">
         <span class="tbl-sira-no" data-poster-url="${escapeHtml(posterUrl)}" title="Afiş önizlemesi için üzerine gelin (Film ID: ${fid})" onmouseenter="showPosterHoverTooltip(this.dataset.posterUrl, event.clientX, event.clientY)" onmousemove="positionPosterHoverTooltip(event.clientX, event.clientY)" onmouseleave="hidePosterHoverTooltip()">${escapeHtml(siraDisplay)}</span>
       </td>
-      <td>
+      <td class="col-title">
         <a class="tbl-title-link" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" data-summary="${escapeHtml(summaryRaw)}" onclick="handleMovieTitleClick(event, '${fid}')" onmouseenter="showSummaryHoverTooltip(this.dataset.summary, event.clientX, event.clientY)" onmousemove="positionSummaryHoverTooltip(event.clientX, event.clientY)" onmouseleave="hideSummaryHoverTooltip()">${escapeHtml(movie.film_name)}</a>
       </td>
-      <td class="col-center">${escapeHtml(imdbDisplay)}</td>
-      <td class="col-center" title="Benim Puanım (Şu an: ${escapeHtml(myScoreDisplay)})">
+      <td class="col-narrow">${escapeHtml(imdbDisplay)}</td>
+      <td class="col-narrow" title="Benim Puanım (Şu an: ${escapeHtml(myScoreDisplay)})">
         <input type="number" class="tbl-score-input" min="0" max="10" step="0.1" placeholder="-" value="${escapeHtml(String(myScoreVal))}" onchange="updateMyScore('${fid}', this.value)">
       </td>
       <td class="col-center">${escapeHtml(yearDisplay)}</td>
-      <td class="col-center">${escapeHtml(durationDisplay)}</td>
-      <td class="col-center">
+      <td class="col-narrow">${escapeHtml(durationDisplay)}</td>
+      <td class="col-narrow">
         <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c1} title="İzleme Listem 1" onchange="updateWatchlist(1, '${fid}', this.checked)">
       </td>
-      <td class="col-center">
+      <td class="col-narrow">
         <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c2} title="İzleme Listem 2" onchange="updateWatchlist(2, '${fid}', this.checked)">
       </td>
-      <td class="col-center">
+      <td class="col-narrow">
         <input type="checkbox" class="tbl-cb tbl-cb-wl" ${c3} title="İzleme Listem 3" onchange="updateWatchlist(3, '${fid}', this.checked)">
       </td>
       <td class="col-center">
         <input type="checkbox" class="tbl-cb tbl-cb-watched" ${cWatched} title="İzlediklerim" onchange="updateWatched('${fid}', this.checked)">
       </td>
-      <td class="col-center">
+      <td class="col-narrow">
         <input type="checkbox" class="tbl-cb tbl-cb-glorious" ${cGlorious} title="Muhteşem Filmler" onchange="updateGlorious('${fid}', this.checked)">
       </td>
       <td class="col-center">
@@ -5567,8 +5649,8 @@
       <td class="col-center">
         <input type="radio" name="selectedMovieRadio" class="tbl-radio" ${isRadioChecked} title="Filmi Seç (Son ID'ye ata)" onchange="selectMovieIdFromCardRadio('${fid}')">
       </td>
-      <td class="tbl-genres-cell" title="${escapeHtml(genresDisplay)}">${escapeHtml(genresDisplay)}</td>
-      <td class="tbl-actors-cell" title="${escapeHtml(actorsStr)}">${escapeHtml(actorsStr)}</td>
+      <td class="tbl-genres-cell" data-full-text="${escapeHtml(genresDisplay)}" title="${escapeHtml(genresDisplay)}" onmouseenter="handleTableCellOverflowTooltip(this, event.clientX, event.clientY)" onmousemove="positionSummaryHoverTooltip(event.clientX, event.clientY)" onmouseleave="hideSummaryHoverTooltip()">${escapeHtml(genresDisplay)}</td>
+      <td class="tbl-actors-cell" data-full-text="${escapeHtml(actorsStr)}" title="${escapeHtml(actorsStr)}" onmouseenter="handleTableCellOverflowTooltip(this, event.clientX, event.clientY)" onmousemove="positionSummaryHoverTooltip(event.clientX, event.clientY)" onmouseleave="hideSummaryHoverTooltip()">${escapeHtml(actorsStr)}</td>
     `;
     return tr;
   }
@@ -5583,16 +5665,16 @@
       <thead>
         <tr>
           <th class="col-center">Sıra No</th>
-          <th>Ad</th>
-          <th class="col-center">IMDB Puanı</th>
-          <th class="col-center">Benim Puanım</th>
+          <th class="col-title">Ad</th>
+          <th class="col-narrow">IMDB<br>Puanı</th>
+          <th class="col-narrow">Benim<br>Puanım</th>
           <th class="col-center">Yıl</th>
-          <th class="col-center">Süre (dk)</th>
-          <th class="col-center">İzleme Listem 1</th>
-          <th class="col-center">İzleme Listem 2</th>
-          <th class="col-center">İzleme Listem 3</th>
+          <th class="col-narrow">Süre<br>(dk)</th>
+          <th class="col-narrow">İzleme<br>Listem 1</th>
+          <th class="col-narrow">İzleme<br>Listem 2</th>
+          <th class="col-narrow">İzleme<br>Listem 3</th>
           <th class="col-center">İzlediklerim</th>
-          <th class="col-center">Muhteşem Filmler</th>
+          <th class="col-narrow">Muhteşem<br>Filmler</th>
           <th class="col-center">Gizle</th>
           <th class="col-center">Filmi Seç</th>
           <th>Türler</th>
@@ -5884,6 +5966,8 @@
 
       if (!activeRelationFilterSet && isRelatedSideBySideMode) {
         filtered = arrangeMoviesWithRelationsSideBySide(filtered, showHidden, sort1, sort2);
+      } else {
+        relatedSecondaryMovieIdsSet = new Set();
       }
 
       activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
