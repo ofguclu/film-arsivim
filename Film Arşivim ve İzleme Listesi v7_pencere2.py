@@ -3,9 +3,8 @@
 # Her yedeklemede güncelleyin
 SURUM_NOTU = """muhtelif değişiklikler
 
-Sayfa başı film sayısının varsayılan olarak 60'tan 10'a çekilmesi ve yalnızca Kompleks Görünüm'de görünen 10, 20, 30, 40, 50, 60 ve 100 seçenekli bir dropdown eklenmesi.
-Film arama kutusundaki tüm karakterler silindiğinde Enter'a basmaya gerek kalmadan aramanın/filtrenin otomatik güncellenmesi.
-'İzledim' işaretlendiğinde ilgili filme güncel izleme tarihinin kaydedilmesi.
+1- Sayfalama seçenekleri 14,28,42,56,70,84,98 ve 112 olsun
+2- İzledim tıklı ise izleme tarihi sadece İzlediklerim sayfasında görünsün
 """
 
 #kaydet ve 30 sn bekle

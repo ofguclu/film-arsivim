@@ -157,13 +157,14 @@ def main():
 <title>Film Arşivim ve İzleme Listesi</title>
 <style>
   :root {
-    --bg-color: #121212;
+    --bg-color: #383838;
     --card-bg: #1e1e1e;
     --text-color: #e0e0e0;
     --accent-color: #e50914;
-    --border-color: #333;
+    --border-color: #4a4a4a;
   }
   body { background-color: var(--bg-color); color: var(--text-color); font-family: Arial, sans-serif; margin: 0; padding: 20px; overflow-x: clip; transition: background-color 0.2s ease, padding-right 0.22s ease; }
+  body:not(.simple-view):not(.multi-select-page-bg) { background-color: #383838; }
   body.multi-select-page-bg { background-color: #199e46; }
   body.sidebar-open-filter { padding-right: 310px; }
   body.sidebar-open-genre-add { padding-right: 700px; }
@@ -637,6 +638,14 @@ def main():
     min-height: 360px;
   }
 
+  body.no-image-view .movie-card {
+    transform: scale(1, 0.7);
+    transform-origin: top center;
+    margin-bottom: -30%;
+  }
+  body.no-image-view .movie-card:hover {
+    transform: translateY(-4px) scale(1, 0.7);
+  }
   body.no-image-view .poster-wrapper {
     height: 145px;
     background: #141414;
@@ -1579,13 +1588,14 @@ def main():
     <button type="button" id="toggleAllGroupsBtn" class="btn-group-toggle" title="Tüm grupları aç/kapat">📂 Tümünü Aç</button>
 
     <select id="pageSizeSelect" title="Sayfa başına gösterilecek film sayısı" style="background: #1a1a1a; color: #f5c518; border-color: #444; font-weight: bold;">
-      <option value="10" selected>10 / Sayfa</option>
-      <option value="20">20 / Sayfa</option>
-      <option value="30">30 / Sayfa</option>
-      <option value="40">40 / Sayfa</option>
-      <option value="50">50 / Sayfa</option>
-      <option value="60">60 / Sayfa</option>
-      <option value="100">100 / Sayfa</option>
+      <option value="14" selected>14 / Sayfa</option>
+      <option value="28">28 / Sayfa</option>
+      <option value="42">42 / Sayfa</option>
+      <option value="56">56 / Sayfa</option>
+      <option value="70">70 / Sayfa</option>
+      <option value="84">84 / Sayfa</option>
+      <option value="98">98 / Sayfa</option>
+      <option value="112">112 / Sayfa</option>
     </select>
 
     <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">__COUNT_PLACEHOLDER__</span> Film</span>
@@ -1784,7 +1794,7 @@ def main():
   const allMovies = JSON.parse(decodeURIComponent('__MOVIES_JSON_PLACEHOLDER__'));
   const validMovieIds = new Set(allMovies.map(m => String(m.film_ID)));
 
-  let pageSize = 10;
+  let pageSize = 14;
   let currentPage = 1;
   let activeOrderedMovieIds = [];
   let activeGroupedDataCache = new Map();
@@ -4816,7 +4826,7 @@ def main():
           if (state.showHidden) {
             document.getElementById("showHiddenCheckbox").checked = true;
           }
-          if (state.pageSize && [10, 20, 30, 40, 50, 60, 100].includes(Number(state.pageSize))) {
+          if (state.pageSize && [14, 28, 42, 56, 70, 84, 98, 112].includes(Number(state.pageSize))) {
             pageSize = Number(state.pageSize);
             const psSel = document.getElementById("pageSizeSelect");
             if (psSel) psSel.value = String(pageSize);
@@ -5240,7 +5250,8 @@ def main():
     const c2 = watchlist2State[fid] ? "checked" : "";
     const c3 = watchlist3State[fid] ? "checked" : "";
     const cWatched = watchedState[fid] ? "checked" : "";
-    const watchedDateStr = (watchedState[fid] && watchedDatesState[fid]) ? watchedDatesState[fid] : "";
+    const isWatchedFilterActive = (document.getElementById("watchlistDropdown")?.value === "watched");
+    const watchedDateStr = (isWatchedFilterActive && watchedState[fid] && watchedDatesState[fid]) ? watchedDatesState[fid] : "";
     const watchedDateHtml = watchedDateStr ? `<span class="watched-date-badge" title="İzlenme Tarihi: ${escapeHtml(watchedDateStr)}">${escapeHtml(watchedDateStr)}</span>` : "";
     const cGlorious = gloriousState[fid] ? "checked" : "";
     const isRadioChecked = (currentGeneralLastId === fid) ? "checked" : "";
@@ -5597,392 +5608,440 @@ def main():
         });
       }
 
-      const preSidebarMovies = allMovies.filter(movie => {
+      const preGenreCandidates = allMovies.filter(movie => {
         const fid = String(movie.film_ID);
         if (hiddenMoviesState[fid] && !showHidden) return false;
-        if (activeRelationFilterSet) return activeRelationFilterSet.set.has(fid);
-        if (expandedLinkedIds !== null) return expandedLinkedIds.has(fid);
+        if (activeRelationFilterSet && !activeRelationFilterSet.set.has(fid)) return false;
+        if (expandedLinkedIds !== null) {
+          return expandedLinkedIds.has(fid);
+        }
         if (!matchesBaseFilters(movie)) return false;
         if (!matchesSearchTerms(movie)) return false;
         return true;
       });
 
-      let filtered = preSidebarMovies.filter(movie => matchesSidebarGenres(movie));
+      renderSidebarGenreListbox(preGenreCandidates, showHidden);
 
-      renderSidebarGenreListbox(filtered, showHidden);
+      let filtered = preGenreCandidates.filter(movie => matchesSidebarGenres(movie));
 
-      const currentGeneralLastId = String(localStorage.getItem("last_clicked_movie_id") || "").trim();
+      if (sort1 !== "default" || sort2 !== "default") {
+        filtered.sort((a, b) => compareMoviesByCurrentSort(a, b, sort1, sort2));
+      }
+
+      if (isRelatedSideBySideMode) {
+        filtered = arrangeMoviesWithRelationsSideBySide(filtered, showHidden, sort1, sort2);
+      }
+
+      activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
+      currentlyRenderedMovieIds = [...activeOrderedMovieIds];
+
+      document.getElementById("countDisplay").innerText = filtered.length;
+
+      const currentGeneralLastId = localStorage.getItem("last_clicked_movie_id") || "";
+
+      if (filtered.length === 0) {
+        renderPaginationBars(0);
+        container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 40px; color:#888; font-style:italic;">Kriterlerinize uygun film bulunamadı.</div>`;
+        return;
+      }
+
       const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
 
       if (isGroupedLinkedView) {
-        const linkedSortVal = document.getElementById("linkedGroupsSortSelect").value;
-        const isRemakeView = (watchlistSelection === "remake_only");
+        renderPaginationBars(0);
+        const groupsSource = (watchlistSelection === "linked_only")
+          ? seriesMoviesGroupsState
+          : (watchlistSelection === "remake_only" ? remakeMoviesGroupsState : genreMoviesGroupsState);
         const isGenreView = (watchlistSelection === "genre_only");
+        const groupSortOrder = document.getElementById("linkedGroupsSortSelect").value;
+        const filteredIdSet = new Set(filtered.map(m => String(m.film_ID)));
+        const movieByIdMap = new Map(filtered.map(m => [String(m.film_ID), m]));
+        const renderedMovieIdsInGroups = new Set();
 
-        let groupsList = seriesMoviesGroupsState;
-        if (isRemakeView) groupsList = remakeMoviesGroupsState;
-        else if (isGenreView) groupsList = genreMoviesGroupsState;
-
-        const filteredMovieMap = new Map();
-        filtered.forEach(m => filteredMovieMap.set(String(m.film_ID), m));
-
-        const groupsArray = [];
-        groupsList.forEach((g, originalIndex) => {
-          if (!Array.isArray(g) || g.length < 2) return;
-          const groupKey = g[0];
-          const memberIds = g.slice(1);
-
-          const matchedMembers = memberIds
-            .map(id => filteredMovieMap.get(String(id)))
-            .filter(Boolean);
-
-          const visibleG = showHidden ? memberIds : memberIds.filter(id => !hiddenMoviesState[id]);
-          const minLimit = 1;
-          if (visibleG.length < minLimit || matchedMembers.length === 0) return;
-
-          let gName = "";
-          if (isRemakeView) gName = getRemakeGroupName(g);
-          else if (isGenreView) gName = getGenreGroupName(g);
-          else gName = getSeriesGroupName(g);
-
-          let maxImdb = 0;
-          let maxYear = 0;
-          matchedMembers.forEach(m => {
-            const sc = getMovieImdbValue(m);
-            if (sc > maxImdb) maxImdb = sc;
-            const yr = getMovieYearValue(m);
-            if (yr > maxYear) maxYear = yr;
+        const groupsToRender = [];
+        groupsSource.forEach((group, gIdx) => {
+          if (!Array.isArray(group) || group.length < 2) return;
+          const groupKey = group[0];
+          const groupMovieIds = group.slice(1).map(String);
+          const matchingMovies = [];
+          groupMovieIds.forEach(mId => {
+            if (filteredIdSet.has(mId) && movieByIdMap.has(mId)) {
+              matchingMovies.push(movieByIdMap.get(mId));
+              renderedMovieIdsInGroups.add(mId);
+            }
           });
 
-          groupsArray.push({
-            key: groupKey,
-            name: gName,
-            count: visibleG.length,
-            maxImdb: maxImdb,
-            maxYear: maxYear,
-            originalIndex: originalIndex,
-            movies: matchedMembers
-          });
+          const minFilmLimit = 1;
+          if (matchingMovies.length >= minFilmLimit) {
+            let groupTitle = "";
+            if (watchlistSelection === "linked_only") groupTitle = getSeriesGroupName(group);
+            else if (watchlistSelection === "remake_only") groupTitle = getRemakeGroupName(group);
+            else groupTitle = getGenreGroupName(group);
+
+            groupsToRender.push({
+              key: groupKey,
+              originalIndex: gIdx,
+              title: groupTitle,
+              movies: matchingMovies
+            });
+          }
         });
 
-        groupsArray.sort((a, b) => {
-          if (linkedSortVal === "default") {
-            if (sort1 === "imdb_desc" || sort1 === "imdb_asc") {
-              return b.maxImdb - a.maxImdb;
-            } else if (sort1 === "year_desc" || sort1 === "year_asc") {
-              return b.maxYear - a.maxYear;
-            } else if (sort2 === "imdb_desc" || sort2 === "imdb_asc") {
-              return b.maxImdb - a.maxImdb;
-            } else if (sort2 === "year_desc" || sort2 === "year_asc") {
-              return b.maxYear - a.maxYear;
-            }
+        groupsToRender.sort((a, b) => {
+          if (groupSortOrder === "alpha_asc") {
+            return a.title.localeCompare(b.title);
+          } else if (groupSortOrder === "alpha_desc") {
+            return b.title.localeCompare(a.title);
+          } else if (groupSortOrder === "default") {
             return a.originalIndex - b.originalIndex;
-          } else if (linkedSortVal === "alpha_asc") {
-            return a.name.localeCompare(b.name);
-          } else if (linkedSortVal === "alpha_desc") {
-            return b.name.localeCompare(a.name);
-          } else if (linkedSortVal === "count_asc") {
-            if (a.count !== b.count) return a.count - b.count;
-            return a.name.localeCompare(b.name);
-          } else if (linkedSortVal === "count_desc") {
-            if (a.count !== b.count) return b.count - a.count;
-            return b.name.localeCompare(a.name);
+          } else if (groupSortOrder === "count_asc") {
+            if (a.movies.length !== b.movies.length) return a.movies.length - b.movies.length;
+            return a.title.localeCompare(b.title);
+          } else if (groupSortOrder === "count_desc") {
+            if (a.movies.length !== b.movies.length) return b.movies.length - a.movies.length;
+            return a.title.localeCompare(b.title);
           }
           return 0;
         });
 
-        currentlyRenderedMovieIds = filtered.map(m => String(m.film_ID));
-        activeOrderedMovieIds = [...currentlyRenderedMovieIds];
-        document.getElementById("countDisplay").innerText = filtered.length;
-        renderPaginationBars(filtered.length);
+        const gridFragment = document.createDocumentFragment();
+        const totalGroupsCount = groupsToRender.length;
 
-        const fragment = document.createDocumentFragment();
-        let iconPrefix = "🎬";
-        if (isRemakeView) iconPrefix = "🎥";
-        else if (isGenreView) iconPrefix = "🏷️";
-
-        groupsArray.forEach(grpInfo => {
-          activeGroupedDataCache.set(grpInfo.key, {
-            grpInfo,
-            showHidden,
-            currentGeneralLastId,
-            isGenreView
-          });
-
+        groupsToRender.forEach((grpInfo, gPosIdx) => {
           const wrapper = document.createElement("div");
           wrapper.className = "group-section-wrapper";
           wrapper.dataset.groupKey = grpInfo.key;
 
-          const secHeader = document.createElement("div");
-          secHeader.className = "group-section-header";
+          const header = document.createElement("div");
+          header.className = "group-section-header";
 
-          const isOpenPreviously = openGroupKeys.has(grpInfo.key);
-          const collapseClass = isOpenPreviously ? "" : "collapsed";
-          const collapseIconText = isOpenPreviously ? "▼" : "▶";
+          const leftInfo = document.createElement("span");
+          const iconPrefix = (watchlistSelection === "linked_only") ? "🎬" : (watchlistSelection === "remake_only" ? "🎥" : "🏷️");
+          leftInfo.innerHTML = `${iconPrefix} ${escapeHtml(grpInfo.title)} <span style="font-size:11px; opacity:0.8; font-weight:normal;">(${grpInfo.movies.length} film)</span>`;
 
-          secHeader.innerHTML = `<span>${iconPrefix} ${escapeHtml(grpInfo.name)} (${grpInfo.count} Film)</span><span class="group-collapse-icon">${collapseIconText}</span>`;
+          const rightControls = document.createElement("span");
+          rightControls.style.display = "inline-flex";
+          rightControls.style.alignItems = "center";
+          rightControls.style.gap = "8px";
+
+          const posBadge = document.createElement("span");
+          posBadge.textContent = `${gPosIdx + 1} / ${totalGroupsCount}`;
+          posBadge.style.fontSize = "11px";
+          posBadge.style.color = "#f5c518";
+          posBadge.style.background = "rgba(0,0,0,0.45)";
+          posBadge.style.padding = "1px 6px";
+          posBadge.style.borderRadius = "4px";
+          posBadge.style.border = "1px solid rgba(255,255,255,0.2)";
+
+          const collapseIcon = document.createElement("span");
+          collapseIcon.className = "group-collapse-icon";
 
           const moviesContainer = document.createElement("div");
-          moviesContainer.className = `group-movies-container ${collapseClass}`;
+          moviesContainer.className = "group-movies-container";
 
-          if (isOpenPreviously) {
+          const shouldBeOpen = openGroupKeys.has(grpInfo.key);
+          activeGroupedDataCache.set(grpInfo.key, {
+            grpInfo: grpInfo,
+            showHidden: showHidden,
+            currentGeneralLastId: currentGeneralLastId,
+            isGenreView: isGenreView
+          });
+
+          if (shouldBeOpen) {
+            moviesContainer.classList.remove("collapsed");
+            collapseIcon.innerText = "▼ Açık";
             populateGroupMoviesContainer(moviesContainer, grpInfo.key, true);
+          } else {
+            moviesContainer.classList.add("collapsed");
+            collapseIcon.innerText = "► Kapalı";
           }
 
-          wrapper.appendChild(secHeader);
+          header.addEventListener("click", () => {
+            const isCurrentlyCollapsed = moviesContainer.classList.contains("collapsed");
+            if (isCurrentlyCollapsed) {
+              moviesContainer.classList.remove("collapsed");
+              collapseIcon.innerText = "▼ Açık";
+              populateGroupMoviesContainer(moviesContainer, grpInfo.key, true);
+            } else {
+              moviesContainer.classList.add("collapsed");
+              collapseIcon.innerText = "► Kapalı";
+            }
+          });
+
+          rightControls.appendChild(posBadge);
+          rightControls.appendChild(collapseIcon);
+
+          header.appendChild(leftInfo);
+          header.appendChild(rightControls);
+
+          wrapper.appendChild(header);
           wrapper.appendChild(moviesContainer);
-          fragment.appendChild(wrapper);
+          gridFragment.appendChild(wrapper);
         });
 
-        container.appendChild(fragment);
-        applyPersistentHighlight();
-        updateToggleAllButtonState();
-        return;
-      }
-
-      if (activeRelationFilterSet) {
-        filtered.sort((a, b) => {
-          const yearA = getMovieYearValue(a);
-          const yearB = getMovieYearValue(b);
-          if (yearA !== yearB) {
-            return yearA - yearB;
-          }
-          return parseInt(String(a.film_ID), 10) - parseInt(String(b.film_ID), 10);
+        const ungroupedRemainder = filtered.filter(m => !renderedMovieIdsInGroups.has(String(m.film_ID)));
+        const remTotal = ungroupedRemainder.length;
+        ungroupedRemainder.forEach((movie, rIdx) => {
+          gridFragment.appendChild(buildMovieCardElement(movie, showHidden, currentGeneralLastId, "rem", rIdx + 1, remTotal));
         });
+
+        container.appendChild(gridFragment);
       } else {
-        filtered.sort((a, b) => compareMoviesByCurrentSort(a, b, sort1, sort2));
-        if (isRelatedSideBySideMode) {
-          filtered = arrangeMoviesWithRelationsSideBySide(filtered, showHidden, sort1, sort2);
-        }
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * pageSize;
+        const pageMovies = filtered.slice(startIdx, startIdx + pageSize);
+
+        renderPaginationBars(filtered.length);
+
+        const gridFragment = document.createDocumentFragment();
+        const totalFiltered = filtered.length;
+        pageMovies.forEach((movie, idx) => {
+          gridFragment.appendChild(buildMovieCardElement(movie, showHidden, currentGeneralLastId, "", startIdx + idx + 1, totalFiltered));
+        });
+        container.appendChild(gridFragment);
       }
 
-      activeOrderedMovieIds = filtered.map(m => String(m.film_ID));
-      const totalFilteredCount = filtered.length;
-      document.getElementById("countDisplay").innerText = totalFilteredCount;
-      renderPaginationBars(totalFilteredCount);
-
-      const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
-      if (currentPage > totalPages) currentPage = totalPages;
-      const startIdx = (currentPage - 1) * pageSize;
-      const pageMovies = filtered.slice(startIdx, startIdx + pageSize);
-      currentlyRenderedMovieIds = pageMovies.map(m => String(m.film_ID));
-
-      const fragment = document.createDocumentFragment();
-      pageMovies.forEach((movie, pageIdx) => {
-        const globalPos = startIdx + pageIdx + 1;
-        const card = buildMovieCardElement(movie, showHidden, currentGeneralLastId, "", globalPos, totalFilteredCount);
-        fragment.appendChild(card);
-      });
-
-      if (activeRelationFilterSet && activeRelationFilterSet.type === 'genre' && activeRelationFilterSet.groupKey) {
-        fragment.appendChild(buildAddMovieToGenreCard(activeRelationFilterSet.groupKey));
-      }
-
-      container.appendChild(fragment);
       applyPersistentHighlight();
-      updateToggleAllButtonState();
-
     } catch (err) {
       console.error("renderMovies error:", err);
+      document.getElementById("movieGridContainer").innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 40px; color:#f87171;">Filmler gösterilirken bir hata oluştu: ${escapeHtml(err.message)}</div>`;
     }
   }
 
-  document.getElementById("toggleFilmSearchSidebarBtn").addEventListener("click", () => {
-    setSidebarMode(sidebarMode === "filter" ? null : "filter");
-  });
-  document.getElementById("toggleGenreAddSidebarBtn").addEventListener("click", () => {
-    setSidebarMode(sidebarMode === "genre_add" ? null : "genre_add");
-  });
-  document.getElementById("toggleRelatedSideBySideBtn").addEventListener("click", toggleRelatedSideBySide);
-  document.getElementById("closeFilmSearchSidebarBtn").addEventListener("click", () => {
-    setSidebarMode(null);
-  });
-  document.getElementById("sidebarCancelGenreAddBtn").addEventListener("click", () => {
-    setSidebarMode(null);
-  });
-  document.getElementById("sidebarConfirmGenreAddBtn").addEventListener("click", confirmSidebarGenreAdd);
-  document.getElementById("sidebarCreateGenreBtn").addEventListener("click", createNewGenreInSidebar);
-  document.getElementById("sidebarNewGenreInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      createNewGenreInSidebar();
-    }
-  });
-  document.getElementById("sidebarRenameGenreBtn").addEventListener("click", renameFocusedGenreInSidebar);
-  document.getElementById("sidebarRenameGenreInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      renameFocusedGenreInSidebar();
-    }
-  });
-  document.getElementById("sidebarGenreSearchInput").addEventListener("input", () => renderSidebar4ColGenreList(null));
-  document.getElementById("sidebarGenreSortSelect").addEventListener("change", () => renderSidebar4ColGenreList(null));
+  document.addEventListener("DOMContentLoaded", () => {
+    const hoverTip = document.createElement("div");
+    hoverTip.id = "posterHoverTooltip";
+    hoverTip.className = "poster-hover-tooltip";
+    hoverTip.innerHTML = `<img id="posterHoverTooltipImg" src="" alt="Afiş Önizleme">`;
+    document.body.appendChild(hoverTip);
 
-  document.getElementById("movieGridContainer").addEventListener("click", (e) => {
-    const triggerBtn = e.target.closest(".group-popup-trigger");
-    if (triggerBtn) {
-      const movieId = triggerBtn.dataset.movieId;
-      const type = triggerBtn.dataset.type;
-      if (movieId && type) {
-        openGroupSelectPopup(movieId, type);
+    initFilters();
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      renderMovies(false);
+    });
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      renderMovies(true);
+    });
+    document.getElementById("searchInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        renderMovies(true);
       }
-      return;
+    });
+
+    const domainDropdown = document.getElementById("domainFilterDropdown");
+    const domainBtn = document.getElementById("domainFilterBtn");
+    const countryDropdown = document.getElementById("countryFilterDropdown");
+    const countryBtn = document.getElementById("countryFilterBtn");
+
+    if (domainBtn && domainDropdown) {
+      domainBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (countryDropdown) countryDropdown.classList.remove("open");
+        domainDropdown.classList.toggle("open");
+        if (domainDropdown.classList.contains("open")) {
+          const sEl = document.getElementById("domainFilterSearch");
+          if (sEl) sEl.focus();
+        }
+      });
+    }
+    const domainSearchEl = document.getElementById("domainFilterSearch");
+    if (domainSearchEl) {
+      domainSearchEl.addEventListener("input", () => renderDomainMultiSelectOptions());
+      domainSearchEl.addEventListener("click", (e) => e.stopPropagation());
+    }
+    const domainSelectAllBtn = document.getElementById("domainSelectAllBtn");
+    if (domainSelectAllBtn) {
+      domainSelectAllBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const q = (domainSearchEl?.value || "").toLowerCase().trim();
+        const targets = q ? allAvailableDomains.filter(d => d.toLowerCase().includes(q)) : allAvailableDomains;
+        targets.forEach(d => selectedDomainsSet.add(d));
+        updateDomainMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+    const domainClearAllBtn = document.getElementById("domainClearAllBtn");
+    if (domainClearAllBtn) {
+      domainClearAllBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedDomainsSet.clear();
+        updateDomainMultiSelectUI();
+        renderMovies(false);
+      });
     }
 
-    const header = e.target.closest(".group-section-header");
-    if (header) {
-      const wrapper = header.closest(".group-section-wrapper");
-      if (!wrapper) return;
-      const moviesContainer = wrapper.querySelector(".group-movies-container");
-      if (!moviesContainer) return;
+    if (countryBtn && countryDropdown) {
+      countryBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (domainDropdown) domainDropdown.classList.remove("open");
+        countryDropdown.classList.toggle("open");
+        if (countryDropdown.classList.contains("open")) {
+          const sEl = document.getElementById("countryFilterSearch");
+          if (sEl) sEl.focus();
+        }
+      });
+    }
+    const countrySearchEl = document.getElementById("countryFilterSearch");
+    if (countrySearchEl) {
+      countrySearchEl.addEventListener("input", () => renderCountryMultiSelectOptions());
+      countrySearchEl.addEventListener("click", (e) => e.stopPropagation());
+    }
+    const countrySelectAllBtn = document.getElementById("countrySelectAllBtn");
+    if (countrySelectAllBtn) {
+      countrySelectAllBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const q = (countrySearchEl?.value || "").toLowerCase().trim();
+        const targets = q ? allAvailableCountries.filter(c => c.toLowerCase().includes(q)) : allAvailableCountries;
+        targets.forEach(c => selectedCountriesSet.add(c));
+        updateCountryMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+    const countryClearAllBtn = document.getElementById("countryClearAllBtn");
+    if (countryClearAllBtn) {
+      countryClearAllBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedCountriesSet.clear();
+        updateCountryMultiSelectUI();
+        renderMovies(false);
+      });
+    }
 
-      const isCollapsed = moviesContainer.classList.toggle("collapsed");
-      const iconSpan = header.querySelector(".group-collapse-icon");
-      if (iconSpan) {
-        iconSpan.innerText = isCollapsed ? "▶" : "▼";
+    document.addEventListener("click", (e) => {
+      if (domainDropdown && !domainDropdown.contains(e.target)) {
+        domainDropdown.classList.remove("open");
       }
+      if (countryDropdown && !countryDropdown.contains(e.target)) {
+        countryDropdown.classList.remove("open");
+      }
+    });
 
-      populateGroupMoviesContainer(moviesContainer, wrapper.dataset.groupKey, !isCollapsed);
-      applyPersistentHighlight();
-      updateToggleAllButtonState();
+    const minYearRange = document.getElementById("minYearRange");
+    const maxYearRange = document.getElementById("maxYearRange");
+    function handleYearSliderChange() {
+      updateYearSliderLabel();
+      renderMovies(false);
     }
-  });
+    minYearRange.addEventListener("input", handleYearSliderChange);
+    maxYearRange.addEventListener("input", handleYearSliderChange);
 
-  document.getElementById("multiSelectCheckbox").addEventListener("change", updateMultiSelectUI);
-  document.getElementById("closeGroupSelectModalBtn").addEventListener("click", closeGroupSelectPopup);
-  document.getElementById("confirmGroupSelectBtn").addEventListener("click", confirmGroupSelect);
-  document.getElementById("createNewGroupInPopupBtn").addEventListener("click", createNewGroupFromPopup);
-  document.getElementById("newGroupInPopupInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      createNewGroupFromPopup();
+    const minDurationRange = document.getElementById("minDurationRange");
+    const maxDurationRange = document.getElementById("maxDurationRange");
+    function handleDurationSliderChange() {
+      updateDurationSliderLabel();
+      renderMovies(false);
     }
-  });
-  document.getElementById("renameGroupInPopupBtn").addEventListener("click", renameSelectedGroupInPopup);
-  document.getElementById("renameGroupInPopupInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      renameSelectedGroupInPopup();
+    minDurationRange.addEventListener("input", handleDurationSliderChange);
+    maxDurationRange.addEventListener("input", handleDurationSliderChange);
+
+    const minImdbRange = document.getElementById("minImdbRange");
+    const maxImdbRange = document.getElementById("maxImdbRange");
+    function handleImdbSliderChange() {
+      updateImdbSliderLabel();
+      renderMovies(false);
     }
-  });
-  document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown(null));
-  document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown(null));
+    minImdbRange.addEventListener("input", handleImdbSliderChange);
+    maxImdbRange.addEventListener("input", handleImdbSliderChange);
 
-  document.getElementById("closeBulkAddModalBtn").addEventListener("click", closeBulkAddMoviesToGenrePopup);
-  document.getElementById("confirmBulkAddBtn").addEventListener("click", confirmBulkAddMoviesToGenre);
-  document.getElementById("bulkSearchInput").addEventListener("input", renderBulkAddMoviesGrid);
-  document.getElementById("bulkDomainFilter").addEventListener("change", renderBulkAddMoviesGrid);
-  document.getElementById("bulkMinYear").addEventListener("input", renderBulkAddMoviesGrid);
-  document.getElementById("bulkMaxYear").addEventListener("input", renderBulkAddMoviesGrid);
-  document.getElementById("bulkMinImdb").addEventListener("input", renderBulkAddMoviesGrid);
-  document.getElementById("bulkMaxImdb").addEventListener("input", renderBulkAddMoviesGrid);
-  document.getElementById("bulkSortSelect").addEventListener("change", renderBulkAddMoviesGrid);
-  document.getElementById("bulkShowHiddenCheckbox").addEventListener("change", renderBulkAddMoviesGrid);
-  document.getElementById("bulkResetFiltersBtn").addEventListener("click", () => {
-    document.getElementById("bulkSearchInput").value = "";
-    document.getElementById("bulkDomainFilter").value = "";
-    document.getElementById("bulkMinYear").value = "";
-    document.getElementById("bulkMaxYear").value = "";
-    document.getElementById("bulkMinImdb").value = "";
-    document.getElementById("bulkMaxImdb").value = "";
-    document.getElementById("bulkSortSelect").value = "imdb_desc";
-    document.getElementById("bulkShowHiddenCheckbox").checked = false;
-    renderBulkAddMoviesGrid();
-  });
-
-  function updateToggleAllButtonState() {
-    const containers = document.querySelectorAll(".group-movies-container");
-    const toggleBtn = document.getElementById("toggleAllGroupsBtn");
-    if (containers.length === 0 || !toggleBtn) return;
-
-    const allCollapsed = Array.from(containers).every(el => el.classList.contains("collapsed"));
-    if (allCollapsed) {
-      toggleBtn.innerText = "📂 Tümünü Aç";
-    } else {
-      toggleBtn.innerText = "📁 Tümünü Kapat";
+    const minMyScoreRange = document.getElementById("minMyScoreRange");
+    const maxMyScoreRange = document.getElementById("maxMyScoreRange");
+    function handleMyScoreSliderChange() {
+      updateMyScoreSliderLabel();
+      renderMovies(false);
     }
-  }
+    minMyScoreRange.addEventListener("input", handleMyScoreSliderChange);
+    maxMyScoreRange.addEventListener("input", handleMyScoreSliderChange);
 
-  function toggleAllGroups() {
-    const wrappers = document.querySelectorAll(".group-section-wrapper");
-    const toggleBtn = document.getElementById("toggleAllGroupsBtn");
-    if (wrappers.length === 0 || !toggleBtn) return;
+    document.getElementById("sortSelect1").addEventListener("change", () => renderMovies(false));
+    document.getElementById("sortSelect2").addEventListener("change", () => renderMovies(false));
 
-    const containers = Array.from(wrappers).map(w => w.querySelector(".group-movies-container")).filter(Boolean);
-    const isCurrentlyAllCollapsed = containers.every(el => el.classList.contains("collapsed"));
+    document.getElementById("watchlistDropdown").addEventListener("change", () => {
+      activeRelationFilterSet = null;
+      updateRelationBanner();
+      renderMovies(false);
+    });
 
-    if (isCurrentlyAllCollapsed) {
+    document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
+
+    document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
+      updateRelationBanner();
+      renderMovies(false);
+      renderRecentDropdown();
+    });
+
+    const multiSelectCb = document.getElementById("multiSelectCheckbox");
+    if (multiSelectCb) {
+      multiSelectCb.addEventListener("change", () => {
+        updateMultiSelectUI();
+      });
+    }
+
+    const pageSizeSel = document.getElementById("pageSizeSelect");
+    if (pageSizeSel) {
+      pageSizeSel.addEventListener("change", () => {
+        const val = parseInt(pageSizeSel.value, 10);
+        if ([14, 28, 42, 56, 70, 84, 98, 112].includes(val)) {
+          pageSize = val;
+          currentPage = 1;
+          renderMovies(false, true);
+        }
+      });
+    }
+
+    document.getElementById("toggleAllGroupsBtn").addEventListener("click", () => {
+      const wrappers = document.querySelectorAll(".group-section-wrapper");
+      if (wrappers.length === 0) return;
+
+      let anyClosed = false;
+      wrappers.forEach(w => {
+        const mc = w.querySelector(".group-movies-container");
+        if (mc && mc.classList.contains("collapsed")) {
+          anyClosed = true;
+        }
+      });
+
+      const shouldExpand = anyClosed;
       wrappers.forEach(w => {
         const mc = w.querySelector(".group-movies-container");
         const icon = w.querySelector(".group-collapse-icon");
         if (mc) {
-          mc.classList.remove("collapsed");
-          populateGroupMoviesContainer(mc, w.dataset.groupKey, true);
+          if (shouldExpand) {
+            mc.classList.remove("collapsed");
+            if (icon) icon.innerText = "▼ Açık";
+            populateGroupMoviesContainer(mc, w.dataset.groupKey, true);
+          } else {
+            mc.classList.add("collapsed");
+            if (icon) icon.innerText = "► Kapalı";
+          }
         }
-        if (icon) icon.innerText = "▼";
       });
-      toggleBtn.innerText = "📁 Tümünü Kapat";
-    } else {
-      wrappers.forEach(w => {
-        const mc = w.querySelector(".group-movies-container");
-        const icon = w.querySelector(".group-collapse-icon");
-        if (mc) {
-          mc.classList.add("collapsed");
-          populateGroupMoviesContainer(mc, w.dataset.groupKey, false);
-        }
-        if (icon) icon.innerText = "▶";
-      });
-      toggleBtn.innerText = "📂 Tümünü Aç";
-    }
-    applyPersistentHighlight();
-  }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const editorBtn = document.getElementById("editorLinkBtn");
-    if (editorBtn) {
-      const currentProtocol = window.location.protocol;
-      if (currentProtocol === "file:") {
-        editorBtn.href = "./film_editor.html";
-      } else {
-        editorBtn.href = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, "/") + "film_editor.html";
+      const toggleBtn = document.getElementById("toggleAllGroupsBtn");
+      toggleBtn.innerText = shouldExpand ? "📁 Tümünü Kapat" : "📂 Tümünü Aç";
+    });
+
+    document.getElementById("goBtn").addEventListener("click", executeGoToId);
+    document.getElementById("lastIdInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        executeGoToId();
       }
-    }
-  });
+    });
 
-  document.getElementById("toggleViewModeBtn").addEventListener("click", () => {
-    toggleViewMode();
-    renderMoviesPreservingScroll();
-  });
-  document.getElementById("goBtn").addEventListener("click", executeGoToId);
-  document.getElementById("lastIdInput").addEventListener("keypress", (e) => {
-    if (e.key === 'Enter') {
-      executeGoToId();
-    }
-  });
+    document.getElementById("recentMoviesDropdown").addEventListener("change", (e) => {
+      const selectedId = e.target.value;
+      if (!selectedId) return;
 
-  document.getElementById("toggleAllGroupsBtn").addEventListener("click", toggleAllGroups);
-
-  document.getElementById("recentMoviesDropdown").addEventListener("change", (e) => {
-    const selectedId = e.target.value;
-    if (selectedId) {
       document.getElementById("searchInput").value = "";
       setSelectedDomains([]);
       setSelectedCountries([]);
       resetSliderRangesToFull();
-
       sidebarSelectedGenreKeys.clear();
       document.getElementById("watchlistDropdown").value = "all";
       document.getElementById("showHiddenCheckbox").checked = false;
-
       activeRelationFilterSet = null;
       updateRelationBanner();
-
-      document.getElementById("lastIdInput").value = selectedId;
-      syncCardRadioSelection(selectedId);
-      try {
-        localStorage.setItem("last_clicked_movie_id", selectedId);
-        saveStateToStorage();
-      } catch (err) {}
 
       renderMovies(false, true);
 
@@ -5995,241 +6054,212 @@ def main():
         }
       }
 
-      if (sidebarMode === "genre_add") {
-        loadMovieGenresIntoSidebar();
-      }
+      addRecentMovie(selectedId);
+      document.getElementById("recentMoviesDropdown").value = "";
 
       requestAnimationFrame(() => {
         scrollToMovie(selectedId, true);
       });
+    });
+
+    const toggleSidebarBtn = document.getElementById("toggleFilmSearchSidebarBtn");
+    if (toggleSidebarBtn) {
+      toggleSidebarBtn.addEventListener("click", () => {
+        setSidebarMode(sidebarMode === "filter" ? null : "filter");
+      });
+    }
+
+    const toggleGenreAddBtn = document.getElementById("toggleGenreAddSidebarBtn");
+    if (toggleGenreAddBtn) {
+      toggleGenreAddBtn.addEventListener("click", () => {
+        setSidebarMode(sidebarMode === "genre_add" ? null : "genre_add");
+      });
+    }
+
+    const toggleRelatedSideBySideBtn = document.getElementById("toggleRelatedSideBySideBtn");
+    if (toggleRelatedSideBySideBtn) {
+      toggleRelatedSideBySideBtn.addEventListener("click", () => {
+        toggleRelatedSideBySide();
+      });
+    }
+
+    const closeSidebarBtn = document.getElementById("closeFilmSearchSidebarBtn");
+    if (closeSidebarBtn) {
+      closeSidebarBtn.addEventListener("click", () => {
+        setSidebarMode(null);
+      });
+    }
+
+    const sidebarGenreSearchInput = document.getElementById("sidebarGenreSearchInput");
+    if (sidebarGenreSearchInput) {
+      sidebarGenreSearchInput.addEventListener("input", () => renderSidebar4ColGenreList());
+    }
+
+    const sidebarGenreSortSelect = document.getElementById("sidebarGenreSortSelect");
+    if (sidebarGenreSortSelect) {
+      sidebarGenreSortSelect.addEventListener("change", () => renderSidebar4ColGenreList());
+    }
+
+    const sidebarCreateGenreBtn = document.getElementById("sidebarCreateGenreBtn");
+    if (sidebarCreateGenreBtn) {
+      sidebarCreateGenreBtn.addEventListener("click", createNewGenreInSidebar);
+    }
+
+    const sidebarNewGenreInput = document.getElementById("sidebarNewGenreInput");
+    if (sidebarNewGenreInput) {
+      sidebarNewGenreInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          createNewGenreInSidebar();
+        }
+      });
+    }
+
+    const sidebarRenameGenreBtn = document.getElementById("sidebarRenameGenreBtn");
+    if (sidebarRenameGenreBtn) {
+      sidebarRenameGenreBtn.addEventListener("click", renameFocusedGenreInSidebar);
+    }
+
+    const sidebarRenameGenreInput = document.getElementById("sidebarRenameGenreInput");
+    if (sidebarRenameGenreInput) {
+      sidebarRenameGenreInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          renameFocusedGenreInSidebar();
+        }
+      });
+    }
+
+    const sidebarConfirmGenreAddBtn = document.getElementById("sidebarConfirmGenreAddBtn");
+    if (sidebarConfirmGenreAddBtn) {
+      sidebarConfirmGenreAddBtn.addEventListener("click", confirmSidebarGenreAdd);
+    }
+
+    const sidebarCancelGenreAddBtn = document.getElementById("sidebarCancelGenreAddBtn");
+    if (sidebarCancelGenreAddBtn) {
+      sidebarCancelGenreAddBtn.addEventListener("click", () => {
+        setSidebarMode(null);
+      });
+    }
+
+    const toggleViewModeBtn = document.getElementById("toggleViewModeBtn");
+    if (toggleViewModeBtn) {
+      toggleViewModeBtn.addEventListener("click", toggleViewMode);
+    }
+
+    document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+      document.getElementById("searchInput").value = "";
+      setSelectedDomains([]);
+      setSelectedCountries([]);
+      resetSliderRangesToFull();
+      sidebarSelectedGenreKeys.clear();
+      document.getElementById("watchlistDropdown").value = "all";
+      document.getElementById("linkedGroupsSortSelect").value = "default";
+      document.getElementById("showHiddenCheckbox").checked = false;
+      if (multiSelectCb) {
+        multiSelectCb.checked = false;
+        updateMultiSelectUI();
+      }
+      isRelatedSideBySideMode = false;
+      applyRelatedSideBySideUI();
+      activeRelationFilterSet = null;
+      persistentHighlightedMovieId = null;
+      updateRelationBanner();
+      renderMovies(false);
+    });
+
+    document.getElementById("exportDataBtn").addEventListener("click", exportUserData);
+    document.getElementById("importDataBtn").addEventListener("click", () => {
+      document.getElementById("importFileInput").click();
+    });
+    document.getElementById("importFileInput").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        importUserData(e.target.files[0]);
+      }
       e.target.value = "";
-    }
-  });
+    });
 
-  const searchInputEl = document.getElementById("searchInput");
-  searchInputEl.addEventListener("input", (e) => {
-    if (e.target.value.trim() === "") {
-      renderMovies(false);
-    }
-  });
-  searchInputEl.addEventListener("keyup", (e) => {
-    if (e.target.value.trim() === "" && (e.key === "Backspace" || e.key === "Delete")) {
-      renderMovies(false);
-    }
-  });
-  searchInputEl.addEventListener("search", (e) => {
-    if (e.target.value.trim() === "") {
-      renderMovies(false);
-    }
-  });
-
-  document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
-    const val = parseInt(e.target.value, 10);
-    if (!isNaN(val) && val > 0) {
-      pageSize = val;
-      currentPage = 1;
-      saveStateToStorage();
-      renderMovies(false);
-    }
-  });
-  document.getElementById("searchInput").addEventListener("keypress", (e) => {
-    if (e.key === 'Enter') {
-      renderMovies(true);
-    }
-  });
-  document.getElementById("searchBtn").addEventListener("click", () => {
-    renderMovies(true);
-  });
-
-  (function setupMultiSelectDropdownEvents() {
-    const domainWrap = document.getElementById("domainFilterDropdown");
-    const domainBtn = document.getElementById("domainFilterBtn");
-    const domainSearch = document.getElementById("domainFilterSearch");
-    const domainSelAll = document.getElementById("domainSelectAllBtn");
-    const domainClearAll = document.getElementById("domainClearAllBtn");
-
-    const countryWrap = document.getElementById("countryFilterDropdown");
-    const countryBtn = document.getElementById("countryFilterBtn");
-    const countrySearch = document.getElementById("countryFilterSearch");
-    const countrySelAll = document.getElementById("countrySelectAllBtn");
-    const countryClearAll = document.getElementById("countryClearAllBtn");
-
-    if (domainBtn && domainWrap) {
-      domainBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willOpen = !domainWrap.classList.contains("open");
-        if (countryWrap) countryWrap.classList.remove("open");
-        domainWrap.classList.toggle("open", willOpen);
-        if (willOpen && domainSearch) {
-          domainSearch.value = "";
-          renderDomainMultiSelectOptions();
-          setTimeout(() => domainSearch.focus(), 30);
-        }
-      });
-    }
-    if (domainSearch) {
-      domainSearch.addEventListener("input", renderDomainMultiSelectOptions);
-      domainSearch.addEventListener("click", (e) => e.stopPropagation());
-    }
-    if (domainSelAll) {
-      domainSelAll.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const q = domainSearch ? domainSearch.value.toLowerCase().trim() : "";
-        const targets = q ? allAvailableDomains.filter(d => d.toLowerCase().includes(q)) : allAvailableDomains;
-        targets.forEach(d => selectedDomainsSet.add(d));
-        updateDomainMultiSelectUI();
-        renderMovies(false);
-      });
-    }
-    if (domainClearAll) {
-      domainClearAll.addEventListener("click", (e) => {
-        e.stopPropagation();
-        selectedDomainsSet.clear();
-        updateDomainMultiSelectUI();
-        renderMovies(false);
-      });
-    }
-
-    if (countryBtn && countryWrap) {
-      countryBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willOpen = !countryWrap.classList.contains("open");
-        if (domainWrap) domainWrap.classList.remove("open");
-        countryWrap.classList.toggle("open", willOpen);
-        if (willOpen && countrySearch) {
-          countrySearch.value = "";
-          renderCountryMultiSelectOptions();
-          setTimeout(() => countrySearch.focus(), 30);
-        }
-      });
-    }
-    if (countrySearch) {
-      countrySearch.addEventListener("input", renderCountryMultiSelectOptions);
-      countrySearch.addEventListener("click", (e) => e.stopPropagation());
-    }
-    if (countrySelAll) {
-      countrySelAll.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const q = countrySearch ? countrySearch.value.toLowerCase().trim() : "";
-        const targets = q ? allAvailableCountries.filter(c => c.toLowerCase().includes(q)) : allAvailableCountries;
-        targets.forEach(c => selectedCountriesSet.add(c));
-        updateCountryMultiSelectUI();
-        renderMovies(false);
-      });
-    }
-    if (countryClearAll) {
-      countryClearAll.addEventListener("click", (e) => {
-        e.stopPropagation();
-        selectedCountriesSet.clear();
-        updateCountryMultiSelectUI();
-        renderMovies(false);
-      });
-    }
+    document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
 
     document.addEventListener("click", (e) => {
-      if (domainWrap && !domainWrap.contains(e.target)) {
-        domainWrap.classList.remove("open");
-      }
-      if (countryWrap && !countryWrap.contains(e.target)) {
-        countryWrap.classList.remove("open");
+      const btn = e.target.closest(".group-popup-trigger");
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const mId = btn.dataset.movieId;
+        const gType = btn.dataset.type;
+        if (mId && gType) {
+          openGroupSelectPopup(mId, gType);
+        }
       }
     });
-  })();
 
-  document.getElementById("minYearRange").addEventListener("input", () => {
-    updateYearSliderLabel();
-    renderMovies(false);
-  });
-  document.getElementById("maxYearRange").addEventListener("input", () => {
-    updateYearSliderLabel();
-    renderMovies(false);
-  });
+    document.getElementById("groupSearchInput").addEventListener("input", () => filterAndSortGroupSelectDropdown());
+    document.getElementById("groupPopupSortSelect").addEventListener("change", () => filterAndSortGroupSelectDropdown());
+    document.getElementById("createNewGroupInPopupBtn").addEventListener("click", createNewGroupFromPopup);
+    document.getElementById("newGroupInPopupInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        createNewGroupFromPopup();
+      }
+    });
+    document.getElementById("renameGroupInPopupBtn").addEventListener("click", renameSelectedGroupInPopup);
+    document.getElementById("renameGroupInPopupInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        renameSelectedGroupInPopup();
+      }
+    });
+    document.getElementById("closeGroupSelectModalBtn").addEventListener("click", closeGroupSelectPopup);
+    document.getElementById("confirmGroupSelectBtn").addEventListener("click", confirmGroupSelect);
 
-  document.getElementById("minDurationRange").addEventListener("input", () => {
-    updateDurationSliderLabel();
-    renderMovies(false);
-  });
-  document.getElementById("maxDurationRange").addEventListener("input", () => {
-    updateDurationSliderLabel();
-    renderMovies(false);
-  });
+    document.getElementById("bulkSearchInput").addEventListener("input", renderBulkAddMoviesGrid);
+    document.getElementById("bulkDomainFilter").addEventListener("change", renderBulkAddMoviesGrid);
+    document.getElementById("bulkMinYear").addEventListener("input", renderBulkAddMoviesGrid);
+    document.getElementById("bulkMaxYear").addEventListener("input", renderBulkAddMoviesGrid);
+    document.getElementById("bulkMinImdb").addEventListener("input", renderBulkAddMoviesGrid);
+    document.getElementById("bulkMaxImdb").addEventListener("input", renderBulkAddMoviesGrid);
+    document.getElementById("bulkSortSelect").addEventListener("change", renderBulkAddMoviesGrid);
+    document.getElementById("bulkShowHiddenCheckbox").addEventListener("change", renderBulkAddMoviesGrid);
+    document.getElementById("bulkResetFiltersBtn").addEventListener("click", () => {
+      document.getElementById("bulkSearchInput").value = "";
+      document.getElementById("bulkDomainFilter").value = "";
+      document.getElementById("bulkMinYear").value = "";
+      document.getElementById("bulkMaxYear").value = "";
+      document.getElementById("bulkMinImdb").value = "";
+      document.getElementById("bulkMaxImdb").value = "";
+      document.getElementById("bulkSortSelect").value = "imdb_desc";
+      document.getElementById("bulkShowHiddenCheckbox").checked = false;
+      renderBulkAddMoviesGrid();
+    });
+    document.getElementById("closeBulkAddModalBtn").addEventListener("click", closeBulkAddMoviesToGenrePopup);
+    document.getElementById("confirmBulkAddBtn").addEventListener("click", confirmBulkAddMoviesToGenre);
 
-  document.getElementById("minImdbRange").addEventListener("input", () => {
-    updateImdbSliderLabel();
-    renderMovies(false);
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        hidePosterHoverTooltip();
+        closeUrlPopup();
+        closeGroupNamePopup(false);
+        closeGroupSelectPopup();
+        closeBulkAddMoviesToGenrePopup();
+        if (sidebarMode !== null) {
+          setSidebarMode(null);
+        }
+        if (domainDropdown) domainDropdown.classList.remove("open");
+        if (countryDropdown) countryDropdown.classList.remove("open");
+      }
+    });
   });
-  document.getElementById("maxImdbRange").addEventListener("input", () => {
-    updateImdbSliderLabel();
-    renderMovies(false);
-  });
-
-  document.getElementById("minMyScoreRange").addEventListener("input", () => {
-    updateMyScoreSliderLabel();
-    renderMovies(false);
-  });
-  document.getElementById("maxMyScoreRange").addEventListener("input", () => {
-    updateMyScoreSliderLabel();
-    renderMovies(false);
-  });
-
-  document.getElementById("sortSelect1").addEventListener("change", () => renderMovies(false));
-  document.getElementById("sortSelect2").addEventListener("change", () => renderMovies(false));
-  document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
-  document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
-  document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
-    updateRelationBanner();
-    renderMovies(false);
-    renderRecentDropdown();
-  });
-  document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
-
-  document.getElementById("resetFiltersBtn").addEventListener("click", () => {
-    document.getElementById("searchInput").value = "";
-    setSelectedDomains([]);
-    setSelectedCountries([]);
-    resetSliderRangesToFull();
-
-    sidebarSelectedGenreKeys.clear();
-    document.getElementById("watchlistDropdown").value = "all";
-    document.getElementById("linkedGroupsSortSelect").value = "default";
-    document.getElementById("showHiddenCheckbox").checked = false;
-    document.getElementById("multiSelectCheckbox").checked = false;
-    updateMultiSelectUI();
-
-    activeRelationFilterSet = null;
-    updateRelationBanner();
-    currentPage = 1;
-
-    saveStateToStorage();
-    renderMovies(false);
-    renderRecentDropdown();
-  });
-
-  document.getElementById("exportDataBtn").addEventListener("click", exportUserData);
-  document.getElementById("importDataBtn").addEventListener("click", () => {
-    document.getElementById("importFileInput").click();
-  });
-  document.getElementById("importFileInput").addEventListener("change", (e) => {
-    if (e.target.files && e.target.files[0]) {
-      importUserData(e.target.files[0]);
-      e.target.value = "";
-    }
-  });
-
-  initFilters();
 </script>
-
-<div id="posterHoverTooltip" class="poster-hover-tooltip" aria-hidden="true">
-  <img id="posterHoverTooltipImg" src="" alt="Afiş Önizleme">
-</div>
-
 </body>
-</html>
-"""
+</html>"""
 
+    print(" -> 'details.js' ile 'favorilerim.html' içerisindeki veriler senkronize ediliyor...")
+    movies_json_str = json.dumps(details_js_list, ensure_ascii=False)
     import urllib.parse
-    movies_json = urllib.parse.quote(json.dumps(details_js_list, ensure_ascii=False))
-    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", movies_json).replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
+    encoded_movies = urllib.parse.quote(movies_json_str)
+
+    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", encoded_movies).replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
 
     with open(input_prev_html, "w", encoding="utf-8") as f:
         f.write(final_html)
