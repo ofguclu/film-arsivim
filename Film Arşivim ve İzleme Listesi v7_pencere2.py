@@ -1,7 +1,12 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "3 Seçenekli Görünüm Toggle + Resimsiz Hover Önizleme) eklendi"
+SURUM_NOTU = """muhtelif değişiklikler
+
+Sayfa başı film sayısının varsayılan olarak 60'tan 10'a çekilmesi ve yalnızca Kompleks Görünüm'de görünen 10, 20, 30, 40, 50, 60 ve 100 seçenekli bir dropdown eklenmesi.
+Film arama kutusundaki tüm karakterler silindiğinde Enter'a basmaya gerek kalmadan aramanın/filtrenin otomatik güncellenmesi.
+'İzledim' işaretlendiğinde ilgili filme güncel izleme tarihinin kaydedilmesi.
+"""
 
 #kaydet ve 30 sn bekle
 import time

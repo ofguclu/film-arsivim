@@ -21,7 +21,7 @@ def normalize_url(url):
 
 def main():
     print("=" * 65)
-    print("   ANA KOD.PY - PAGING & LAZY GROUPS v50 (DISCRETE SLIDERS)")
+    print("   ANA KOD.PY - PAGING & LAZY GROUPS v50 (ISTEK 1 & ISTEK 4)")
     print("=" * 65)
 
     existing_url_to_id = {}
@@ -589,10 +589,11 @@ def main():
   body.simple-view #editorLinkBtn,
   body.simple-view #exportDataBtn,
   body.simple-view #importDataBtn,
-  body.simple-view #domainFilter,
-  body.simple-view #countryFilter,
+  body.simple-view #domainFilterDropdown,
+  body.simple-view #countryFilterDropdown,
   body.simple-view #sortSelect1,
   body.simple-view #sortSelect2,
+  body.simple-view #pageSizeSelect,
   body.simple-view .filter-slider-container {
     display: none !important;
   }
@@ -636,7 +637,6 @@ def main():
     min-height: 360px;
   }
 
-  /* Resimsiz Görünüm (Sade Görünüm üzerine kurulu, resim gizli ve poster kutusu %50 küçültülmüş: 145px) */
   body.no-image-view .poster-wrapper {
     height: 145px;
     background: #141414;
@@ -910,54 +910,6 @@ def main():
     pointer-events: auto;
   }
 
-  .relation-badge-btn {
-    background: rgba(37, 99, 235, 0.9);
-    color: #fff;
-    border: 1px solid rgba(147, 197, 253, 0.6);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-    backdrop-filter: blur(2px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
-    white-space: nowrap;
-  }
-  .relation-badge-btn:hover { background: #1d4ed8; transform: scale(1.05); }
-  .relation-badge-btn.active-group { background: #f5c518; color: #000; border-color: #fff; }
-
-  .remake-badge-btn {
-    background: rgba(139, 92, 246, 0.9);
-    color: #fff;
-    border: 1px solid rgba(221, 214, 254, 0.6);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-    backdrop-filter: blur(2px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
-    white-space: nowrap;
-  }
-  .remake-badge-btn:hover { background: #7c3aed; transform: scale(1.05); }
-  .remake-badge-btn.active-group { background: #f5c518; color: #000; border-color: #fff; }
-
-  .genre-badge-btn {
-    background: rgba(16, 185, 129, 0.9);
-    color: #fff;
-    border: 1px solid rgba(167, 243, 208, 0.6);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-    backdrop-filter: blur(2px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
-    white-space: nowrap;
-  }
-  .genre-badge-btn:hover { background: #059669; transform: scale(1.05); }
-  .genre-badge-btn.active-group { background: #f5c518; color: #000; border-color: #fff; }
-
   .poster-badges-bottom {
     position: absolute;
     bottom: 6px;
@@ -1016,8 +968,10 @@ def main():
     border-top: 1px solid var(--border-color);
     font-size: 11px;
   }
+  .watched-wrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
   .watched-label { display: flex; align-items: center; gap: 3px; cursor: pointer; color: #ccc; flex-shrink: 0; }
   .watched-checkbox { width: 13px; height: 13px; accent-color: #28a745; cursor: pointer; }
+  .watched-date-badge { font-size: 9.5px; color: #34d399; background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); padding: 1px 4px; border-radius: 3px; white-space: nowrap; }
   .score-container { display: flex; align-items: center; gap: 3px; color: #f5c518; flex-shrink: 0; }
   .score-input { width: 36px; padding: 2px 3px; text-align: center; background: #222; color: #f5c518; border: 1px solid #444; border-radius: 3px; font-weight: bold; font-size: 11px; }
 
@@ -1240,6 +1194,132 @@ def main():
   .summary-text { color: #aaa; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 12px; line-height: 16px; height: 32px; max-height: 32px; margin-top: 2px; }
   .actors-text { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; height: 16px; margin-top: auto; }
 
+
+  .multi-select-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .multi-select-btn {
+    padding: 6px 10px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-width: 135px;
+    max-width: 210px;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+  .multi-select-btn:hover, .multi-select-dropdown.open .multi-select-btn {
+    border-color: var(--accent-color);
+  }
+  .multi-select-btn.has-selection {
+    border-color: #10b981;
+    color: #a7f3d0;
+  }
+  .multi-select-btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .multi-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 220px;
+    max-width: 280px;
+    max-height: 310px;
+    background: #181818;
+    border: 1px solid #444;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+    z-index: 3000;
+    flex-direction: column;
+    padding: 6px;
+    box-sizing: border-box;
+    gap: 5px;
+  }
+  .multi-select-dropdown.open .multi-select-menu {
+    display: flex;
+  }
+  .multi-select-search {
+    width: 100%;
+    padding: 5px 8px;
+    background: #121212;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    font-size: 11.5px;
+    box-sizing: border-box;
+  }
+  .multi-select-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .multi-select-action-btn {
+    flex: 1;
+    padding: 3px 6px;
+    font-size: 10.5px;
+    background: #242424;
+    color: #ccc;
+    border: 1px solid #3a3a3a;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .multi-select-action-btn:hover {
+    background: #333;
+    color: #fff;
+  }
+  .multi-select-options-list {
+    overflow-y: auto;
+    max-height: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .multi-select-option-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11.5px;
+    color: #e0e0e0;
+    user-select: none;
+  }
+  .multi-select-option-row:hover {
+    background: #252525;
+  }
+  .multi-select-option-row.checked {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+    font-weight: bold;
+  }
+  .multi-select-option-row input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: #10b981;
+    cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .multi-select-option-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .single-grid-list {
     width: 100%;
     height: 850px;
@@ -1358,7 +1438,20 @@ def main():
       <button type="button" id="searchBtn" class="btn-search" title="Ara (veya Enter'a basın)">🔍</button>
     </div>
 
-    <select id="domainFilter"><option value="">Tüm Domainler</option></select>
+    <div class="multi-select-dropdown" id="domainFilterDropdown">
+      <button type="button" class="multi-select-btn" id="domainFilterBtn" title="Domain seçimi (Çoklu seçim)">
+        <span class="multi-select-btn-text" id="domainFilterBtnText">Tüm Domainler</span>
+        <span>▾</span>
+      </button>
+      <div class="multi-select-menu" id="domainFilterMenu">
+        <input type="text" class="multi-select-search" id="domainFilterSearch" placeholder="Domain ara...">
+        <div class="multi-select-actions">
+          <button type="button" class="multi-select-action-btn" id="domainSelectAllBtn">Tümünü Seç</button>
+          <button type="button" class="multi-select-action-btn" id="domainClearAllBtn">Temizle</button>
+        </div>
+        <div class="multi-select-options-list" id="domainFilterOptionsList"></div>
+      </div>
+    </div>
 
     <div class="filter-slider-container" title="Film Yıl Aralığı Filtresi (Sadece mevcut değerler; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
@@ -1371,7 +1464,20 @@ def main():
       </div>
     </div>
 
-    <select id="countryFilter"><option value="">Tüm Ülkeler</option></select>
+    <div class="multi-select-dropdown" id="countryFilterDropdown">
+      <button type="button" class="multi-select-btn" id="countryFilterBtn" title="Ülke seçimi (Çoklu seçim)">
+        <span class="multi-select-btn-text" id="countryFilterBtnText">Tüm Ülkeler</span>
+        <span>▾</span>
+      </button>
+      <div class="multi-select-menu" id="countryFilterMenu">
+        <input type="text" class="multi-select-search" id="countryFilterSearch" placeholder="Ülke ara...">
+        <div class="multi-select-actions">
+          <button type="button" class="multi-select-action-btn" id="countrySelectAllBtn">Tümünü Seç</button>
+          <button type="button" class="multi-select-action-btn" id="countryClearAllBtn">Temizle</button>
+        </div>
+        <div class="multi-select-options-list" id="countryFilterOptionsList"></div>
+      </div>
+    </div>
 
     <div class="filter-slider-container" title="Film Süre Aralığı Filtresi (Sadece mevcut süreler; olmayanlar 0 kabul edilir)">
       <div class="filter-slider-header">
@@ -1472,6 +1578,16 @@ def main():
 
     <button type="button" id="toggleAllGroupsBtn" class="btn-group-toggle" title="Tüm grupları aç/kapat">📂 Tümünü Aç</button>
 
+    <select id="pageSizeSelect" title="Sayfa başına gösterilecek film sayısı" style="background: #1a1a1a; color: #f5c518; border-color: #444; font-weight: bold;">
+      <option value="10" selected>10 / Sayfa</option>
+      <option value="20">20 / Sayfa</option>
+      <option value="30">30 / Sayfa</option>
+      <option value="40">40 / Sayfa</option>
+      <option value="50">50 / Sayfa</option>
+      <option value="60">60 / Sayfa</option>
+      <option value="100">100 / Sayfa</option>
+    </select>
+
     <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">__COUNT_PLACEHOLDER__</span> Film</span>
 
     <div class="controls-bottom-row">
@@ -1493,7 +1609,6 @@ def main():
   </div>
 </div>
 
-<!-- Sağ Yan Panel (Film Ara veya 4 Kolon Tür Ekle) -->
 <aside id="filmSearchSidebarPanel" class="right-sidebar-panel" aria-label="Sağ Yan Panel">
   <div class="right-sidebar-header">
     <span id="sidebarPanelTitle">🏷️ Türlere Göre Filtrele</span>
@@ -1545,7 +1660,6 @@ def main():
 <div class="movie-grid" id="movieGridContainer"></div>
 <div class="pagination-bar" id="paginationBottomBar"></div>
 
-<!-- URL Düzenleme Popup Modal -->
 <div id="urlPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:20px; border-radius:8px; width:500px; max-width:90%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
     <h3 style="margin-top:0; color:#f5c518;">Film URL Yönetimi (ID: <span id="popupMovieId"></span>)</h3>
@@ -1558,7 +1672,6 @@ def main():
   </div>
 </div>
 
-<!-- Yeni Grup Oluşturulurken İsim Verme Popup Modal -->
 <div id="groupNamePopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:20px; border-radius:8px; width:450px; max-width:90%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
     <h3 style="margin-top:0; color:#f5c518;" id="groupNameModalTitle">📁 Yeni Grup Adı Belirle</h3>
@@ -1571,7 +1684,6 @@ def main():
   </div>
 </div>
 
-<!-- Grup Seçim Modal -->
 <div id="groupSelectPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:12px 16px; border-radius:8px; width:1470px; max-width:98%; max-height:98vh; overflow-y:auto; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.85);">
     <div style="display:flex; gap:14px;">
@@ -1617,7 +1729,6 @@ def main():
   </div>
 </div>
 
-<!-- Tür Sayfasından Toplu Film Ekleme Modal -->
 <div id="bulkAddMoviesToGenreModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.78); z-index:9999; justify-content:center; align-items:center;">
   <div style="background:#1e1e1e; border:1px solid #333; padding:20px; border-radius:8px; width:1140px; max-width:96%; color:#e0e0e0; box-shadow:0 6px 28px rgba(0,0,0,0.85); display:flex; flex-direction:column; gap:12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px;">
@@ -1673,7 +1784,7 @@ def main():
   const allMovies = JSON.parse(decodeURIComponent('__MOVIES_JSON_PLACEHOLDER__'));
   const validMovieIds = new Set(allMovies.map(m => String(m.film_ID)));
 
-  const PAGE_SIZE = 60;
+  let pageSize = 10;
   let currentPage = 1;
   let activeOrderedMovieIds = [];
   let activeGroupedDataCache = new Map();
@@ -1683,11 +1794,12 @@ def main():
   let watchlist2State = {};
   let watchlist3State = {};
   let watchedState = {};
+  let watchedDatesState = {};
   let gloriousState = {};
   let myScoreState = {};
   let hiddenMoviesState = {};
   let recentMoviesState = [];
-  let viewMode = "complex"; // "complex" | "simple" | "no_image"
+  let viewMode = "complex";
   let isSimpleViewMode = false;
   let isRelatedSideBySideMode = false;
   let currentlyRenderedMovieIds = [];
@@ -1702,7 +1814,7 @@ def main():
   let genreGroupsNamesState = {};
 
   let sidebarSelectedGenreKeys = new Set();
-  let sidebarMode = null; // null | "filter" | "genre_add"
+  let sidebarMode = null;
   let sidebarTargetMovieId = null;
   let sidebarGenreTempCreatedKeys = [];
   let sidebarGenreSelectedKeys = new Set();
@@ -1725,6 +1837,191 @@ def main():
 
   let targetGenreKeyForBulkAdd = null;
   let bulkSelectedMovieIds = new Set();
+
+  let allAvailableDomains = [];
+  let allAvailableCountries = [];
+  let selectedDomainsSet = new Set();
+  let selectedCountriesSet = new Set();
+
+  function updateDomainMultiSelectUI() {
+    const btn = document.getElementById("domainFilterBtn");
+    const txt = document.getElementById("domainFilterBtnText");
+    const listEl = document.getElementById("domainFilterOptionsList");
+    if (btn && txt) {
+      const arr = Array.from(selectedDomainsSet);
+      if (arr.length === 0) {
+        txt.innerText = "Tüm Domainler";
+        btn.classList.remove("has-selection");
+        btn.title = "Tüm Domainler";
+      } else if (arr.length === 1) {
+        txt.innerText = arr[0];
+        btn.classList.add("has-selection");
+        btn.title = arr[0];
+      } else {
+        txt.innerText = `${arr.length} Domain Seçili`;
+        btn.classList.add("has-selection");
+        btn.title = arr.join(", ");
+      }
+    }
+    if (listEl) {
+      listEl.querySelectorAll(".multi-select-option-row").forEach(row => {
+        const val = row.dataset.value;
+        const isChecked = selectedDomainsSet.has(val);
+        row.classList.toggle("checked", isChecked);
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = isChecked;
+      });
+    }
+  }
+
+  function updateCountryMultiSelectUI() {
+    const btn = document.getElementById("countryFilterBtn");
+    const txt = document.getElementById("countryFilterBtnText");
+    const listEl = document.getElementById("countryFilterOptionsList");
+    if (btn && txt) {
+      const arr = Array.from(selectedCountriesSet);
+      if (arr.length === 0) {
+        txt.innerText = "Tüm Ülkeler";
+        btn.classList.remove("has-selection");
+        btn.title = "Tüm Ülkeler";
+      } else if (arr.length === 1) {
+        txt.innerText = arr[0];
+        btn.classList.add("has-selection");
+        btn.title = arr[0];
+      } else {
+        txt.innerText = `${arr.length} Ülke Seçili`;
+        btn.classList.add("has-selection");
+        btn.title = arr.join(", ");
+      }
+    }
+    if (listEl) {
+      listEl.querySelectorAll(".multi-select-option-row").forEach(row => {
+        const val = row.dataset.value;
+        const isChecked = selectedCountriesSet.has(val);
+        row.classList.toggle("checked", isChecked);
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = isChecked;
+      });
+    }
+  }
+
+  function renderDomainMultiSelectOptions() {
+    const listEl = document.getElementById("domainFilterOptionsList");
+    const searchEl = document.getElementById("domainFilterSearch");
+    if (!listEl) return;
+    const q = searchEl ? searchEl.value.toLowerCase().trim() : "";
+    listEl.innerHTML = "";
+    const filtered = q ? allAvailableDomains.filter(d => d.toLowerCase().includes(q)) : allAvailableDomains;
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div style="color:#777; font-size:11px; padding:6px;">Sonuç yok</div>`;
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    filtered.forEach(d => {
+      const isChecked = selectedDomainsSet.has(d);
+      const row = document.createElement("div");
+      row.className = "multi-select-option-row" + (isChecked ? " checked" : "");
+      row.dataset.value = d;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isChecked;
+
+      const lbl = document.createElement("span");
+      lbl.className = "multi-select-option-label";
+      lbl.textContent = d;
+      lbl.title = d;
+
+      const onToggle = () => {
+        if (selectedDomainsSet.has(d)) {
+          selectedDomainsSet.delete(d);
+        } else {
+          selectedDomainsSet.add(d);
+        }
+        updateDomainMultiSelectUI();
+        renderMovies(false);
+      };
+
+      cb.addEventListener("change", (e) => {
+        e.stopPropagation();
+        onToggle();
+      });
+      row.addEventListener("click", (e) => {
+        if (e.target !== cb) {
+          onToggle();
+        }
+      });
+
+      row.appendChild(cb);
+      row.appendChild(lbl);
+      frag.appendChild(row);
+    });
+    listEl.appendChild(frag);
+  }
+
+  function renderCountryMultiSelectOptions() {
+    const listEl = document.getElementById("countryFilterOptionsList");
+    const searchEl = document.getElementById("countryFilterSearch");
+    if (!listEl) return;
+    const q = searchEl ? searchEl.value.toLowerCase().trim() : "";
+    listEl.innerHTML = "";
+    const filtered = q ? allAvailableCountries.filter(c => c.toLowerCase().includes(q)) : allAvailableCountries;
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div style="color:#777; font-size:11px; padding:6px;">Sonuç yok</div>`;
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    filtered.forEach(c => {
+      const isChecked = selectedCountriesSet.has(c);
+      const row = document.createElement("div");
+      row.className = "multi-select-option-row" + (isChecked ? " checked" : "");
+      row.dataset.value = c;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isChecked;
+
+      const lbl = document.createElement("span");
+      lbl.className = "multi-select-option-label";
+      lbl.textContent = c;
+      lbl.title = c;
+
+      const onToggle = () => {
+        if (selectedCountriesSet.has(c)) {
+          selectedCountriesSet.delete(c);
+        } else {
+          selectedCountriesSet.add(c);
+        }
+        updateCountryMultiSelectUI();
+        renderMovies(false);
+      };
+
+      cb.addEventListener("change", (e) => {
+        e.stopPropagation();
+        onToggle();
+      });
+      row.addEventListener("click", (e) => {
+        if (e.target !== cb) {
+          onToggle();
+        }
+      });
+
+      row.appendChild(cb);
+      row.appendChild(lbl);
+      frag.appendChild(row);
+    });
+    listEl.appendChild(frag);
+  }
+
+  function setSelectedDomains(arr) {
+    selectedDomainsSet = new Set((arr || []).filter(d => allAvailableDomains.includes(d)));
+    updateDomainMultiSelectUI();
+  }
+
+  function setSelectedCountries(arr) {
+    selectedCountriesSet = new Set((arr || []).filter(c => allAvailableCountries.includes(c)));
+    updateCountryMultiSelectUI();
+  }
 
   let yearStepValues = [0];
   let durationStepValues = [0];
@@ -2619,6 +2916,14 @@ def main():
     const rWatched = localStorage.getItem("watched_ids");
     if (rWatched) watchedState = JSON.parse(rWatched);
 
+    const rWatchedDates = localStorage.getItem("watched_dates");
+    if (rWatchedDates) {
+      const parsedWD = JSON.parse(rWatchedDates);
+      if (typeof parsedWD === "object" && parsedWD !== null) {
+        watchedDatesState = parsedWD;
+      }
+    }
+
     const rGlorious = localStorage.getItem("glorious_movie_ids");
     if (rGlorious) gloriousState = JSON.parse(rGlorious);
 
@@ -2678,6 +2983,7 @@ def main():
     watchlist2State = {};
     watchlist3State = {};
     watchedState = {};
+    watchedDatesState = {};
     gloriousState = {};
     myScoreState = {};
     hiddenMoviesState = {};
@@ -3116,9 +3422,11 @@ def main():
     document.getElementById("bulkShowHiddenCheckbox").checked = false;
 
     const bulkDomainSel = document.getElementById("bulkDomainFilter");
-    const mainDomainSel = document.getElementById("domainFilter");
-    if (bulkDomainSel && mainDomainSel) {
-      bulkDomainSel.innerHTML = mainDomainSel.innerHTML;
+    if (bulkDomainSel) {
+      bulkDomainSel.innerHTML = '<option value="">Tüm Domainler</option>';
+      allAvailableDomains.forEach(d => {
+        bulkDomainSel.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
+      });
       bulkDomainSel.value = "";
     }
 
@@ -4033,6 +4341,7 @@ def main():
         watchlist_ids2: watchlist2State,
         watchlist_ids3: watchlist3State,
         watched_ids: watchedState,
+        watched_dates: watchedDatesState,
         glorious_movie_ids: gloriousState,
         myscore_ids: myScoreState,
         hidden_movie_ids: hiddenMoviesState,
@@ -4096,6 +4405,10 @@ def main():
         if (data.watched_ids) {
           watchedState = data.watched_ids;
           localStorage.setItem("watched_ids", JSON.stringify(watchedState));
+        }
+        if (data.watched_dates && typeof data.watched_dates === "object") {
+          watchedDatesState = data.watched_dates;
+          localStorage.setItem("watched_dates", JSON.stringify(watchedDatesState));
         }
         if (data.glorious_movie_ids) {
           gloriousState = data.glorious_movie_ids;
@@ -4212,10 +4525,9 @@ def main():
         if (uNum > 0) myScores.add(uNum);
       });
 
-      const domainSel = document.getElementById("domainFilter");
-      Array.from(domains).sort().forEach(d => {
-        domainSel.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
-      });
+      allAvailableDomains = Array.from(domains).sort();
+      renderDomainMultiSelectOptions();
+      updateDomainMultiSelectUI();
 
       yearStepValues = Array.from(years).sort((a, b) => a - b);
       durationStepValues = Array.from(durations).sort((a, b) => a - b);
@@ -4243,10 +4555,9 @@ def main():
         myScoreStepValues
       );
 
-      const countrySel = document.getElementById("countryFilter");
-      Array.from(countries).sort().forEach(c => {
-        if(c) countrySel.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
-      });
+      allAvailableCountries = Array.from(countries).filter(Boolean).sort();
+      renderCountryMultiSelectOptions();
+      updateCountryMultiSelectUI();
 
       updateYearSliderLabel();
       updateDurationSliderLabel();
@@ -4335,7 +4646,7 @@ def main():
   }
 
   function goToPage(pageNum, scrollTop = true) {
-    const totalPages = Math.max(1, Math.ceil(activeOrderedMovieIds.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(activeOrderedMovieIds.length / pageSize));
     const targetPage = Math.min(Math.max(1, parseInt(pageNum, 10) || 1), totalPages);
     if (targetPage === currentPage && !scrollTop) return;
     currentPage = targetPage;
@@ -4353,7 +4664,7 @@ def main():
     const watchlistSelection = document.getElementById("watchlistDropdown").value;
     const isGroupedLinkedView = ((watchlistSelection === "linked_only" || watchlistSelection === "remake_only" || watchlistSelection === "genre_only") && !activeRelationFilterSet);
 
-    if (isGroupedLinkedView || totalItems <= PAGE_SIZE) {
+    if (isGroupedLinkedView || totalItems <= pageSize) {
       topBar.classList.add("hidden-bar");
       botBar.classList.add("hidden-bar");
       topBar.innerHTML = "";
@@ -4364,7 +4675,7 @@ def main():
     topBar.classList.remove("hidden-bar");
     botBar.classList.remove("hidden-bar");
 
-    const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+    const totalPages = Math.ceil(totalItems / pageSize);
     if (currentPage > totalPages) currentPage = totalPages;
 
     let html = `<button type="button" class="page-btn" onclick="goToPage(1)" ${currentPage === 1 ? "disabled" : ""}>« İlk</button>`;
@@ -4401,12 +4712,16 @@ def main():
       const imdbB = getRangeBoundsFromDiscreteSlider(document.getElementById("minImdbRange"), document.getElementById("maxImdbRange"), imdbStepValues);
       const myScB = getRangeBoundsFromDiscreteSlider(document.getElementById("minMyScoreRange"), document.getElementById("maxMyScoreRange"), myScoreStepValues);
 
+      const domainsArr = Array.from(selectedDomainsSet);
+      const countriesArr = Array.from(selectedCountriesSet);
       const state = {
         search: document.getElementById("searchInput").value,
-        domain: document.getElementById("domainFilter").value,
+        domains: domainsArr,
+        domain: domainsArr.length === 1 ? domainsArr[0] : "",
         minYearVal: yrB.lowVal,
         maxYearVal: yrB.highVal,
-        country: document.getElementById("countryFilter").value,
+        countries: countriesArr,
+        country: countriesArr.length === 1 ? countriesArr[0] : "",
         minDurationVal: durB.lowVal,
         maxDurationVal: durB.highVal,
         minImdbVal: imdbB.lowVal,
@@ -4418,6 +4733,7 @@ def main():
         watchlistSelection: document.getElementById("watchlistDropdown").value,
         linkedGroupsSort: document.getElementById("linkedGroupsSortSelect").value,
         showHidden: document.getElementById("showHiddenCheckbox").checked,
+        pageSize: pageSize,
         lastId: document.getElementById("lastIdInput").value
       };
       localStorage.setItem("archive_ui_state", JSON.stringify(state));
@@ -4433,7 +4749,13 @@ def main():
         if (saved) {
           const state = JSON.parse(saved);
           if (state.search !== undefined) document.getElementById("searchInput").value = state.search;
-          if (state.domain !== undefined) document.getElementById("domainFilter").value = state.domain;
+          if (Array.isArray(state.domains)) {
+            setSelectedDomains(state.domains);
+          } else if (state.domain) {
+            setSelectedDomains([state.domain]);
+          } else {
+            setSelectedDomains([]);
+          }
 
           const minYrDesired = state.minYearVal !== undefined ? state.minYearVal : state.minYear;
           const maxYrDesired = state.maxYearVal !== undefined ? state.maxYearVal : state.maxYear;
@@ -4445,7 +4767,13 @@ def main():
             maxYrDesired
           );
 
-          if (state.country !== undefined) document.getElementById("countryFilter").value = state.country;
+          if (Array.isArray(state.countries)) {
+            setSelectedCountries(state.countries);
+          } else if (state.country) {
+            setSelectedCountries([state.country]);
+          } else {
+            setSelectedCountries([]);
+          }
 
           const minDurDesired = state.minDurationVal !== undefined ? state.minDurationVal : state.minDuration;
           const maxDurDesired = state.maxDurationVal !== undefined ? state.maxDurationVal : state.maxDuration;
@@ -4488,11 +4816,17 @@ def main():
           if (state.showHidden) {
             document.getElementById("showHiddenCheckbox").checked = true;
           }
+          if (state.pageSize && [10, 20, 30, 40, 50, 60, 100].includes(Number(state.pageSize))) {
+            pageSize = Number(state.pageSize);
+            const psSel = document.getElementById("pageSizeSelect");
+            if (psSel) psSel.value = String(pageSize);
+          }
           if (state.lastId) {
             document.getElementById("lastIdInput").value = state.lastId;
           }
         } else {
-          document.getElementById("domainFilter").value = "hdfilmcehennemi.nl";
+          setSelectedDomains(["hdfilmcehennemi.nl"]);
+          setSelectedCountries([]);
           document.getElementById("sortSelect1").value = "imdb_desc";
           document.getElementById("sortSelect2").value = "year_desc";
         }
@@ -4557,6 +4891,39 @@ def main():
     renderRecentDropdown();
   }
 
+  function copyMovieWebpFilename(movieId) {
+    const fid = String(movieId || "").trim();
+    if (!fid) return;
+    const textToCopy = `${fid}.webp`;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(textToCopy).catch(() => {
+        fallbackCopyText(textToCopy);
+      });
+    } else {
+      fallbackCopyText(textToCopy);
+    }
+  }
+
+  function fallbackCopyText(text) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  function handleMovieTitleClick(event, movieId) {
+    handleCardClick(movieId);
+    copyMovieWebpFilename(movieId);
+  }
+
   function handleCardClick(movieId) {
     try {
       if (movieId) {
@@ -4596,16 +4963,29 @@ def main():
     } catch (e) {}
   }
 
+  function getFormattedTodayDate() {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yyyy = now.getFullYear();
+    return `${dd}.${mm}.${yyyy}`;
+  }
+
   function updateWatched(movieId, isChecked) {
     try {
-      watchedState[movieId] = isChecked;
+      const fid = String(movieId);
+      watchedState[fid] = isChecked;
       localStorage.setItem("watched_ids", JSON.stringify(watchedState));
-      saveStateToStorage();
 
-      const currentSelection = document.getElementById("watchlistDropdown").value;
-      if (currentSelection === "watched") {
-        renderMoviesPreservingScroll();
+      if (isChecked) {
+        watchedDatesState[fid] = getFormattedTodayDate();
+      } else {
+        delete watchedDatesState[fid];
       }
+      localStorage.setItem("watched_dates", JSON.stringify(watchedDatesState));
+
+      saveStateToStorage();
+      renderMoviesPreservingScroll();
     } catch (e) {}
   }
 
@@ -4666,8 +5046,8 @@ def main():
     const manualId = document.getElementById("lastIdInput").value.trim();
     if (manualId && !isNaN(manualId)) {
       document.getElementById("searchInput").value = "";
-      document.getElementById("domainFilter").value = "";
-      document.getElementById("countryFilter").value = "";
+      setSelectedDomains([]);
+      setSelectedCountries([]);
       resetSliderRangesToFull();
 
       sidebarSelectedGenreKeys.clear();
@@ -4686,7 +5066,7 @@ def main():
 
       const idxInList = activeOrderedMovieIds.indexOf(String(manualId));
       if (idxInList !== -1) {
-        const targetPage = Math.floor(idxInList / PAGE_SIZE) + 1;
+        const targetPage = Math.floor(idxInList / pageSize) + 1;
         if (targetPage !== currentPage) {
           currentPage = targetPage;
           renderMovies(false, true);
@@ -4860,6 +5240,8 @@ def main():
     const c2 = watchlist2State[fid] ? "checked" : "";
     const c3 = watchlist3State[fid] ? "checked" : "";
     const cWatched = watchedState[fid] ? "checked" : "";
+    const watchedDateStr = (watchedState[fid] && watchedDatesState[fid]) ? watchedDatesState[fid] : "";
+    const watchedDateHtml = watchedDateStr ? `<span class="watched-date-badge" title="İzlenme Tarihi: ${escapeHtml(watchedDateStr)}">${escapeHtml(watchedDateStr)}</span>` : "";
     const cGlorious = gloriousState[fid] ? "checked" : "";
     const isRadioChecked = (currentGeneralLastId === fid) ? "checked" : "";
     const myScoreVal = myScoreState[fid] !== undefined ? myScoreState[fid] : "";
@@ -4965,9 +5347,12 @@ def main():
         <button class="hide-movie-btn ${isHidden ? 'is-hidden' : ''}" title="${eyeBtnTitle}" onclick="toggleHiddenMovie('${fid}')">${eyeBtnIcon}</button>
       </div>
       <div class="card-user-actions">
-        <label class="watched-label" title="İzlediklerim">
-          <input type="checkbox" class="watched-checkbox" ${cWatched} onchange="updateWatched('${fid}', this.checked)"> İzledim
-        </label>
+        <div class="watched-wrap">
+          <label class="watched-label" title="${watchedDateStr ? 'İzlediklerim (' + escapeHtml(watchedDateStr) + ')' : 'İzlediklerim'}">
+            <input type="checkbox" class="watched-checkbox" ${cWatched} onchange="updateWatched('${fid}', this.checked)"> İzledim
+          </label>
+          ${watchedDateHtml}
+        </div>
         <span class="film-id-badge" title="Film ID">ID: ${fid}</span>
         <div class="score-container" title="Puanım (1-10)">
           <span>Puanım:</span>
@@ -5004,7 +5389,7 @@ def main():
       </div>
       <div class="card-details">
         ${domainContainerHtml}
-        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" title="${escapeHtml(titleTooltip)}" onclick="handleCardClick('${fid}')">${escapeHtml(movie.film_name)}</a>
+        <a class="movie-title" href="${escapeHtml(movie.web_scraper_start_url)}" target="_blank" title="${escapeHtml(titleTooltip)}" onclick="handleMovieTitleClick(event, '${fid}')">${escapeHtml(movie.film_name)}</a>
         <div class="meta-info">
           <span>${imdbText}</span>
           <span>${durationText}</span>
@@ -5063,10 +5448,8 @@ def main():
       activeGroupedDataCache.clear();
 
       const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
-      const selectedDomain = document.getElementById("domainFilter").value;
 
       const yrBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minYearRange"), document.getElementById("maxYearRange"), yearStepValues);
-      const selectedCountry = document.getElementById("countryFilter").value;
       const durBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minDurationRange"), document.getElementById("maxDurationRange"), durationStepValues);
       const imdbBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minImdbRange"), document.getElementById("maxImdbRange"), imdbStepValues);
       const myScoreBounds = getRangeBoundsFromDiscreteSlider(document.getElementById("minMyScoreRange"), document.getElementById("maxMyScoreRange"), myScoreStepValues);
@@ -5131,12 +5514,19 @@ def main():
           if (gs && gs.length > 0) return false;
         }
 
-        if (selectedDomain && getDomain(movie.web_scraper_start_url) !== selectedDomain) return false;
+        if (selectedDomainsSet.size > 0) {
+          const mDomain = getDomain(movie.web_scraper_start_url);
+          if (!selectedDomainsSet.has(mDomain)) return false;
+        }
 
         const mYr = getMovieYearValue(movie);
         if (mYr < yrBounds.lowVal || mYr > yrBounds.highVal) return false;
 
-        if (selectedCountry && !(movie.country || "").includes(selectedCountry)) return false;
+        if (selectedCountriesSet.size > 0) {
+          const movieCountries = (movie.country || "").split(",").map(c => c.trim()).filter(Boolean);
+          const hasMatchingCountry = movieCountries.some(c => selectedCountriesSet.has(c));
+          if (!hasMatchingCountry) return false;
+        }
 
         const mDur = getMovieDurationValue(movie);
         if (mDur < durBounds.lowVal || mDur > durBounds.highVal) return false;
@@ -5371,10 +5761,10 @@ def main():
       document.getElementById("countDisplay").innerText = totalFilteredCount;
       renderPaginationBars(totalFilteredCount);
 
-      const totalPages = Math.max(1, Math.ceil(totalFilteredCount / PAGE_SIZE));
+      const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
       if (currentPage > totalPages) currentPage = totalPages;
-      const startIdx = (currentPage - 1) * PAGE_SIZE;
-      const pageMovies = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+      const startIdx = (currentPage - 1) * pageSize;
+      const pageMovies = filtered.slice(startIdx, startIdx + pageSize);
       currentlyRenderedMovieIds = pageMovies.map(m => String(m.film_ID));
 
       const fragment = document.createDocumentFragment();
@@ -5576,8 +5966,8 @@ def main():
     const selectedId = e.target.value;
     if (selectedId) {
       document.getElementById("searchInput").value = "";
-      document.getElementById("domainFilter").value = "";
-      document.getElementById("countryFilter").value = "";
+      setSelectedDomains([]);
+      setSelectedCountries([]);
       resetSliderRangesToFull();
 
       sidebarSelectedGenreKeys.clear();
@@ -5588,6 +5978,7 @@ def main():
       updateRelationBanner();
 
       document.getElementById("lastIdInput").value = selectedId;
+      syncCardRadioSelection(selectedId);
       try {
         localStorage.setItem("last_clicked_movie_id", selectedId);
         saveStateToStorage();
@@ -5597,7 +5988,7 @@ def main():
 
       const idxInList = activeOrderedMovieIds.indexOf(String(selectedId));
       if (idxInList !== -1) {
-        const targetPage = Math.floor(idxInList / PAGE_SIZE) + 1;
+        const targetPage = Math.floor(idxInList / pageSize) + 1;
         if (targetPage !== currentPage) {
           currentPage = targetPage;
           renderMovies(false, true);
@@ -5615,35 +6006,32 @@ def main():
     }
   });
 
-  function resetAllFilters() {
-    document.getElementById("searchInput").value = "";
-    document.getElementById("domainFilter").value = "";
-    document.getElementById("countryFilter").value = "";
-    resetSliderRangesToFull();
-
-    sidebarSelectedGenreKeys.clear();
-    document.getElementById("watchlistDropdown").value = "all";
-    document.getElementById("showHiddenCheckbox").checked = false;
-
-    activeRelationFilterSet = null;
-    updateRelationBanner();
-    renderMovies(false);
-    renderRecentDropdown();
-  }
-
-  document.getElementById("resetFiltersBtn").addEventListener("click", resetAllFilters);
-
-  document.getElementById("exportDataBtn").addEventListener("click", exportUserData);
-  document.getElementById("importDataBtn").addEventListener("click", () => {
-    document.getElementById("importFileInput").click();
+  const searchInputEl = document.getElementById("searchInput");
+  searchInputEl.addEventListener("input", (e) => {
+    if (e.target.value.trim() === "") {
+      renderMovies(false);
+    }
   });
-  document.getElementById("importFileInput").addEventListener("change", (e) => {
-    if (e.target.files && e.target.files[0]) {
-      importUserData(e.target.files[0]);
-      e.target.value = "";
+  searchInputEl.addEventListener("keyup", (e) => {
+    if (e.target.value.trim() === "" && (e.key === "Backspace" || e.key === "Delete")) {
+      renderMovies(false);
+    }
+  });
+  searchInputEl.addEventListener("search", (e) => {
+    if (e.target.value.trim() === "") {
+      renderMovies(false);
     }
   });
 
+  document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (!isNaN(val) && val > 0) {
+      pageSize = val;
+      currentPage = 1;
+      saveStateToStorage();
+      renderMovies(false);
+    }
+  });
   document.getElementById("searchInput").addEventListener("keypress", (e) => {
     if (e.key === 'Enter') {
       renderMovies(true);
@@ -5653,7 +6041,100 @@ def main():
     renderMovies(true);
   });
 
-  document.getElementById("domainFilter").addEventListener("change", () => renderMovies(false));
+  (function setupMultiSelectDropdownEvents() {
+    const domainWrap = document.getElementById("domainFilterDropdown");
+    const domainBtn = document.getElementById("domainFilterBtn");
+    const domainSearch = document.getElementById("domainFilterSearch");
+    const domainSelAll = document.getElementById("domainSelectAllBtn");
+    const domainClearAll = document.getElementById("domainClearAllBtn");
+
+    const countryWrap = document.getElementById("countryFilterDropdown");
+    const countryBtn = document.getElementById("countryFilterBtn");
+    const countrySearch = document.getElementById("countryFilterSearch");
+    const countrySelAll = document.getElementById("countrySelectAllBtn");
+    const countryClearAll = document.getElementById("countryClearAllBtn");
+
+    if (domainBtn && domainWrap) {
+      domainBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !domainWrap.classList.contains("open");
+        if (countryWrap) countryWrap.classList.remove("open");
+        domainWrap.classList.toggle("open", willOpen);
+        if (willOpen && domainSearch) {
+          domainSearch.value = "";
+          renderDomainMultiSelectOptions();
+          setTimeout(() => domainSearch.focus(), 30);
+        }
+      });
+    }
+    if (domainSearch) {
+      domainSearch.addEventListener("input", renderDomainMultiSelectOptions);
+      domainSearch.addEventListener("click", (e) => e.stopPropagation());
+    }
+    if (domainSelAll) {
+      domainSelAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const q = domainSearch ? domainSearch.value.toLowerCase().trim() : "";
+        const targets = q ? allAvailableDomains.filter(d => d.toLowerCase().includes(q)) : allAvailableDomains;
+        targets.forEach(d => selectedDomainsSet.add(d));
+        updateDomainMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+    if (domainClearAll) {
+      domainClearAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedDomainsSet.clear();
+        updateDomainMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+
+    if (countryBtn && countryWrap) {
+      countryBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !countryWrap.classList.contains("open");
+        if (domainWrap) domainWrap.classList.remove("open");
+        countryWrap.classList.toggle("open", willOpen);
+        if (willOpen && countrySearch) {
+          countrySearch.value = "";
+          renderCountryMultiSelectOptions();
+          setTimeout(() => countrySearch.focus(), 30);
+        }
+      });
+    }
+    if (countrySearch) {
+      countrySearch.addEventListener("input", renderCountryMultiSelectOptions);
+      countrySearch.addEventListener("click", (e) => e.stopPropagation());
+    }
+    if (countrySelAll) {
+      countrySelAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const q = countrySearch ? countrySearch.value.toLowerCase().trim() : "";
+        const targets = q ? allAvailableCountries.filter(c => c.toLowerCase().includes(q)) : allAvailableCountries;
+        targets.forEach(c => selectedCountriesSet.add(c));
+        updateCountryMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+    if (countryClearAll) {
+      countryClearAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedCountriesSet.clear();
+        updateCountryMultiSelectUI();
+        renderMovies(false);
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (domainWrap && !domainWrap.contains(e.target)) {
+        domainWrap.classList.remove("open");
+      }
+      if (countryWrap && !countryWrap.contains(e.target)) {
+        countryWrap.classList.remove("open");
+      }
+    });
+  })();
 
   document.getElementById("minYearRange").addEventListener("input", () => {
     updateYearSliderLabel();
@@ -5663,8 +6144,6 @@ def main():
     updateYearSliderLabel();
     renderMovies(false);
   });
-
-  document.getElementById("countryFilter").addEventListener("change", () => renderMovies(false));
 
   document.getElementById("minDurationRange").addEventListener("input", () => {
     updateDurationSliderLabel();
@@ -5698,25 +6177,59 @@ def main():
   document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
   document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
   document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
-    renderRecentDropdown();
+    updateRelationBanner();
     renderMovies(false);
+    renderRecentDropdown();
   });
   document.getElementById("clearRelationBtn").addEventListener("click", clearRelationFilter);
 
-  window.addEventListener("scroll", hidePosterHoverTooltip, { passive: true });
+  document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+    document.getElementById("searchInput").value = "";
+    setSelectedDomains([]);
+    setSelectedCountries([]);
+    resetSliderRangesToFull();
+
+    sidebarSelectedGenreKeys.clear();
+    document.getElementById("watchlistDropdown").value = "all";
+    document.getElementById("linkedGroupsSortSelect").value = "default";
+    document.getElementById("showHiddenCheckbox").checked = false;
+    document.getElementById("multiSelectCheckbox").checked = false;
+    updateMultiSelectUI();
+
+    activeRelationFilterSet = null;
+    updateRelationBanner();
+    currentPage = 1;
+
+    saveStateToStorage();
+    renderMovies(false);
+    renderRecentDropdown();
+  });
+
+  document.getElementById("exportDataBtn").addEventListener("click", exportUserData);
+  document.getElementById("importDataBtn").addEventListener("click", () => {
+    document.getElementById("importFileInput").click();
+  });
+  document.getElementById("importFileInput").addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) {
+      importUserData(e.target.files[0]);
+      e.target.value = "";
+    }
+  });
+
   initFilters();
 </script>
-<div id="posterHoverTooltip" class="poster-hover-tooltip"><img id="posterHoverTooltipImg" src="" alt="Afiş Önizleme"></div>
+
+<div id="posterHoverTooltip" class="poster-hover-tooltip" aria-hidden="true">
+  <img id="posterHoverTooltipImg" src="" alt="Afiş Önizleme">
+</div>
+
 </body>
 </html>
 """
 
     import urllib.parse
-    movies_json_str = json.dumps(details_js_list, ensure_ascii=False)
-    encoded_movies = urllib.parse.quote(movies_json_str)
-
-    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", encoded_movies)
-    final_html = final_html.replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
+    movies_json = urllib.parse.quote(json.dumps(details_js_list, ensure_ascii=False))
+    final_html = html_template.replace("__MOVIES_JSON_PLACEHOLDER__", movies_json).replace("__COUNT_PLACEHOLDER__", str(len(details_js_list)))
 
     with open(input_prev_html, "w", encoding="utf-8") as f:
         f.write(final_html)
