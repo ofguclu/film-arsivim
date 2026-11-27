@@ -1,11 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = """muhtelif değişiklikler
-
-1- Sayfalama seçenekleri 14,28,42,56,70,84,98 ve 112 olsun
-2- İzledim tıklı ise izleme tarihi sadece İzlediklerim sayfasında görünsün
-"""
+SURUM_NOTU = "film seçilince  panoya filminID sini filmID.webp olarak koyuldu"
 
 #kaydet ve 30 sn bekle
 import time
