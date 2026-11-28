@@ -1849,6 +1849,7 @@ def main():
     <span class="film-count-badge" title="Listelenen film sayısı">🎬 <span id="countDisplay">__COUNT_PLACEHOLDER__</span> Film</span>
 
     <div class="controls-bottom-row">
+      <button type="button" id="domainManageBtn" class="btn-go" title="Domain yönlendirme ve değiştirme kurallarını yönet">🌐 Domain</button>
       <button type="button" id="toggleFilmSearchSidebarBtn" class="btn-go" title="Sağ yan panelde türlere göre film ara">🔍 Film Ara</button>
       <button type="button" id="toggleGenreAddSidebarBtn" class="btn-go" title="Sağ yan panelde (4 kolon) seçili filme tür ekle/yönet">🏷️ Tür Ekle</button>
       <button type="button" id="toggleRelatedSideBySideBtn" class="btn-go" title="Seri veya remake ilişkili filmleri filtre/aramaya dahil edip ilk filmin yanına sırala">🔗 İlişkililer Yanyana</button>
@@ -1933,6 +1934,18 @@ def main():
     <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:8px;">
       <button type="button" onclick="closeUrlPopup()" style="background:#333; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; cursor:pointer;">İptal</button>
       <button type="button" onclick="saveUrlPopup()" style="background:#e50914; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="domainRulesPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#1e1e1e; border:1px solid #333; padding:20px; border-radius:8px; width:500px; max-width:90%; color:#e0e0e0; box-shadow:0 4px 20px rgba(0,0,0,0.8);">
+    <h3 style="margin-top:0; color:#f5c518;">Domain Değiştirme Yönetimi</h3>
+    <p style="font-size:12px; color:#aaa; margin-bottom:10px;">Grupları <b>---</b> satırı ile ayırın. Her gruptaki önceki satırlarda yer alan domain adları, o grubun <b>en son satırındaki</b> domain adı ile tüm filmlerde değiştirilir.</p>
+    <textarea id="domainRulesTextarea" rows="10" placeholder="fullhdfilmizlesene.de&#10;fullhdfilmizlesene.now&#10;---&#10;webteizle.cc&#10;webteizle.nl&#10;webteizle.info" style="width:100%; background:#121212; color:#e0e0e0; border:1px solid #444; padding:8px; border-radius:4px; font-family:monospace; font-size:12px; box-sizing:border-box;"></textarea>
+    <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:8px;">
+      <button type="button" onclick="closeDomainRulesPopup()" style="background:#333; color:#fff; border:1px solid #555; padding:6px 12px; border-radius:4px; cursor:pointer;">İptal</button>
+      <button type="button" onclick="saveDomainRulesPopup()" style="background:#e50914; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Kaydet</button>
     </div>
   </div>
 </div>
@@ -2154,6 +2167,8 @@ def main():
   let sidebarGenreFocusedKey = null;
 
   let alternativeUrlsState = {};
+  let domainRulesRawText = "";
+  let domainReplaceMap = {};
   let activeRelationFilterSet = null;
   let currentPopupMovieId = null;
 
@@ -3348,6 +3363,12 @@ def main():
         alternativeUrlsState = parsedAlt;
       }
     }
+
+    const rDomainRules = localStorage.getItem("domain_replacement_rules_text");
+    if (rDomainRules !== null) {
+      domainRulesRawText = rDomainRules;
+      rebuildDomainReplaceMap(domainRulesRawText);
+    }
   } catch (e) {
     watchlist1State = {};
     watchlist2State = {};
@@ -3365,6 +3386,175 @@ def main():
     genreMoviesGroupsState = [];
     genreGroupsNamesState = {};
     alternativeUrlsState = {};
+  }
+
+  function normalizeDomainToken(rawLine) {
+    if (!rawLine) return "";
+    let s = String(rawLine).trim().toLowerCase();
+    s = s.replace(/^https?:\/\//, "");
+    s = s.replace(/^www\./, "");
+    s = s.split("/")[0].split("?")[0].split("#")[0].trim();
+    return s;
+  }
+
+  function rebuildDomainReplaceMap(rawText) {
+    const map = {};
+    if (!rawText || typeof rawText !== "string") {
+      domainReplaceMap = map;
+      return;
+    }
+    const lines = rawText.split(/\r?\n/);
+    const groups = [];
+    let currentGroup = [];
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (/^-{3,}$/.test(trimmed)) {
+        if (currentGroup.length > 0) {
+          groups.push(currentGroup);
+          currentGroup = [];
+        }
+      } else if (trimmed !== "") {
+        const cleanDom = normalizeDomainToken(trimmed);
+        if (cleanDom) {
+          currentGroup.push(cleanDom);
+        }
+      }
+    });
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+
+    groups.forEach(grp => {
+      if (grp.length < 2) return;
+      const targetDomain = grp[grp.length - 1];
+      for (let i = 0; i < grp.length - 1; i++) {
+        const srcDomain = grp[i];
+        if (srcDomain && targetDomain && srcDomain !== targetDomain) {
+          map[srcDomain] = targetDomain;
+        }
+      }
+    });
+
+    domainReplaceMap = map;
+  }
+
+  function applyDomainRulesToUrl(urlStr) {
+    if (!urlStr || typeof urlStr !== "string") return urlStr;
+    const keys = Object.keys(domainReplaceMap);
+    if (keys.length === 0) return urlStr;
+
+    let result = urlStr.trim();
+    const sortedKeys = keys.sort((a, b) => b.length - a.length);
+
+    for (const srcDom of sortedKeys) {
+      const tgtDom = domainReplaceMap[srcDom];
+      const escaped = srcDom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp("(^|://|\\.)" + escaped + "(?=$|[:/?#])", "i");
+      if (regex.test(result)) {
+        result = result.replace(regex, "$1" + tgtDom);
+        break;
+      }
+    }
+    return result;
+  }
+
+  function refreshDomainFilterLists() {
+    const domainCounts = {};
+    allMovies.forEach(m => {
+      const d = getDomain(m.web_scraper_start_url);
+      if (d) {
+        domainCounts[d] = (domainCounts[d] || 0) + 1;
+      }
+    });
+    domainMovieCountsMap = domainCounts;
+    allAvailableDomains = Object.keys(domainCounts).sort((a, b) => {
+      const diff = (domainCounts[b] || 0) - (domainCounts[a] || 0);
+      return diff !== 0 ? diff : a.localeCompare(b);
+    });
+    selectedDomainsSet = new Set(Array.from(selectedDomainsSet).filter(d => allAvailableDomains.includes(d)));
+    renderDomainMultiSelectOptions();
+    updateDomainMultiSelectUI();
+
+    const bulkDomainSel = document.getElementById("bulkDomainFilter");
+    if (bulkDomainSel) {
+      const prevVal = bulkDomainSel.value;
+      bulkDomainSel.innerHTML = '<option value="">Tüm Domainler</option>';
+      allAvailableDomains.forEach(d => {
+        bulkDomainSel.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
+      });
+      bulkDomainSel.value = allAvailableDomains.includes(prevVal) ? prevVal : "";
+    }
+  }
+
+  function applyDomainRulesToAllMoviesAndFilters(shouldReinitDomains = true) {
+    const keys = Object.keys(domainReplaceMap);
+    if (keys.length > 0) {
+      allMovies.forEach(m => {
+        if (m.web_scraper_start_url) {
+          m.web_scraper_start_url = applyDomainRulesToUrl(m.web_scraper_start_url);
+        }
+        if (m.url) {
+          m.url = applyDomainRulesToUrl(m.url);
+        }
+      });
+
+      Object.keys(alternativeUrlsState).forEach(fid => {
+        const arr = alternativeUrlsState[fid];
+        if (Array.isArray(arr)) {
+          alternativeUrlsState[fid] = arr.map(u => applyDomainRulesToUrl(u));
+        }
+      });
+      try {
+        localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
+      } catch (e) {}
+
+      if (selectedDomainsSet && selectedDomainsSet.size > 0) {
+        const nextSelected = new Set();
+        selectedDomainsSet.forEach(d => {
+          const cleanD = normalizeDomainToken(d);
+          nextSelected.add(domainReplaceMap[cleanD] || d);
+        });
+        selectedDomainsSet = nextSelected;
+      }
+    }
+
+    if (shouldReinitDomains) {
+      refreshDomainFilterLists();
+    }
+  }
+
+  function openDomainRulesPopup() {
+    const ta = document.getElementById("domainRulesTextarea");
+    if (ta) {
+      ta.value = domainRulesRawText || "";
+    }
+    const modal = document.getElementById("domainRulesPopupModal");
+    if (modal) {
+      modal.style.display = "flex";
+    }
+    setTimeout(() => {
+      if (ta) ta.focus();
+    }, 80);
+  }
+
+  function closeDomainRulesPopup() {
+    const modal = document.getElementById("domainRulesPopupModal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  function saveDomainRulesPopup() {
+    const ta = document.getElementById("domainRulesTextarea");
+    domainRulesRawText = ta ? ta.value : "";
+    try {
+      localStorage.setItem("domain_replacement_rules_text", domainRulesRawText);
+    } catch (e) {}
+    rebuildDomainReplaceMap(domainRulesRawText);
+    applyDomainRulesToAllMoviesAndFilters(true);
+    closeDomainRulesPopup();
+    renderMoviesPreservingScroll();
   }
 
   function openUrlPopup(movieId) {
@@ -3389,8 +3579,8 @@ def main():
     const text = document.getElementById("urlPopupTextarea").value;
     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
     if (lines.length > 0) {
-      const mainUrl = lines[0];
-      const altUrls = lines.slice(1);
+      const mainUrl = applyDomainRulesToUrl(lines[0]);
+      const altUrls = lines.slice(1).map(u => applyDomainRulesToUrl(u));
 
       const movie = allMovies.find(m => String(m.film_ID) === currentPopupMovieId);
       if (movie) {
@@ -3405,6 +3595,7 @@ def main():
         localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
       } catch(e) {}
     }
+    refreshDomainFilterLists();
     closeUrlPopup();
     renderMoviesPreservingScroll();
   }
@@ -4725,7 +4916,8 @@ def main():
         remake_groups_names: remakeGroupsNamesState,
         genre_movies_groups: genreMoviesGroupsState,
         genre_groups_names: genreGroupsNamesState,
-        alternative_urls_map: alternativeUrlsState
+        alternative_urls_map: alternativeUrlsState,
+        domain_replacement_rules_text: domainRulesRawText
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -4827,6 +5019,12 @@ def main():
           alternativeUrlsState = data.alternative_urls_map;
           localStorage.setItem("alternative_urls_map", JSON.stringify(alternativeUrlsState));
         }
+        if (typeof data.domain_replacement_rules_text === "string") {
+          domainRulesRawText = data.domain_replacement_rules_text;
+          localStorage.setItem("domain_replacement_rules_text", domainRulesRawText);
+          rebuildDomainReplaceMap(domainRulesRawText);
+        }
+        applyDomainRulesToAllMoviesAndFilters(true);
 
         rebuildMyScoreSteps(false);
         sidebarSelectedGenreKeys.clear();
@@ -4868,6 +5066,7 @@ def main():
 
   function initFilters() {
     try {
+      applyDomainRulesToAllMoviesAndFilters(false);
       const domainCounts = {};
       const years = new Set([0]);
       const countries = new Set();
@@ -5128,10 +5327,14 @@ def main():
         if (saved) {
           const state = JSON.parse(saved);
           if (state.search !== undefined) document.getElementById("searchInput").value = state.search;
+          const mapDomFn = (d) => {
+            const cleanD = normalizeDomainToken(d);
+            return domainReplaceMap[cleanD] || d;
+          };
           if (Array.isArray(state.domains)) {
-            setSelectedDomains(state.domains);
+            setSelectedDomains(state.domains.map(mapDomFn));
           } else if (state.domain) {
-            setSelectedDomains([state.domain]);
+            setSelectedDomains([mapDomFn(state.domain)]);
           } else {
             setSelectedDomains([]);
           }
@@ -6460,6 +6663,8 @@ def main():
     syncSimpleViewControlsPlacement();
     updateMultiSelectUI();
     applyRelatedSideBySideUI();
+
+    document.getElementById("domainManageBtn").addEventListener("click", openDomainRulesPopup);
 
     document.getElementById("toggleFilmSearchSidebarBtn").addEventListener("click", () => {
       setSidebarMode(sidebarMode === "filter" ? null : "filter");
