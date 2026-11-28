@@ -1803,6 +1803,9 @@ def main():
       <option value="remake_only">🎥 Remake-Benzer Filmler</option>
       <option value="genre_only">🏷️ Türler</option>
       <option value="no_genre">🏷️ Türü Olmayanlar</option>
+      <option value="no_imdb">⭐ IMDB Puanı Olmayanlar</option>
+      <option value="no_my_score">📝 Benim Puanım Olmayanlar</option>
+      <option value="no_poster">🖼️ Resmi Olmayanlar</option>
     </select>
 
     <div class="linked-sort-container" id="linkedSortContainer">
@@ -2045,6 +2048,74 @@ def main():
 <script>
   const allMovies = JSON.parse(decodeURIComponent('__MOVIES_JSON_PLACEHOLDER__'));
   const validMovieIds = new Set(allMovies.map(m => String(m.film_ID)));
+  const missingPosters = new Set();
+  const checkedPosters = new Set();
+  let isBgScanStarted = false;
+  let posterScanRenderTimer = null;
+  let lastMissingCountForRender = 0;
+
+  function schedulePosterScanRender() {
+    const wl = document.getElementById("watchlistDropdown");
+    if (!wl || wl.value !== "no_poster") return;
+    if (posterScanRenderTimer) return;
+
+    posterScanRenderTimer = setTimeout(() => {
+      posterScanRenderTimer = null;
+      const curWl = document.getElementById("watchlistDropdown");
+      if (curWl && curWl.value === "no_poster" && missingPosters.size !== lastMissingCountForRender) {
+        lastMissingCountForRender = missingPosters.size;
+        renderMoviesPreservingScroll();
+      }
+    }, 600);
+  }
+
+  function startBackgroundPosterScan() {
+    if (isBgScanStarted) return;
+    isBgScanStarted = true;
+    let idx = 0;
+    const total = allMovies.length;
+    const batchSize = 50;
+
+    function scanBatch() {
+      const end = Math.min(idx + batchSize, total);
+      for (; idx < end; idx++) {
+        const film = allMovies[idx];
+        const fid = String(film.film_ID !== undefined && film.film_ID !== null ? film.film_ID : idx);
+        if (checkedPosters.has(fid)) continue;
+        checkedPosters.add(fid);
+
+        const posterUrl = film.poster;
+        if (!posterUrl || typeof posterUrl !== "string" || posterUrl.trim() === "") {
+          missingPosters.add(fid);
+          continue;
+        }
+
+        const img = new Image();
+        img.decoding = "async";
+        img.onerror = () => {
+          missingPosters.add(fid);
+          schedulePosterScanRender();
+        };
+        img.src = posterUrl;
+      }
+
+      if (idx < total) {
+        setTimeout(scanBatch, 80);
+      } else {
+        const wl = document.getElementById("watchlistDropdown");
+        if (wl && wl.value === "no_poster" && missingPosters.size !== lastMissingCountForRender) {
+          lastMissingCountForRender = missingPosters.size;
+          renderMoviesPreservingScroll();
+        }
+      }
+    }
+
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(() => scanBatch(), { timeout: 1000 });
+    } else {
+      setTimeout(scanBatch, 150);
+    }
+  }
 
   let pageSize = 14;
   let currentPage = 1;
@@ -2101,6 +2172,7 @@ def main():
   let bulkSelectedMovieIds = new Set();
 
   let allAvailableDomains = [];
+  let domainMovieCountsMap = {};
   let allAvailableCountries = [];
   let selectedDomainsSet = new Set();
   let selectedCountriesSet = new Set();
@@ -2189,10 +2261,12 @@ def main():
       cb.type = "checkbox";
       cb.checked = isChecked;
 
+      const dCount = domainMovieCountsMap[d] || 0;
+      const displayLabel = `${d} (${dCount})`;
       const lbl = document.createElement("span");
       lbl.className = "multi-select-option-label";
-      lbl.textContent = d;
-      lbl.title = d;
+      lbl.textContent = displayLabel;
+      lbl.title = displayLabel;
 
       const onToggle = () => {
         if (selectedDomainsSet.has(d)) {
@@ -2398,9 +2472,11 @@ def main():
   function renderMoviesPreservingScroll() {
     const savedScrollY = window.scrollY;
     renderMovies(false, true);
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
-    });
+    if (Math.abs(window.scrollY - savedScrollY) > 2) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+      });
+    }
   }
 
   function applyPersistentHighlight() {
@@ -4792,7 +4868,7 @@ def main():
 
   function initFilters() {
     try {
-      const domains = new Set();
+      const domainCounts = {};
       const years = new Set([0]);
       const countries = new Set();
       const durations = new Set([0]);
@@ -4801,7 +4877,9 @@ def main():
 
       allMovies.forEach(m => {
         const d = getDomain(m.web_scraper_start_url);
-        if (d) domains.add(d);
+        if (d) {
+          domainCounts[d] = (domainCounts[d] || 0) + 1;
+        }
 
         const yNum = getMovieYearValue(m);
         if (yNum > 0) years.add(yNum);
@@ -4822,7 +4900,11 @@ def main():
         if (uNum > 0) myScores.add(uNum);
       });
 
-      allAvailableDomains = Array.from(domains).sort();
+      domainMovieCountsMap = domainCounts;
+      allAvailableDomains = Object.keys(domainCounts).sort((a, b) => {
+        const diff = (domainCounts[b] || 0) - (domainCounts[a] || 0);
+        return diff !== 0 ? diff : a.localeCompare(b);
+      });
       renderDomainMultiSelectOptions();
       updateDomainMultiSelectUI();
 
@@ -5643,7 +5725,7 @@ def main():
         ${badgesRightHtml}
       </div>
       <div class="poster-wrapper">
-        <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok';">
+        <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(movie.film_name)}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/210x290?text=Afi%C5%9F+Yok'; missingPosters.add('${fid}'); schedulePosterScanRender();">
         <div class="select-id-radio-wrap" title="Bu filmin ID'sini Son ID kutucuğuna ata">
           <input type="radio" name="selectedMovieRadio" class="select-id-radio" ${isRadioChecked} onchange="selectMovieIdFromCardRadio('${fid}')">
         </div>
@@ -5981,6 +6063,25 @@ def main():
         if (watchlistSelection === "no_genre") {
           const gs = getGenreGroupsForMovie(fid);
           if (gs && gs.length > 0) return false;
+        }
+
+        if (watchlistSelection === "no_imdb") {
+          if (movie.imdb_score !== null && movie.imdb_score !== undefined && String(movie.imdb_score).trim() !== "") {
+            return false;
+          }
+        }
+
+        if (watchlistSelection === "no_my_score") {
+          const uScRaw = myScoreState[fid];
+          if (uScRaw !== null && uScRaw !== undefined && String(uScRaw).trim() !== "" && !isNaN(parseFloat(uScRaw))) {
+            return false;
+          }
+        }
+
+        if (watchlistSelection === "no_poster") {
+          const hasPosterStr = movie.poster && typeof movie.poster === "string" && movie.poster.trim() !== "";
+          const isMissing = !hasPosterStr || missingPosters.has(fid);
+          if (!isMissing) return false;
         }
 
         if (selectedDomainsSet.size > 0) {
@@ -6355,6 +6456,7 @@ def main():
     document.body.appendChild(summaryTipEl);
 
     initFilters();
+    setTimeout(startBackgroundPosterScan, 300);
     syncSimpleViewControlsPlacement();
     updateMultiSelectUI();
     applyRelatedSideBySideUI();
@@ -6573,7 +6675,12 @@ def main():
 
     document.getElementById("sortSelect1").addEventListener("change", () => renderMovies(false));
     document.getElementById("sortSelect2").addEventListener("change", () => renderMovies(false));
-    document.getElementById("watchlistDropdown").addEventListener("change", () => renderMovies(false));
+    document.getElementById("watchlistDropdown").addEventListener("change", (e) => {
+      if (e.target.value === "no_poster" && !isBgScanStarted) {
+        startBackgroundPosterScan();
+      }
+      renderMovies(false);
+    });
     document.getElementById("linkedGroupsSortSelect").addEventListener("change", () => renderMovies(false));
     document.getElementById("showHiddenCheckbox").addEventListener("change", () => {
       renderRecentDropdown();

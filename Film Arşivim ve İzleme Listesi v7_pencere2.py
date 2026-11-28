@@ -1,7 +1,7 @@
 #PENCERE 2
 
 # Her yedeklemede güncelleyin
-SURUM_NOTU = "Tablo görünümü iyileştirildi"
+SURUM_NOTU = "IMBD Puanı Olmayanlar, Benim Puanım Olmayanlar ve Resmi Olmayanlar eklendi. Dropdown'da domain adının yanına film sayısı eklendi. "
 
 #kaydet ve 30 sn bekle
 import time
